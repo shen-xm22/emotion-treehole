@@ -251,7 +251,9 @@ def build_user_profile_context(user_profile: dict, assessment_records: list) -> 
         if t in seen_types:
             continue
         seen_types.add(t)
-        scores = json.loads(rec["scores"])
+        scores = rec["scores"]
+        if isinstance(scores, str):
+            scores = json.loads(scores)
         created = rec["created_at"]
         if t == "anxiety":
             cs = scores.get("core_score", 0)
