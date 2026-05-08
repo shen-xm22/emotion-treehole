@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field
 
 # ─── 配置 ───────────────────────────────────────────────
 
-DEEPSEEK_API_KEY = "sk-5b8d6781ac7d42fdb070efb980c38bdf"
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-5b8d6781ac7d42fdb070efb980c38bdf")
 DEEPSEEK_MODEL = "deepseek-v4-pro"  # DeepSeek V4 Pro (2026-04-24 正式发布)
 DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 
@@ -37,7 +37,7 @@ SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1N
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ─── JWT 配置 ───────────────────────────────────────────
-JWT_SECRET = "emotion-treehole-jwt-secret-2026"
+JWT_SECRET = os.environ.get("JWT_SECRET", "emotion-treehole-jwt-secret-2026")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_HOURS = 72
 
