@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌿 树洞情绪站 | 你的心灵栖息地</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --sage:      #8B9D8B;
+      --sage-lt:   #C4D3C4;
+      --sage-pt:   #E8F0E8;
+      --rose:      #E8C4C8;
+      --rose-lt:   #F5E4E6;
+      --lavender:  #C9C0D3;
+      --lavender-lt: #EAE5F1;
+      --warm-bg:   #FAF6F1;
+      --cream:     #FDFBF9;
+      --brown:     #5D4E37;
+      --brown-lt:  #8B7D6A;
+      --shadow:    0 8px 32px rgba(93,78,55,0.10);
+      --shadow-hv: 0 16px 48px rgba(93,78,55,0.16);
+      --radius:    20px;
+      --transition: 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: transparent;
+      color: var(--brown);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--warm-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--sage-lt); border-radius: 3px; }
+
+    /* ===== Pure CSS Nature Background ===== */
+    .bg-nature {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+      background: linear-gradient(175deg,
+        #F6F0E8 0%,      /* warm cream sky */
+        #EDE8DA 18%,     /* soft beige */
+        #E0E1CF 38%,     /* light sage */
+        #D1D7C2 55%,     /* sage green */
+        #C2CEB3 72%,     /* deeper sage */
+        #B6C5A6 85%,     /* forest edge */
+        #AEBFA0 100%     /* woodland floor */
+      );
+    }
+
+    /* Sunlight beam — warm glow that drifts slowly */
+    .sun-beam {
+      position: absolute;
+      inset: -60% -40%;
+      background: radial-gradient(
+        ellipse at 30% 15%,
+        rgba(255,236,210,0.28) 0%,
+        rgba(245,226,195,0.12) 25%,
+        rgba(255,236,210,0.05) 45%,
+        transparent 60%
+      );
+      animation: driftSun 24s ease-in-out infinite alternate;
+      mix-blend-mode: overlay;
+    }
+
+    @keyframes driftSun {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(3%,2%) scale(1.05); }
+      100% { transform: translate(-3%,-1%) scale(0.97); }
+    }
+
+    /* Second beam from opposite side */
+    .sun-beam-secondary {
+      position: absolute;
+      inset: -30% -30%;
+      background: radial-gradient(
+        ellipse at 75% 40%,
+        rgba(245,227,200,0.18) 0%,
+        rgba(240,220,190,0.08) 30%,
+        transparent 55%
+      );
+      animation: driftSun2 30s ease-in-out infinite alternate;
+      mix-blend-mode: overlay;
+    }
+
+    @keyframes driftSun2 {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(4%,-3%) scale(1.08); }
+    }
+
+    /* Soft ground light — warm glow from below */
+    .ground-glow {
+      position: absolute;
+      bottom: -20%;
+      left: 0;
+      right: 0;
+      height: 60%;
+      background: radial-gradient(
+        ellipse at 50% 100%,
+        rgba(180,200,160,0.20) 0%,
+        rgba(170,190,150,0.08) 40%,
+        transparent 70%
+      );
+      animation: groundPulse 20s ease-in-out infinite alternate;
+    }
+
+    @keyframes groundPulse {
+      0%   { opacity: 0.7; transform: scaleY(1); }
+      100% { opacity: 1; transform: scaleY(1.05); }
+    }
+
+    /* Organic blobs — soft forest shapes */
+    .forest-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      will-change: transform, opacity;
+    }
+
+    .forest-blob.sage-mist {
+      width: 700px; height: 600px;
+      background: var(--sage-lt);
+      top: 10%; left: -10%;
+      opacity: 0.12;
+      animation: blobDrift1 35s ease-in-out infinite alternate;
+    }
+    .forest-blob.rose-mist {
+      width: 500px; height: 500px;
+      background: var(--rose);
+      bottom: 15%; right: -8%;
+      opacity: 0.07;
+      animation: blobDrift2 28s ease-in-out infinite alternate;
+    }
+    .forest-blob.lav-mist {
+      width: 400px; height: 400px;
+      background: var(--lavender-lt);
+      top: 45%; right: -5%;
+      opacity: 0.09;
+      animation: blobDrift3 32s ease-in-out infinite alternate;
+    }
+    .forest-blob.gold-mist {
+      width: 350px; height: 350px;
+      background: #DFCEB5;
+      bottom: 30%; left: -6%;
+      opacity: 0.06;
+      animation: blobDrift4 26s ease-in-out infinite alternate;
+    }
+    /* A warm central glow */
+    .forest-blob.warm-glow {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, #EEE3D0, transparent);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.08;
+      animation: blobDrift1 40s ease-in-out infinite alternate;
+    }
+
+    @keyframes blobDrift1 {
+      0%   { transform: translate(0,0) scale(1); }
+      33%  { transform: translate(40px,-25px) scale(1.06); }
+      66%  { transform: translate(-30px,35px) scale(0.96); }
+      100% { transform: translate(20px,10px) scale(1.03); }
+    }
+    @keyframes blobDrift2 {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(-35px,-20px) scale(1.08); }
+      100% { transform: translate(25px,30px) scale(0.95); }
+    }
+    @keyframes blobDrift3 {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(25px,15px) scale(0.95); }
+      100% { transform: translate(-30px,-20px) scale(1.05); }
+    }
+    @keyframes blobDrift4 {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(20px,-25px) scale(1.07); }
+    }
+
+    /* Subtle texture — like forest floor leaves */
+    .forest-texture {
+      position: absolute;
+      inset: 0;
+      opacity: 0.025;
+      background-image:
+        radial-gradient(circle at 15% 30%, var(--sage) 0.8px, transparent 0.8px),
+        radial-gradient(circle at 70% 25%, var(--sage-lt) 0.6px, transparent 0.6px),
+        radial-gradient(circle at 45% 70%, var(--rose) 0.5px, transparent 0.5px),
+        radial-gradient(circle at 80% 55%, var(--lavender) 0.7px, transparent 0.7px);
+      background-size: 100px 100px, 180px 180px, 140px 140px, 120px 120px;
+      background-position: 0 0, 50px 30px, 80px 100px, 30px 70px;
+      animation: textureShift 80s linear infinite alternate;
+    }
+
+    @keyframes textureShift {
+      0%   { background-position: 0 0, 50px 30px, 80px 100px, 30px 70px; }
+      100% { background-position: 60px 40px, 100px 80px, 40px 60px, 80px 30px; }
+    }
+
+    /* Vignette for depth */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 35%, rgba(93,78,55,0.06) 100%);
+    }
+
+    /* ===== Floating Decorations ===== */
+    .deco-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .deco-leaf {
+      position: absolute;
+      opacity: 0.10;
+      font-size: 28px;
+      animation: floatLeaf 14s ease-in-out infinite;
+    }
+    .deco-leaf:nth-child(1){top:8%;left:3%;animation-delay:0s}
+    .deco-leaf:nth-child(2){top:20%;right:6%;animation-delay:-3.5s;font-size:22px}
+    .deco-leaf:nth-child(3){bottom:30%;left:5%;animation-delay:-7s;font-size:24px}
+    .deco-leaf:nth-child(4){bottom:15%;right:3%;animation-delay:-10.5s;font-size:30px}
+    .deco-leaf:nth-child(5){top:50%;left:92%;animation-delay:-2.5s;font-size:18px}
+    .deco-leaf:nth-child(6){top:60%;left:4%;animation-delay:-8s;font-size:20px}
+    .deco-leaf:nth-child(7){top:5%;left:50%;animation-delay:-5.5s;font-size:16px}
+
+    .deco-star {
+      position: absolute;
+      opacity: 0.07;
+      font-size: 14px;
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    .deco-star:nth-child(8){top:10%;left:72%;animation-delay:0s}
+    .deco-star:nth-child(9){top:35%;right:18%;animation-delay:-1.2s}
+    .deco-star:nth-child(10){bottom:38%;left:58%;animation-delay:-2.4s}
+    .deco-star:nth-child(11){top:70%;left:12%;animation-delay:-0.6s}
+    .deco-star:nth-child(12){bottom:10%;right:30%;animation-delay:-1.8s}
+    .deco-star:nth-child(13){top:45%;left:80%;animation-delay:-3s}
+
+    @keyframes floatLeaf {
+      0%,100%{transform:translateY(0)rotate(0deg)}
+      25%{transform:translateY(-18px)rotate(5deg)}
+      50%{transform:translateY(-8px)rotate(-3deg)}
+      75%{transform:translateY(-20px)rotate(4deg)}
+    }
+    @keyframes twinkle {
+      0%,100%{opacity:0.05;transform:scale(1)}
+      50%{opacity:0.18;transform:scale(1.3)}
+    }
+
+    /* ===== Navigation ===== */
+    header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 40px;
+      background: rgba(250,246,241,0.85);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px;
+      transition: var(--transition);
+    }
+    header .logo { flex-shrink: 0; }
+    /* Right-side group: nav + auth */
+    .header-actions {
+      display: flex; align-items: center; gap: 0;
+    }
+    .header-actions nav {
+      display: flex; align-items: center;
+    }
+    .header-actions nav a {
+      text-decoration: none; color: var(--brown-lt); font-size: 13px; font-weight: 500;
+      padding: 6px 14px; border-radius: 50px;
+      transition: all 0.25s;
+      white-space: nowrap;
+    }
+    .header-actions nav a::after { display: none !important; }
+    .header-actions nav a:hover {
+      color: var(--brown);
+      background: rgba(139,157,139,0.08);
+    }
+    .header-actions nav a.nav-cta {
+      background: var(--sage); color: #fff !important; margin-left: 4px;
+    }
+    .header-actions nav a.nav-cta:hover {
+      background: #798C79;
+    }
+    .nav-divider {
+      width: 1px; height: 18px;
+      background: rgba(93,78,55,0.12);
+      margin: 0 10px;
+      flex-shrink: 0;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--brown); font-weight: 600; font-size: 18px; }
+    .logo-icon { font-size: 28px; }
+    nav { display: flex; align-items: center; gap: 24px; }
+    nav a { text-decoration: none; color: var(--brown-lt); font-size: 14px; font-weight: 500; transition: color 0.3s; position: relative; }
+    nav a::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: var(--sage); border-radius: 1px; transition: width 0.3s; }
+    nav a:hover { color: var(--brown); }
+    nav a:hover::after { width: 100%; }
+    .nav-cta { background: var(--sage); color: #fff !important; padding: 8px 20px; border-radius: 50px; font-weight: 500; transition: background 0.3s, transform 0.3s !important; }
+    .nav-cta::after { display: none !important; }
+    .nav-cta:hover { background: #798C79; transform: translateY(-1px); }
+    /* Auth display in header */
+    .auth-display { display: flex; align-items: center; gap: 8px; }
+    .auth-display .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--sage);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: var(--transition); flex-shrink: 0;
+    }
+    .auth-display .user-avatar:hover { transform: scale(1.05); }
+    .auth-display .user-name { font-size: 13px; color: var(--brown-lt); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .auth-btn { text-decoration: none; color: var(--brown-lt); font-size: 13px; font-weight: 500; padding: 6px 14px; border-radius: 50px; transition: all 0.25s; }
+    .auth-btn:hover { color: var(--brown); background: rgba(139,157,139,0.08); }
+    .auth-btn.register { background: var(--sage); color: #fff; }
+    .auth-btn.register:hover { background: #798C79; }
+    .dropdown-menu {
+      position: absolute; top: 100%; right: 0; margin-top: 8px;
+      background: rgba(253,251,249,0.97); backdrop-filter: blur(12px);
+      border: 1px solid rgba(139,157,139,0.10); border-radius: 12px;
+      padding: 8px 0; min-width: 140px; box-shadow: 0 8px 32px rgba(93,78,55,0.10);
+      display: none; z-index: 50;
+    }
+    .dropdown-menu.show { display: block; }
+    .dropdown-menu a {
+      display: block; padding: 10px 18px; font-size: 14px; color: var(--brown);
+      text-decoration: none; transition: background 0.2s;
+    }
+    .dropdown-menu a:hover { background: var(--sage-pt); }
+    .dropdown-menu .divider { height: 1px; background: rgba(139,157,139,0.10); margin: 4px 12px; }
+    .dropdown-menu .logout { color: #D47A84; }
+
+    /* ===== Hero ===== */
+    .hero {
+      position: relative; z-index: 1; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--sage-pt); color: var(--sage); font-size: 13px; font-weight: 500;
+      padding: 6px 16px; border-radius: 50px; margin-bottom: 32px;
+      animation: fadeUp 0.8s ease both;
+    }
+    .hero h1 {
+      font-family: 'Quicksand','Noto Sans SC',sans-serif;
+      font-size: clamp(40px,8vw,72px); font-weight: 700; line-height: 1.2;
+      color: var(--brown); animation: fadeUp 0.8s ease 0.1s both;
+    }
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, var(--sage), var(--lavender));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-subtitle {
+      font-size: clamp(16px,2.2vw,20px); color: var(--brown-lt); font-weight: 300;
+      max-width: 540px; margin: 20px auto 0; animation: fadeUp 0.8s ease 0.2s both;
+    }
+    .hero-actions {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 16px; margin-top: 40px; animation: fadeUp 0.8s ease 0.3s both;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px; border-radius: 50px; font-size: 15px; font-weight: 500;
+      font-family: inherit; border: none; cursor: pointer; text-decoration: none;
+      transition: var(--transition);
+    }
+    .btn-primary { background: var(--sage); color: #fff; box-shadow: 0 4px 16px rgba(139,157,139,0.3); }
+    .btn-primary:hover { background: #798C79; transform: translateY(-2px); box-shadow: 0 8px 28px rgba(139,157,139,0.4); }
+    .btn-secondary { background: transparent; color: var(--brown); border: 1.5px solid var(--rose); }
+    .btn-secondary:hover { background: var(--rose-lt); transform: translateY(-2px); }
+    .hero-illus { margin-top: 48px; font-size: 72px; opacity: 0.4; animation: fadeUp 0.8s ease 0.4s both; }
+    .hero-scroll { margin-top: 40px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--brown-lt); font-size: 12px; opacity: 0.5; animation: fadeUp 0.8s ease 0.5s both; }
+    .hero-scroll span { display: block; width: 20px; height: 30px; border: 2px solid var(--brown-lt); border-radius: 10px; position: relative; }
+    .hero-scroll span::after { content: ''; position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 3px; height: 8px; background: var(--sage); border-radius: 2px; animation: scrollDot 2s ease infinite; }
+    @keyframes scrollDot { 0%{top:6px;opacity:1} 100%{top:18px;opacity:0} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ===== Section ===== */
+    section { position: relative; z-index: 1; }
+    .section-header { text-align: center; margin-bottom: 56px; }
+    .section-header h2 { font-family: 'Quicksand','Noto Sans SC',sans-serif; font-size: clamp(28px,4vw,38px); font-weight: 700; color: var(--brown); }
+    .section-header p { color: var(--brown-lt); font-weight: 300; font-size: 16px; margin-top: 10px; max-width: 450px; margin-left: auto; margin-right: auto; }
+    .section-divider { width: 48px; height: 3px; background: linear-gradient(90deg,var(--sage),var(--rose)); border-radius: 2px; margin: 12px auto 0; }
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+    /* ===== Modules ===== */
+    .modules { padding: 100px 0 120px; }
+    .module-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 28px; }
+    .module-card {
+      background: rgba(253,251,249,0.92); border-radius: var(--radius); padding: 40px 32px 36px;
+      box-shadow: var(--shadow); cursor: pointer; transition: var(--transition);
+      position: relative; overflow: hidden; border: 1px solid rgba(139,157,139,0.08);
+      backdrop-filter: blur(4px);
+      display: flex; flex-direction: column;
+    }
+    .module-card p { flex: 1; }
+    .module-card .module-stats { margin-top: auto; }
+    .module-grid a { display: flex; }
+    .module-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: var(--radius) var(--radius) 0 0; transition: var(--transition); }
+    .module-card:nth-child(1)::before { background: linear-gradient(90deg,var(--sage),var(--sage-lt)); }
+    .module-card:nth-child(2)::before { background: linear-gradient(90deg,var(--rose),#F0D0D5); }
+    .module-card:nth-child(3)::before { background: linear-gradient(90deg,var(--lavender),var(--lavender-lt)); }
+.module-card:nth-child(4)::before { background: linear-gradient(90deg,#C9D1B0,#DCDFC0); }
+    .module-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hv); }
+    .module-icon { font-size: 40px; margin-bottom: 16px; display: inline-block; }
+    .module-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+    .module-tag { display: inline-block; font-size: 12px; padding: 3px 12px; border-radius: 50px; font-weight: 400; margin-top: 2px; }
+    .module-tag.sage { background: var(--sage-pt); color: var(--sage); }
+    .module-tag.rose { background: var(--rose-lt); color: #C49098; }
+    .module-tag.lav { background: var(--lavender-lt); color: #9A8EB0; }
+    .module-card p { color: var(--brown-lt); font-size: 14px; margin-top: 12px; line-height: 1.7; }
+    .module-stats { display: flex; gap: 24px; margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(93,78,55,0.06); }
+    .module-stats span { font-size: 13px; color: var(--brown-lt); display: flex; align-items: center; gap: 4px; }
+    .module-card .card-arrow { position: absolute; bottom: 20px; right: 24px; font-size: 20px; opacity: 0; transition: var(--transition); }
+    .module-card:hover .card-arrow { opacity: 0.5; transform: translateX(4px); }
+
+    /* ===== How It Works ===== */
+    .how-it-works { padding: 80px 0; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 32px; }
+    .step { text-align: center; padding: 32px 20px; }
+    .step-num { width: 52px; height: 52px; border-radius: 50%; background: rgba(253,251,249,0.92); backdrop-filter: blur(4px); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-family: 'Quicksand',sans-serif; font-size: 20px; font-weight: 700; color: var(--sage); }
+    .step h4 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .step p { font-size: 14px; color: var(--brown-lt); font-weight: 300; }
+    .step-icon { font-size: 28px; margin-bottom: 8px; }
+
+    /* ===== Pricing ===== */
+    .pricing { padding: 100px 0; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 20px; }
+    .pricing-card { background: rgba(253,251,249,0.92); backdrop-filter: blur(4px); border-radius: var(--radius); padding: 32px 24px; text-align: center; box-shadow: var(--shadow); border: 1px solid rgba(139,157,139,0.08); transition: var(--transition); }
+    .pricing-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hv); }
+    .pricing-card.featured { border: 2px solid var(--sage); position: relative; }
+    .pricing-card.featured::after { content: '最受欢迎'; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--sage); color: #fff; font-size: 11px; padding: 3px 14px; border-radius: 50px; font-weight: 500; }
+    .pricing-card.free { border-color: var(--rose-lt); }
+    .pricing-icon { font-size: 32px; margin-bottom: 8px; }
+    .pricing-card h4 { font-size: 16px; font-weight: 600; }
+    .pricing-price { font-family: 'Quicksand',sans-serif; font-size: 28px; font-weight: 700; color: var(--sage); margin: 10px 0; }
+    .pricing-price .unit { font-size: 14px; font-weight: 400; color: var(--brown-lt); }
+    .pricing-card ul { list-style: none; text-align: left; margin: 16px 0 20px; }
+    .pricing-card li { font-size: 13px; color: var(--brown-lt); padding: 5px 0; display: flex; align-items: center; gap: 6px; }
+    .pricing-card li::before { content: '✓'; color: var(--sage); font-weight: 700; }
+    .pricing-card .btn { width: 100%; justify-content: center; padding: 10px 20px; font-size: 14px; }
+    .pricing-card.featured .btn { background: var(--sage); color: #fff; }
+    .pricing-card.free .btn { background: transparent; border: 1.5px solid var(--rose); color: var(--brown); }
+
+    /* ===== Vibe ===== */
+    .vibe-section { padding: 80px 0; text-align: center; }
+    .vibe-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 24px; margin-top: 40px; }
+    .vibe-card { background: rgba(253,251,249,0.92); backdrop-filter: blur(4px); border-radius: var(--radius); padding: 32px 24px; box-shadow: var(--shadow); font-size: 14px; font-weight: 300; line-height: 1.8; border: 1px solid rgba(139,157,139,0.06); }
+    .vibe-card .quote { font-size: 28px; opacity: 0.3; }
+    .vibe-card .author { margin-top: 12px; font-size: 13px; font-weight: 500; color: var(--sage); }
+
+    /* ===== Final CTA ===== */
+    .final-cta { padding: 100px 0; text-align: center; }
+    .final-cta h2 { font-family: 'Quicksand','Noto Sans SC',sans-serif; font-size: clamp(26px,4vw,36px); font-weight: 700; }
+    .final-cta p { color: var(--brown-lt); margin: 12px auto 28px; max-width: 400px; font-weight: 300; }
+
+    /* ===== Footer ===== */
+    footer { position: relative; z-index: 1; text-align: center; padding: 40px 24px; font-size: 13px; color: var(--brown-lt); border-top: 1px solid rgba(93,78,55,0.06); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      header { padding: 12px 20px; }
+      .header-actions nav { display: none; }
+      .header-actions nav.mobile-open { display: flex; flex-direction: column; position: absolute; top: 100%; left: 0; right: 0; background: rgba(250,246,241,0.98); padding: 20px; backdrop-filter: blur(20px); z-index: 40; }
+      .header-actions .nav-divider { display: none; }
+      .auth-display .user-name { display: none; }
+      .mobile-menu-btn { display: block; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--brown); }
+      .module-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .pricing-grid { grid-template-columns: 1fr 1fr; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .hero-actions .btn { justify-content: center; }
+    }
+    @media (max-width: 480px) {
+      .steps { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .module-card { padding: 28px 20px; }
+      .hero { padding-top: 100px; }
+    }
+    @media (min-width: 769px) { .mobile-menu-btn { display: none; } }
+
+    /* ===== Animations ===== */
+    .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.8s ease, transform 0.8s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .hero .fade-in { opacity: 1; transform: none; }
+    body { opacity: 0; transition: opacity 0.6s ease; }
+    body.loaded { opacity: 1; }
+
+    /* ===== Treehole: Warm Window into Another Space ===== */
+    .treehole-section {
+      position: relative;
+      z-index: 1;
+      padding: 100px 0 120px;
+      margin: 60px 0;
+    }
+    /* dark atmospheric background */
+    .treehole-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(28,18,8,0.03) 15%,
+        rgba(28,18,8,0.06) 50%,
+        rgba(28,18,8,0.03) 85%,
+        transparent 100%
+      );
+      pointer-events: none;
+    }
+    /* warm glow - like a lit window in the dark */
+    .treehole-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: min(90vw, 800px);
+      height: min(60vw, 500px);
+      background: radial-gradient(ellipse at 50% 40%,
+        rgba(220,180,130,0.10) 0%,
+        rgba(200,160,110,0.05) 30%,
+        transparent 70%
+      );
+      pointer-events: none;
+      animation: glowPulse 6s ease-in-out infinite alternate;
+    }
+    @keyframes glowPulse {
+      0%   { opacity: 0.7; transform: translate(-50%,-50%) scale(1); }
+      100% { opacity: 1; transform: translate(-50%,-50%) scale(1.04); }
+    }
+
+    .treehole-inner {
+      position: relative;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    /* Lantern/moon icon with warm glow ring */
+    .treehole-icon-wrap {
+      position: relative;
+      width: 120px; height: 120px;
+      margin-bottom: 28px;
+    }
+    .treehole-icon-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1.5px solid rgba(200,176,144,0.12);
+      animation: ringPulse 4s ease-in-out infinite;
+    }
+    .treehole-icon-ring:nth-child(2) {
+      inset: -18px;
+      border-color: rgba(200,176,144,0.06);
+      animation-delay: 1s;
+    }
+    .treehole-icon-ring:nth-child(3) {
+      inset: -36px;
+      border-color: rgba(200,176,144,0.03);
+      animation-delay: 2s;
+    }
+    @keyframes ringPulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.08); opacity: 0.5; }
+    }
+    .treehole-icon {
+      position: absolute;
+      inset: 10px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      background: radial-gradient(circle at 40% 35%, rgba(255,242,224,0.15), transparent 60%);
+      box-shadow:
+        0 0 40px rgba(220,180,130,0.08),
+        inset 0 0 30px rgba(220,180,130,0.04);
+    }
+
+    .treehole-section h2 {
+      font-family: 'Quicksand','Noto Sans SC',sans-serif;
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700;
+      color: #2A1E14;
+      line-height: 1.3;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+    .treehole-section h2 .warm-em {
+      color: #7DA08A;
+      font-style: normal;
+    }
+    .treehole-section .sub {
+      color: #8A7A6A;
+      font-size: 15px;
+      line-height: 1.8;
+      margin: 14px 0 0;
+      max-width: 440px;
+      font-weight: 300;
+    }
+
+    /* tag pills */
+    .treehole-tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .treehole-tags span {
+      font-size: 12px;
+      color: #8A7A6A;
+      padding: 5px 14px;
+      border-radius: 50px;
+      background: rgba(200,176,144,0.06);
+      border: 1px solid rgba(200,176,144,0.08);
+    }
+
+    /* whispers - floating quotes */
+    .whisper-quotes {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 28px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .whisper {
+      font-size: 13px;
+      color: #8A7A6A;
+      padding: 10px 18px;
+      border-radius: 18px;
+      background: rgba(200,176,144,0.04);
+      border: 1px solid rgba(200,176,144,0.06);
+      line-height: 1.6;
+      max-width: 85%;
+      opacity: 0.6;
+      transition: opacity 0.4s ease;
+      align-self: flex-start;
+    }
+    .whisper:nth-child(even) {
+      align-self: flex-end;
+      background: rgba(200,176,144,0.07);
+    }
+    .whisper:hover { opacity: 1; }
+    .whisper .whisper-tag {
+      font-size: 10px;
+      opacity: 0.5;
+      display: block;
+      margin-top: 4px;
+    }
+
+    /* CTA button — warm, brighter */
+    .treehole-enter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 28px;
+      padding: 16px 44px;
+      border-radius: 50px;
+      font-size: 17px;
+      font-weight: 600;
+      font-family: inherit;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(135deg, #7DA08A, #8DB09A);
+      box-shadow: 0 6px 28px rgba(125,160,138,0.25);
+      transition: all 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+      letter-spacing: 0.5px;
+      border: none;
+      cursor: pointer;
+    }
+    .treehole-enter-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(125,160,138,0.35);
+      background: linear-gradient(135deg, #8DB09A, #9DC0AA);
+    }
+    .treehole-enter-btn .arrow {
+      font-size: 18px;
+      transition: transform 0.3s ease;
+      display: inline-block;
+    }
+    .treehole-enter-btn:hover .arrow { transform: translateX(6px) rotate(0deg); }
+    .treehole-enter-btn:active { transform: translateY(-1px); }
+
+    .treehole-hint {
+      font-size: 12px;
+      color: #9A8A7A;
+      margin-top: 10px;
+      font-weight: 300;
+      opacity: 0.6;
+    }
+
+    @media (max-width: 640px) {
+      .treehole-section { padding: 70px 0 80px; margin: 30px 0; }
+      .treehole-icon-wrap { width: 90px; height: 90px; margin-bottom: 20px; }
+      .treehole-icon { font-size: 36px; }
+      .whisper-quotes { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background: Pure CSS Nature Scene -->
+  <div class="bg-nature">
+    <div class="sun-beam"></div>
+    <div class="sun-beam-secondary"></div>
+    <div class="ground-glow"></div>
+    <div class="forest-blob sage-mist"></div>
+    <div class="forest-blob rose-mist"></div>
+    <div class="forest-blob lav-mist"></div>
+    <div class="forest-blob gold-mist"></div>
+    <div class="forest-blob warm-glow"></div>
+    <div class="forest-texture"></div>
+    <div class="vignette"></div>
+  </div>
+
+  <!-- Floating Decorations -->
+  <div class="deco-container">
+    <span class="deco-leaf">🍃</span>
+    <span class="deco-leaf">🌿</span>
+    <span class="deco-leaf">🍂</span>
+    <span class="deco-leaf">🌱</span>
+    <span class="deco-leaf">🍀</span>
+    <span class="deco-leaf">🌾</span>
+    <span class="deco-leaf">🌻</span>
+    <span class="deco-star">✦</span>
+    <span class="deco-star">✧</span>
+    <span class="deco-star">✦</span>
+    <span class="deco-star">✧</span>
+    <span class="deco-star">✦</span>
+    <span class="deco-star">✧</span>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="#" class="logo"><span class="logo-icon">🌿</span><span>树洞情绪站</span></a>
+    <div class="header-actions">
+      <nav id="mainNav">
+        <a href="#modules">测评</a>
+        <a href="#treehole-entry">树洞</a>
+        <a href="#how">怎么用</a>
+        <a href="#pricing">价格</a>
+        <a href="#vibe">心声</a>
+        <a href="treehole.html" class="nav-cta">开始倾诉 →</a>
+      </nav>
+      <div class="nav-divider"></div>
+      <div id="authDisplay" class="auth-display"></div>
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="菜单">☰</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="hero-badge">🌙 匿名 · 私密 · 有温度</div>
+    <h1>给心<br class="mobile-only">一个<br class="mobile-only"><span class="highlight">安全的地方</span></h1>
+    <p class="hero-subtitle">三分钟测评，了解你的性格、焦虑与关系模式。<br>没有评判，没有推销，只有温柔的看见。</p>
+    <div class="hero-actions">
+      <a href="#modules" class="btn btn-primary">✦ 开始免费测评</a>
+      <a href="#how" class="btn btn-secondary">了解更多</a>
+    </div>
+    <div class="hero-illus">🏡</div>
+    <div class="hero-scroll"><span></span>向下探索</div>
+  </section>
+
+  <!-- Modules -->
+  <section class="modules" id="modules">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>从这里开始</h2>
+        <p>三个测评，帮你更懂自己</p>
+        <div class="section-divider"></div>
+      </div>
+      <div class="module-grid">
+        <a href="personality-assessment.html" style="text-decoration:none;color:inherit">
+        <div class="module-card fade-in">
+          <div class="module-icon">🧩</div>
+          <h3>性格测评</h3>
+          <span class="module-tag sage">BFI-10 · 12题</span>
+          <p>你是内向还是外向？更感性还是更理性？探索你最真实的性格底色，发现那些你从未注意到的自己。</p>
+          <div class="module-stats"><span>⏱ 约 2 分钟</span><span>📊 雷达图结果</span></div>
+          <span class="card-arrow">→</span>
+        </div>
+        </a>
+        <a href="anxiety-assessment.html" style="text-decoration:none;color:inherit">
+        <div class="module-card fade-in">
+          <div class="module-icon">😰</div>
+          <h3>焦虑评级</h3>
+          <span class="module-tag rose">场景化自评 · 16题</span>
+          <p>你最近的压力有多大？焦虑悄悄渗透了生活的哪些角落？给情绪做个体检，从看见开始。</p>
+          <div class="module-stats"><span>⏱ 约 2 分钟</span><span>📈 GAD-7 + 综合评分</span></div>
+          <span class="card-arrow">→</span>
+        </div>
+        </a>
+        <a href="relationship-assessment.html" style="text-decoration:none;color:inherit">
+        <div class="module-card fade-in">
+          <div class="module-icon">💕</div>
+          <h3>亲密关系</h3>
+          <span class="module-tag lav">ECR依恋 · 14题</span>
+          <p>你和他/她之间到底怎么了？是沟通问题还是依恋模式的碰撞？理清关系中的隐形剧本。</p>
+          <div class="module-stats"><span>⏱ 约 3 分钟</span><span>💑 焦虑/回避四类型</span></div>
+          <span class="card-arrow">→</span>
+        </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Treehole: Warm Window Section -->
+  <section class="treehole-section fade-in" id="treehole-entry">
+    <div class="treehole-glow"></div>
+    <div class="treehole-inner">
+
+      <!-- Concentric rings + icon -->
+      <div class="treehole-icon-wrap">
+        <div class="treehole-icon-ring"></div>
+        <div class="treehole-icon-ring"></div>
+        <div class="treehole-icon-ring"></div>
+        <div class="treehole-icon">🕯️</div>
+      </div>
+
+      <h2>有些话，<span class="warm-em">只想对树洞说</span></h2>
+      <p class="sub">测评之后，想聊聊？这里不是另一个测试，是一个完全不同的空间。</p>
+
+      <div class="treehole-tags">
+        <span>💚 记住你</span>
+        <span>🌙 深夜陪伴</span>
+        <span>🧠 知识内化</span>
+        <span>🔒 匿名安全</span>
+      </div>
+
+      <!-- Floating chat whispers preview -->
+      <div class="whisper-quotes">
+        <div class="whisper">
+          今天心情不太好，但又不想跟谁说...
+          <span class="whisper-tag">🌙 深夜访客</span>
+        </div>
+        <div class="whisper">
+          测评说我焦虑分很高，有点难过...但好像被看懂了
+          <span class="whisper-tag">📋 刚做完测评</span>
+        </div>
+        <div class="whisper">
+          今天终于把那句话说出口了。树洞，谢谢你一直在这里。
+          <span class="whisper-tag">☕ 老朋友</span>
+        </div>
+      </div>
+
+      <a href="treehole.html" class="treehole-enter-btn">
+        推开这扇门 <span class="arrow">→</span>
+      </a>
+      <div class="treehole-hint">测评结果会自动带过来，不用再答一遍</div>
+
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-it-works" id="how">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>三步了解自己</h2>
+        <p>不需要复杂的流程，打开网页就能开始</p>
+        <div class="section-divider"></div>
+      </div>
+      <div class="steps">
+        <div class="step fade-in"><div class="step-icon">📝</div><div class="step-num">1</div><h4>选择模块</h4><p>从性格、焦虑、关系中选一个你最想探索的方向</p></div>
+        <div class="step fade-in"><div class="step-icon">🤔</div><div class="step-num">2</div><h4>真实作答</h4><p>花几分钟回答几道选择题，不需要犹豫，凭第一感觉就好</p></div>
+        <div class="step fade-in"><div class="step-icon">🌈</div><div class="step-num">3</div><h4>获得看见</h4><p>查看结果报告，也可以解锁 AI 的深度解读，获得属于你的建议</p></div>
+        <div class="step fade-in"><div class="step-icon">🌱</div><div class="step-num">4</div><h4>持续照看</h4><p>每日打卡记录情绪，追踪你的变化。偶尔来树洞坐坐</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>温暖不贵</h2>
+        <p>免费已经够用，深度陪伴也只需一杯奶茶钱</p>
+        <div class="section-divider"></div>
+      </div>
+      <div class="pricing-grid">
+        <div class="pricing-card free fade-in">
+          <div class="pricing-icon">🆓</div>
+          <h4>免费版</h4>
+          <div class="pricing-price">¥0 <span class="unit"></span></div>
+          <ul><li>三大测评全部可用</li><li>基础评分 + 简评</li><li>可视化图表</li><li>每日情绪打卡</li></ul>
+          <button class="btn" onclick="alert('开始免费测评！')">开始使用</button>
+        </div>
+        <div class="pricing-card featured fade-in">
+          <div class="pricing-icon">🌟</div>
+          <h4>深度解读</h4>
+          <div class="pricing-price">¥9.9 <span class="unit">/ 次</span></div>
+          <ul><li>AI 1500字个性化分析</li><li>情绪机制深度解读</li><li>3 条实操改善建议</li><li>动态推荐书单</li></ul>
+          <button class="btn" onclick="alert('深度解读——即将上线')">解锁深度报告</button>
+        </div>
+        <div class="pricing-card fade-in">
+          <div class="pricing-icon">💬</div>
+          <h4>情绪树洞</h4>
+          <div class="pricing-price">¥9.9 <span class="unit">/ 次</span></div>
+          <ul><li>匿名倾诉心事</li><li>AI 温暖回应</li><li>深夜陪伴感</li><li>不评判·不荐药</li></ul>
+          <button class="btn btn-secondary" onclick="location.href='treehole.html'">试试说说</button>
+        </div>
+        <div class="pricing-card fade-in">
+          <div class="pricing-icon">📊</div>
+          <h4>月趋势报告</h4>
+          <div class="pricing-price">¥19.9 <span class="unit">/ 月</span></div>
+          <ul><li>30天情绪数据汇总</li><li>情绪波动趋势图</li><li>AI 趋势解读</li><li>模式识别与预警</li></ul>
+          <button class="btn btn-secondary" onclick="alert('月趋势报告——即将上线')">查看详情</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vibe -->
+  <section class="vibe-section" id="vibe">
+    <div class="container">
+      <div class="section-header fade-in">
+        <h2>每个人心里都有一片森林</h2>
+        <p>偶尔进来坐坐，跟自己的情绪聊聊天</p>
+        <div class="section-divider"></div>
+      </div>
+      <div class="vibe-cards">
+        <div class="vibe-card fade-in"><div class="quote">"</div>在这里做完测评，第一次认真看了自己的情绪曲线。<br>原来我并没有自己想象的那么糟糕。<div class="author">— 匿名用户</div></div>
+        <div class="vibe-card fade-in"><div class="quote">"</div>和男朋友一起做了亲密关系测试，<br>发现我们的分歧其实不是谁对谁错，而是依恋类型不同。<div class="author">— 匿名用户</div></div>
+        <div class="vibe-card fade-in"><div class="quote">"</div>深夜失眠的时候打开树洞说了几句话，<br>AI 回了很长一段，居然看哭了。被理解的感觉真好。<div class="author">— 匿名用户</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta">
+    <div class="container fade-in">
+      <h2>🌿 现在开始，多了解自己一点点</h2>
+      <p>不用注册，不用下载。打开网页，三分钟，一个开始。</p>
+      <a href="#modules" class="btn btn-primary">✦ 开始免费测评</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    🌿 树洞情绪站 · 一个给自己心灵休憩的地方<br>
+    测评结果仅供参考，不构成医疗诊断。<br>
+    如有严重心理困扰，请寻求专业心理咨询师的帮助。<br>
+    <div class="disclaimer">Made with 💚 for everyone who needs a safe place.</div>
+  </footer>
+
+  <script>
+    function toggleMobileMenu() {
+      document.getElementById('mainNav').classList.toggle('mobile-open');
+    }
+
+    // ── Auth display ──
+    function renderAuth() {
+      const el = document.getElementById('authDisplay');
+      const token = localStorage.getItem('treehole_token');
+      const userData = localStorage.getItem('treehole_user');
+
+      if (!token || !userData) {
+        el.innerHTML = `
+          <a href="auth.html?redirect=${encodeURIComponent(window.location.pathname)}" class="auth-btn">登录</a>
+          <a href="auth.html?redirect=${encodeURIComponent(window.location.pathname)}" class="auth-btn register">注册</a>
+        `;
+        return;
+      }
+
+      let user;
+      try { user = JSON.parse(userData); } catch(e) { user = {username:'用户'}; }
+      const initial = user.username.charAt(0).toUpperCase();
+
+      el.innerHTML = `
+        <div style="position:relative">
+          <div class="user-avatar" onclick="toggleDropdown(event)">${initial}</div>
+          <div class="dropdown-menu" id="userDropdown">
+            <a href="#" onclick="viewProfile(event)">👤 我的主页</a>
+            <a href="treehole.html">💬 我的树洞</a>
+            <div class="divider"></div>
+            <a href="#" class="logout" onclick="handleLogout(event)">🚪 退出登录</a>
+          </div>
+        </div>
+        <span class="user-name">${user.username}</span>
+      `;
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      document.getElementById('userDropdown').classList.toggle('show');
+    }
+
+    document.addEventListener('click', () => {
+      const dd = document.getElementById('userDropdown');
+      if (dd) dd.classList.remove('show');
+    });
+
+    function viewProfile(e) {
+      e.preventDefault();
+      window.location.href = 'dashboard.html';
+    }
+
+    function handleLogout(e) {
+      e.preventDefault();
+      if (confirm('确定要退出登录吗？')) {
+        localStorage.removeItem('treehole_token');
+        localStorage.removeItem('treehole_user');
+        renderAuth();
+        window.location.reload();
+      }
+    }
+
+    // ── Observer & scroll ──
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+    document.querySelectorAll('#mainNav a').forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('mainNav').classList.remove('mobile-open');
+      });
+    });
+    window.addEventListener('scroll', () => {
+      const header = document.querySelector('header');
+      header.style.boxShadow = window.scrollY > 80 ? '0 1px 20px rgba(93,78,55,0.06)' : 'none';
+    });
+    document.body.classList.add('loaded');
+
+    // ── Init ──
+    renderAuth();
+    console.log('🌿 树洞情绪站已加载 — 欢迎来到这里');
+  </script>
+</body>
+</html>

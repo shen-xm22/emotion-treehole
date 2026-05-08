@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的主页 · 情绪树洞</title>
+<style>
+:root {
+  --sage: #8B9D8B; --sage-pt: rgba(139,157,139,0.10);
+  --brown: #5C4A3A; --brown-lt: #8F7A72; --bg: #FAF6F1;
+  --card-bg: rgba(255,255,255,0.75);
+  --radius: 16px; --transition: all 0.3s ease;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: var(--bg); color: var(--brown); min-height: 100vh;
+}
+/* Header */
+header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 32px; background: rgba(250,246,241,0.88);
+  backdrop-filter: blur(16px); border-bottom: 1px solid rgba(139,157,139,0.08);
+  position: sticky; top: 0; z-index: 50;
+}
+.logo { text-decoration: none; font-size: 18px; font-weight: 600; color: var(--brown); display: flex; align-items: center; gap: 8px; }
+.logo .logo-icon { font-size: 22px; }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.btn-ghost {
+  background: transparent; border: 1px solid rgba(139,157,139,0.2); padding: 8px 16px;
+  border-radius: 50px; font-size: 13px; font-weight: 500; color: var(--brown-lt);
+  cursor: pointer; font-family: inherit; transition: var(--transition); text-decoration: none;
+}
+.btn-ghost:hover { border-color: var(--sage); color: var(--sage); }
+.btn-sage { background: var(--sage); color: #fff; border: none; padding: 8px 20px; border-radius: 50px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; transition: var(--transition); text-decoration: none; }
+.btn-sage:hover { background: #798C79; }
+
+/* Main */
+.container { max-width: 720px; margin: 0 auto; padding: 32px 20px 60px; }
+
+/* Loading */
+.loading-state { text-align: center; padding: 60px 0; }
+.loader { width: 32px; height: 32px; border: 3px solid rgba(139,157,139,0.1); border-top-color: var(--sage); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state p { font-size: 14px; color: var(--brown-lt); }
+
+/* Profile Card */
+.profile-card {
+  background: var(--card-bg); border-radius: var(--radius); padding: 28px;
+  border: 1px solid rgba(139,157,139,0.08); margin-bottom: 20px;
+  backdrop-filter: blur(12px);
+}
+.profile-header {
+  display: flex; align-items: center; gap: 16px;
+}
+.avatar-large {
+  width: 56px; height: 56px; border-radius: 50%; background: var(--sage);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 600; flex-shrink: 0;
+}
+.profile-info { flex: 1; }
+.profile-info h2 { font-size: 20px; font-weight: 600; }
+.profile-info .meta { font-size: 13px; color: var(--brown-lt); margin-top: 2px; }
+.profile-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.profile-tag {
+  background: var(--sage-pt); color: var(--brown-lt); font-size: 12px;
+  padding: 4px 12px; border-radius: 50px;
+}
+
+/* Edit Profile Modal */
+.edit-overlay {
+  position: fixed; inset: 0; z-index: 100; background: rgba(93,78,55,0.15);
+  backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.edit-overlay.show { opacity: 1; pointer-events: auto; }
+.edit-card {
+  background: rgba(253,251,249,0.97); border-radius: 20px; padding: 28px 24px;
+  max-width: 420px; width: 90%; max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(93,78,55,0.12);
+  transform: translateY(20px); transition: transform 0.3s;
+}
+.edit-overlay.show .edit-card { transform: translateY(0); }
+.edit-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+.edit-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.edit-field { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.edit-field label { font-size: 12px; font-weight: 500; color: var(--brown-lt); }
+.edit-field input, .edit-field select {
+  padding: 8px 12px; border: 1.5px solid rgba(139,157,139,0.15); border-radius: 8px;
+  font-size: 13px; font-family: inherit; background: rgba(255,255,255,0.6); color: var(--brown);
+  outline: none; transition: border-color 0.2s;
+}
+.edit-field input:focus, .edit-field select:focus { border-color: var(--sage); }
+.edit-hobbies { display: flex; flex-wrap: wrap; gap: 5px; }
+.edit-hobby {
+  font-size: 12px; padding: 4px 10px; border-radius: 50px;
+  border: 1px solid rgba(139,157,139,0.15);
+  background: transparent; color: var(--brown-lt); cursor: pointer; transition: all 0.2s;
+}
+.edit-hobby:hover { border-color: var(--sage); color: var(--sage); }
+.edit-hobby.selected { background: var(--sage); color: #fff; border-color: var(--sage); }
+.edit-actions { display: flex; gap: 10px; margin-top: 16px; }
+.edit-actions .btn { flex: 1; padding: 10px; border-radius: 10px; font-size: 13px; font-family: inherit; font-weight: 500; border: none; cursor: pointer; transition: var(--transition); }
+
+/* Section Title */
+.section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* Assessment History */
+.assess-list { display: flex; flex-direction: column; gap: 10px; }
+.assess-item {
+  background: var(--card-bg); border-radius: 12px; padding: 16px 20px;
+  border: 1px solid rgba(139,157,139,0.08); cursor: pointer;
+  transition: var(--transition);
+}
+.assess-item:hover { border-color: rgba(139,157,139,0.2); }
+.assess-item-header { display: flex; align-items: center; gap: 12px; }
+.assess-icon { font-size: 20px; }
+.assess-info { flex: 1; }
+.assess-name { font-weight: 600; font-size: 14px; }
+.assess-summary { font-size: 12px; color: var(--brown-lt); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.assess-date { font-size: 11px; color: var(--brown-lt); white-space: nowrap; }
+.assess-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(139,157,139,0.08); }
+.assess-detail.open { display: block; }
+.assess-detail-inner {
+  font-size: 13px; color: var(--brown); line-height: 1.6;
+}
+
+.empty-state { text-align: center; padding: 40px 0; color: var(--brown-lt); }
+.empty-state .icon { font-size: 32px; margin-bottom: 8px; }
+.empty-state p { font-size: 14px; margin-bottom: 16px; }
+
+/* Quick Actions */
+.quick-actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px;
+}
+.qaction {
+  background: var(--card-bg); border-radius: 12px; padding: 16px;
+  border: 1px solid rgba(139,157,139,0.08); text-decoration: none;
+  transition: var(--transition); text-align: center; color: var(--brown);
+}
+.qaction:hover { border-color: var(--sage); transform: translateY(-2px); }
+.qaction .icon { font-size: 24px; margin-bottom: 4px; }
+.qaction .name { font-size: 13px; font-weight: 500; }
+.qaction .desc { font-size: 11px; color: var(--brown-lt); margin-top: 2px; }
+
+@media (max-width: 600px) {
+  header { padding: 10px 16px; }
+  .container { padding: 20px 16px 40px; }
+  .quick-actions { grid-template-columns: 1fr; }
+  .profile-header { flex-direction: column; text-align: center; }
+  .profile-tags { justify-content: center; }
+}
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" class="logo"><span class="logo-icon">🌿</span><span>情绪树洞</span></a>
+  <div class="header-right">
+    <a href="index.html" class="btn-ghost">首页</a>
+    <a href="treehole.html" class="btn-sage">树洞</a>
+  </div>
+</header>
+
+<div class="container" id="app">
+  <div class="loading-state" id="loadingState">
+    <div class="loader"></div>
+    <p>加载中…</p>
+  </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="edit-overlay" id="editOverlay">
+  <div class="edit-card">
+    <h3>✏️ 编辑资料</h3>
+    <div class="edit-row">
+      <div class="edit-field">
+        <label>昵称</label>
+        <input type="text" id="editNickname" maxlength="20" placeholder="你的名字或昵称">
+      </div>
+    </div>
+    <div class="edit-row">
+      <div class="edit-field">
+        <label>🌟 星座</label>
+        <select id="editZodiac">
+          <option value="">请选择</option>
+          <option>白羊座</option><option>金牛座</option><option>双子座</option><option>巨蟹座</option>
+          <option>狮子座</option><option>处女座</option><option>天秤座</option><option>天蝎座</option>
+          <option>射手座</option><option>摩羯座</option><option>水瓶座</option><option>双鱼座</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label>🧠 MBTI</label>
+        <select id="editMbti">
+          <option value="">请选择</option>
+          <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+          <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+          <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+          <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+        </select>
+      </div>
+    </div>
+    <div class="edit-row">
+      <div class="edit-field">
+        <label>🎂 出生日期</label>
+        <input type="date" id="editBirth">
+      </div>
+      <div class="edit-field">
+        <label>⚤ 性别</label>
+        <select id="editGender">
+          <option value="">不透露</option>
+          <option value="男">男</option>
+          <option value="女">女</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="edit-field" style="margin-bottom:12px">
+      <label>🎯 爱好</label>
+      <div class="edit-hobbies" id="editHobbies">
+        <span class="edit-hobby">阅读</span>
+        <span class="edit-hobby">音乐</span>
+        <span class="edit-hobby">电影</span>
+        <span class="edit-hobby">运动</span>
+        <span class="edit-hobby">旅行</span>
+        <span class="edit-hobby">摄影</span>
+        <span class="edit-hobby">绘画</span>
+        <span class="edit-hobby">游戏</span>
+        <span class="edit-hobby">烹饪</span>
+        <span class="edit-hobby">写作</span>
+        <span class="edit-hobby">手工</span>
+        <span class="edit-hobby">宠物</span>
+      </div>
+    </div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" onclick="closeEdit()" style="background:transparent;border:1px solid rgba(139,157,139,0.2);color:var(--brown-lt)">取消</button>
+      <button class="btn btn-sage" onclick="saveProfile()">保存 ✨</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '';
+
+// ── Auth check ──
+function getToken() { return localStorage.getItem('treehole_token'); }
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('treehole_user')); }
+  catch(e) { return null; }
+}
+function isLoggedIn() { return !!getToken(); }
+
+if (!isLoggedIn()) {
+  window.location.href = 'auth.html?redirect=dashboard.html';
+}
+
+// ── State ──
+let userData = null;
+let profileData = null;
+let assessments = [];
+
+// ── Init ──
+async function loadDashboard() {
+  try {
+    const [user, profile, ass] = await Promise.all([
+      apiGet('/api/auth/me'),
+      apiGet('/api/profile'),
+      apiGet('/api/assessments'),
+    ]);
+    userData = user;
+    profileData = profile;
+    assessments = ass.assessments || [];
+
+    // Update local user cache
+    const u = getUser();
+    if (u) localStorage.setItem('treehole_user', JSON.stringify({...u, username: user.username}));
+
+    renderDashboard();
+    document.getElementById('loadingState').style.display = 'none';
+  } catch(e) {
+    if (e.status === 401) {
+      // Token expired
+      localStorage.removeItem('treehole_token');
+      localStorage.removeItem('treehole_user');
+      window.location.href = 'auth.html?redirect=dashboard.html';
+      return;
+    }
+    document.getElementById('loadingState').innerHTML = '<p style="color:#C44">加载失败，请刷新重试</p>';
+  }
+}
+
+async function apiGet(path) {
+  const resp = await fetch(API_BASE + path, {
+    headers: {'Authorization': 'Bearer ' + getToken()}
+  });
+  if (!resp.ok) throw {status: resp.status, msg: await resp.text()};
+  return resp.json();
+}
+
+async function apiPost(path, data) {
+  const resp = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','Authorization':'Bearer ' + getToken()},
+    body: JSON.stringify(data)
+  });
+  if (!resp.ok) throw {status: resp.status, msg: await resp.text()};
+  return resp.json();
+}
+
+// ── Render ──
+function renderDashboard() {
+  const app = document.getElementById('app');
+  const p = profileData.profile || {};
+  const empty = profileData.profile_empty;
+
+  // Tags
+  const tags = [];
+  if (p.mbti) tags.push('🧠 ' + p.mbti);
+  if (p.zodiac) tags.push('🌟 ' + p.zodiac);
+  if (p.gender) tags.push('⚤ ' + p.gender);
+  if (p.hobbies && p.hobbies.length) tags.push(...p.hobbies.slice(0,3).map(h => '🎯 ' + h));
+
+  const createdDate = userData.created_at ? new Date(userData.created_at + 'Z').toLocaleDateString('zh-CN') : '—';
+
+  app.innerHTML = `
+    <div class="profile-card">
+      <div class="profile-header">
+        <div class="avatar-large">${userData.username.charAt(0).toUpperCase()}</div>
+        <div class="profile-info">
+          <h2>${empty ? userData.username : (p.nickname || userData.username)}</h2>
+          <div class="meta">${userData.email} · 加入于 ${createdDate}</div>
+          <div class="profile-tags">
+            ${tags.length ? tags.map(t => `<span class="profile-tag">${t}</span>`).join('') : '<span class="profile-tag" style="background:transparent;color:var(--brown-lt);padding-left:0">还没有填写资料</span>'}
+          </div>
+        </div>
+        <button class="btn-ghost" onclick="openEdit()" style="flex-shrink:0">✏️ 编辑</button>
+      </div>
+    </div>
+
+    <div class="section-title">📋 测评记录</div>
+    <div class="assess-list" id="assessList">${renderAssessments()}</div>
+
+    <div class="quick-actions">
+      <a href="anxiety-assessment.html" class="qaction">
+        <div class="icon">😰</div>
+        <div class="name">焦虑测评</div>
+        <div class="desc">了解你的焦虑水平</div>
+      </a>
+      <a href="relationship-assessment.html" class="qaction">
+        <div class="icon">💕</div>
+        <div class="name">关系测评</div>
+        <div class="desc">探索你的依恋模式</div>
+      </a>
+      <a href="personality-assessment.html" class="qaction">
+        <div class="icon">🧩</div>
+        <div class="name">性格测评</div>
+        <div class="desc">认识你的性格地图</div>
+      </a>
+      <a href="treehole.html" class="qaction">
+        <div class="icon">🌿</div>
+        <div class="name">去树洞聊聊</div>
+        <div class="desc">和 AI 说说心里话</div>
+      </a>
+    </div>
+  `;
+}
+
+function renderAssessments() {
+  if (!assessments.length) {
+    return `<div class="empty-state"><div class="icon">📝</div><p>还没有测评记录<br>完成测评后，结果会自动保存在这里</p><a href="anxiety-assessment.html" class="btn-sage" style="display:inline-block">开始测评 →</a></div>`;
+  }
+
+  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩'};
+  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估'};
+  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html'};
+
+  function renderDetail(scores, type) {
+    if (!scores) return '';
+    if (type === 'anxiety') {
+      const cs = scores.core_score || 0;
+      const level = cs <= 4 ? '基本无焦虑' : cs <= 9 ? '轻度焦虑' : cs <= 14 ? '中等焦虑' : '较明显焦虑';
+      const fs = scores.full_score || 0;
+      const dims = scores.dimensions || [];
+      const dimHtml = dims.map(d => `<span style="display:inline-block;background:rgba(139,157,139,0.08);border-radius:6px;padding:4px 8px;font-size:12px">${d.name}: ${d.score}/${d.max}</span>`).join(' ');
+      return `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px">
+        <span style="font-size:20px;font-weight:600;color:#5C4A3A">${cs}</span>
+        <span style="font-size:13px;color:#8F7A72">核心分 · ${level}</span>
+        <span style="font-size:13px;color:#8F7A72">综合 ${fs}/36</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${dimHtml}</div>`;
+    }
+    if (type === 'relationship') {
+      const anx = (scores.anxiety || 0).toFixed(1);
+      const avo = (scores.avoidance || 0).toFixed(1);
+      const typeLabel = {secure:'安全型',anxious:'焦虑型',avoidant:'回避型',fearful:'混乱型'};
+      const t = scores.type || '';
+      const desc = typeLabel[t] || t;
+      let bar = '';
+      if (t) {
+        const colors = {secure:'#7B9A6B',anxious:'#D4A88C',avoidant:'#8BA9B4',fearful:'#C49BA4'};
+        bar = `<div style="margin-top:6px;display:flex;gap:6px;align-items:center">
+          <span style="font-size:13px;color:${colors[t]||'#8F7A72'};font-weight:500">${desc}</span>
+        </div>`;
+      }
+      return `<div style="display:flex;gap:16px;margin-bottom:8px">
+        <div><span style="font-size:13px;color:#8F7A72">焦虑倾向</span><br><span style="font-size:18px;font-weight:600">${anx}</span></div>
+        <div><span style="font-size:13px;color:#8F7A72">回避倾向</span><br><span style="font-size:18px;font-weight:600">${avo}</span></div>
+      </div>${bar}`;
+    }
+    if (type === 'personality') {
+      const ds = scores.dimension_scores || {};
+      const typeLabel = scores.type || '';
+      const dimNames = {E:'外向',A:'宜人',C:'尽责',N:'敏感',O:'开放'};
+      const bars = Object.entries(dimNames).map(([k,v]) => {
+        const val = ds[k] || 0;
+        const pct = (val / 5 * 100).toFixed(0);
+        return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:12px;width:36px;color:#8F7A72">${v}</span>
+          <div style="flex:1;height:8px;background:rgba(139,157,139,0.1);border-radius:4px">
+            <div style="width:${pct}%;height:8px;background:#8B9D8B;border-radius:4px"></div>
+          </div>
+          <span style="font-size:12px;color:#5C4A3A;width:20px;text-align:right">${val.toFixed(1)}</span>
+        </div>`;
+      }).join('');
+      const tag = typeLabel ? `<span style="display:inline-block;background:rgba(139,157,139,0.1);border-radius:50px;padding:3px 12px;font-size:12px;font-weight:500">${typeLabel}</span>` : '';
+      return `<div style="margin-bottom:6px">${tag}</div><div style="margin-top:6px">${bars}</div>`;
+    }
+    return `<pre style="font-size:12px;color:#8F7A72;background:rgba(139,157,139,0.04);padding:8px;border-radius:6px;white-space:pre-wrap;font-family:inherit">${JSON.stringify(scores, null, 2)}</pre>`;
+  }
+
+  return assessments.map(a => {
+    const d = new Date(a.created_at + 'Z');
+    const dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+    const scores = a.scores || {};
+    let summaryLine = a.summary || '';
+    if (summaryLine.length > 40) summaryLine = summaryLine.slice(0, 40) + '…';
+
+    return `<div class="assess-item" onclick="toggleDetail('ad${a.id}')">
+      <div class="assess-item-header">
+        <span class="assess-icon">${icons[a.type] || '📋'}</span>
+        <div class="assess-info">
+          <div class="assess-name">${names[a.type] || a.type}</div>
+          <div class="assess-summary">${summaryLine}</div>
+        </div>
+        <span class="assess-date">${dateStr}</span>
+      </div>
+      <div class="assess-detail" id="ad${a.id}">
+        ${renderDetail(scores, a.type)}
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.08)">
+          <a href="${links[a.type] || '#'}" style="font-size:12px;color:#8B9D8B;text-decoration:none">📋 重新测评 →</a>
+          <a href="treehole.html" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDetail(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+
+// ── Edit Profile ──
+function openEdit() {
+  const p = profileData.profile || {};
+  document.getElementById('editNickname').value = p.nickname || '';
+  document.getElementById('editZodiac').value = p.zodiac || '';
+  document.getElementById('editMbti').value = p.mbti || '';
+  document.getElementById('editBirth').value = p.birth_date || '';
+  document.getElementById('editGender').value = p.gender || '';
+  // Hobbies
+  const hobbies = p.hobbies || [];
+  document.querySelectorAll('.edit-hobby').forEach(el => {
+    el.classList.toggle('selected', hobbies.includes(el.textContent.trim()));
+  });
+  document.getElementById('editOverlay').classList.add('show');
+}
+
+function closeEdit() {
+  document.getElementById('editOverlay').classList.remove('show');
+}
+
+async function saveProfile() {
+  const hobbies = Array.from(document.querySelectorAll('.edit-hobby.selected')).map(el => el.textContent.trim());
+  const data = {
+    nickname: document.getElementById('editNickname').value.trim(),
+    zodiac: document.getElementById('editZodiac').value,
+    mbti: document.getElementById('editMbti').value,
+    birth_date: document.getElementById('editBirth').value,
+    gender: document.getElementById('editGender').value,
+    hobbies: hobbies
+  };
+
+  try {
+    const resp = await fetch(API_BASE + '/api/profile', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer ' + getToken()},
+      body: JSON.stringify(data)
+    });
+    if (!resp.ok) throw new Error('保存失败');
+    const res = await resp.json();
+    if (res.status === 'ok') {
+      profileData.profile = data;
+      profileData.profile_empty = false;
+      renderDashboard();
+      closeEdit();
+    }
+  } catch(e) {
+    alert('保存失败，请稍后再试');
+  }
+}
+
+// Hobby toggle
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('edit-hobby')) {
+    e.target.classList.toggle('selected');
+  }
+});
+
+// ── Start ──
+loadDashboard();
+</script>
+</body>
+</html>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焦虑自评 · 树洞情绪站</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #F5F0EB; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; color: #3D2C2A;
+  }
+
+  .container {
+    width: 100%; max-width: 660px;
+    background: rgba(255,255,255,0.90);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-radius: 28px;
+    box-shadow: 0 8px 40px rgba(180,140,120,0.15), 0 2px 8px rgba(180,140,120,0.08);
+    padding: 36px 32px; position: relative;
+  }
+
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Welcome ─── */
+  .welc-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
+  .welc-title {
+    font-size: 26px; font-weight: 700; text-align: center;
+    color: #3D2C2A; margin-bottom: 4px;
+  }
+  .welc-sub {
+    font-size: 14px; color: #8F7A72; text-align: center;
+    margin-bottom: 18px; line-height: 1.6;
+  }
+  .welc-box {
+    background: #FAF7F4; border-radius: 16px; padding: 18px 22px; margin-bottom: 16px;
+    font-size: 13px; line-height: 1.8; color: #5C4540;
+  }
+  .welc-box strong { color: #3D2C2A; }
+  .welc-box p + p { margin-top: 10px; }
+  .welc-box .dim-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; margin-top: 10px;
+  }
+  .welc-box .dim-item {
+    background: #F0E8E0; border-radius: 10px; padding: 8px 12px;
+    font-size: 12px; color: #5C4540; text-align: center;
+  }
+  .welc-note {
+    background: #EDE0D4; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 12px; color: #6E554E; line-height: 1.6;
+  }
+  .welc-note .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .btn-primary {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #D4A88C, #C4906E);
+    color: #fff; border: none; border-radius: 16px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease; letter-spacing: 0.5px;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(196,144,110,0.35);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled {
+    background: #D5CBC3; cursor: not-allowed; transform: none; box-shadow: none;
+  }
+
+  .btn-secondary {
+    flex: 1; padding: 16px;
+    background: #EDE6DF; color: #6E554E; border: none; border-radius: 16px;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .btn-secondary:hover { background: #E2D8CE; }
+
+  /* ─── Progress ─── */
+  .progress-wrap {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  }
+  .progress-bar {
+    flex: 1; height: 6px; background: #EDE6DF;
+    border-radius: 3px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #D4A88C, #C4906E);
+    border-radius: 3px; transition: width 0.5s ease; width: 0%;
+  }
+  .progress-label {
+    font-size: 13px; color: #8F7A72; white-space: nowrap; font-weight: 500;
+  }
+  .progress-dims {
+    display: flex; gap: 6px; margin-bottom: 14px;
+  }
+  .progress-dims .dot {
+    flex: 1; height: 4px; border-radius: 2px; background: #EDE6DF;
+    transition: background 0.4s;
+  }
+  .progress-dims .dot.active { background: #C4906E; }
+  .progress-dims .dot.done { background: #D4A88C; }
+
+  /* ─── Page Header ─── */
+  .page-header {
+    margin-bottom: 14px;
+  }
+  .page-header .dim-name {
+    font-size: 13px; font-weight: 600; color: #C4906E; letter-spacing: 1px;
+    margin-bottom: 2px;
+  }
+  .page-header .dim-desc {
+    font-size: 14px; color: #5C4540; line-height: 1.5;
+  }
+
+  /* ─── Question Area ─── */
+  .q-item {
+    padding: 16px 18px; border-radius: 16px;
+    background: #FAF7F4; margin-bottom: 12px;
+    transition: all 0.25s; border: 2px solid transparent;
+  }
+  .q-item:hover { border-color: #EDE6DF; }
+  .q-item.answered {
+    background: #F5EDE6; border-color: #EADCCF;
+  }
+  .q-item .q-text {
+    font-size: 15px; line-height: 1.7; color: #3D2C2A;
+    margin-bottom: 12px; font-weight: 500;
+  }
+  .q-item .q-text .q-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #EDE6DF; text-align: center; line-height: 22px;
+    font-size: 11px; font-weight: 600; color: #8F7A72;
+    margin-right: 6px; flex-shrink: 0;
+  }
+  .q-item .q-text .q-num.done {
+    background: #D4A88C; color: #fff;
+  }
+
+  .likert-row { display: flex; gap: 6px; }
+  .likert-row .opt { flex: 1; text-align: center; position: relative; }
+  .likert-row .opt input {
+    position: absolute; opacity: 0; width: 0; height: 0;
+    pointer-events: none;
+  }
+  .likert-row .opt label {
+    display: block; padding: 8px 2px; border-radius: 12px;
+    background: #fff; cursor: pointer; transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .likert-row .opt .lbl-val { display: block; font-size: 14px; font-weight: 600; margin-bottom: 1px; color: #8F7A72; }
+  .likert-row .opt .lbl-txt { display: block; font-size: 10px; color: #A8988E; }
+  .likert-row .opt label:hover {
+    background: #F0E8E0; border-color: #E0D1C5;
+  }
+  .likert-row .opt input:checked + label {
+    background: #EADCCF; border-color: #C4906E;
+  }
+  .likert-row .opt input:checked + label .lbl-val { color: #5C3E30; }
+
+  /* ─── Navigation ─── */
+  .nav-row {
+    display: flex; gap: 12px; margin-top: 18px;
+  }
+  .nav-row .btn-primary { flex: 1; }
+
+  /* ─── Open-ended ─── */
+  .open-box { margin: 16px 0; }
+  .open-box label {
+    display: block; font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #3D2C2A;
+  }
+  .open-box label .sub {
+    font-weight: 400; font-size: 13px; color: #8F7A72; display: block; margin-top: 4px;
+  }
+  .open-box textarea {
+    width: 100%; min-height: 140px; padding: 16px;
+    border: 2px solid #EDE6DF; border-radius: 16px;
+    font-family: inherit; font-size: 14px; line-height: 1.7; color: #3D2C2A;
+    background: #FAF7F4; resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .open-box textarea:focus {
+    outline: none; border-color: #C4906E; background: #fff;
+  }
+  .open-box textarea::placeholder { color: #BFB0A6; }
+
+  /* ─── Results ─── */
+  .result-header { text-align: center; margin-bottom: 22px; }
+  .result-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .result-header p { font-size: 14px; color: #8F7A72; line-height: 1.5; }
+
+  .score-grid { display: flex; gap: 16px; margin-bottom: 22px; }
+  .score-card {
+    flex: 1; background: #FAF7F4; border-radius: 16px;
+    padding: 20px; text-align: center;
+  }
+  .score-card .label { font-size: 12px; color: #8F7A72; margin-bottom: 4px; }
+  .score-card .score {
+    font-size: 36px; font-weight: 700;
+    background: linear-gradient(135deg, #D4A88C, #C4906E);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .score-card .score-label {
+    display: inline-block; margin-top: 6px;
+    padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .score-card .score-label.minimal { background: #D4EDDA; color: #155724; }
+  .score-card .score-label.mild { background: #FFF3CD; color: #856404; }
+  .score-card .score-label.moderate { background: #FDE2D4; color: #A05A3A; }
+  .score-card .score-label.severe { background: #F8D7DA; color: #721C24; }
+
+  .dim-breakdown {
+    background: #FAF7F4; border-radius: 16px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .dim-breakdown h3 {
+    font-size: 15px; font-weight: 600; margin-bottom: 10px; color: #3D2C2A;
+  }
+  .dim-bar-wrap { margin-bottom: 8px; }
+  .dim-bar-label {
+    display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px;
+  }
+  .dim-bar-label .dn { color: #5C4540; }
+  .dim-bar-label .dv { color: #8F7A72; font-weight: 600; }
+  .dim-bar-track {
+    height: 6px; background: #EDE6DF; border-radius: 3px; overflow: hidden;
+  }
+  .dim-bar-fill {
+    height: 100%; border-radius: 3px; transition: width 0.8s ease;
+  }
+
+  .result-section {
+    background: #FAF7F4; border-radius: 16px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .result-section h3 {
+    font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #3D2C2A;
+  }
+  .result-section p, .result-section li {
+    font-size: 13px; line-height: 1.7; color: #5C4540;
+  }
+  .result-section ul { padding-left: 18px; }
+  .result-section ul li { margin-bottom: 4px; }
+
+  .result-cta {
+    margin-top: 20px; background: #F0E8E0; border-radius: 16px;
+    padding: 20px; text-align: center;
+  }
+  .result-cta p { font-size: 14px; color: #5C4540; margin-bottom: 12px; }
+  .result-cta .btn-primary { max-width: 280px; margin: 0 auto; }
+
+  .result-footer { margin-top: 16px; text-align: center; }
+  .result-footer a {
+    color: #B39A8E; font-size: 12px; text-decoration: underline;
+    cursor: pointer; transition: color 0.2s;
+  }
+  .result-footer a:hover { color: #8F7A72; }
+
+  @media (max-width: 480px) {
+    .container { padding: 24px 18px; border-radius: 20px; }
+    .welc-title { font-size: 22px; }
+    .welc-box .dim-grid { grid-template-columns: 1fr 1fr; }
+    .likert-row .opt label { padding: 6px 1px; }
+    .likert-row .opt .lbl-val { font-size: 13px; }
+    .score-grid { flex-direction: column; gap: 10px; }
+    .q-item { padding: 14px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- ===== WELCOME ===== -->
+<div class="screen active" id="screen-welcome">
+  <div class="welc-icon">🌿</div>
+  <div class="welc-title">焦虑状态深度评估</div>
+  <div class="welc-sub">16 道场景化自评 · 约 5 分钟 · 参考自 BAI / GAD-7 / DSM-5</div>
+
+  <div class="welc-box">
+    <p>你可能会发现，焦虑不是单纯的"紧张"，而是一张由 <strong>情绪波动、身体信号、思维习惯和社交回避</strong> 交织而成的网。本测评从四个维度帮你理清这张网：</p>
+    <div class="dim-grid">
+      <div class="dim-item">😰 情绪状态</div>
+      <div class="dim-item">🫀 躯体感受</div>
+      <div class="dim-item">🧠 认知思维</div>
+      <div class="dim-item">🤝 社会功能</div>
+    </div>
+    <p style="margin-top:10px">请根据 <strong>过去两周</strong> 的情况，阅读每道题的情境描述，选择最符合你的频率。答案没有对错。</p>
+  </div>
+
+  <div class="welc-note">
+    <span class="icon">🕊️</span>
+    <span><strong>重要提醒：</strong>本测评结果仅供参考，不作为诊断依据。如果焦虑正在影响你的生活，建议寻求专业心理咨询师的帮助。</span>
+  </div>
+
+  <button class="btn-primary" onclick="startQuiz()">开始评估 →</button>
+</div>
+
+<!-- ===== QUESTIONS (4 pages, 4 each) ===== -->
+<div class="screen" id="screen-questions">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" id="progressLabel">1 / 4</span>
+  </div>
+
+  <div id="pageHeader" class="page-header"></div>
+  <div id="questionArea"></div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" id="btnPrev" onclick="prevPage()">← 上一页</button>
+    <button class="btn-primary" id="btnNext" onclick="nextPage()">下一页 →</button>
+  </div>
+</div>
+
+<!-- ===== OPEN ENDED ===== -->
+<div class="screen" id="screen-open">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <span class="progress-label">最后一问</span>
+  </div>
+
+  <div class="open-box">
+    <label>
+      想和树洞聊聊吗？
+      <span class="sub">说说最近让你焦虑的事情，或者此刻的心情。写下来本身就是一种释放。</span>
+    </label>
+    <textarea id="openAnswer" placeholder="比如：最近在愁工作上的事，总觉得自己做得不够好……写完以后好像轻松了一点。"></textarea>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="showResults()">跳过 → 看结果</button>
+    <button class="btn-primary" onclick="showResults()">写好了 →</button>
+  </div>
+</div>
+
+<!-- ===== RESULTS ===== -->
+<div class="screen" id="screen-results">
+  <div class="result-header">
+    <h2>🌱 你的焦虑画像</h2>
+    <p>综合四个维度的评估结果</p>
+  </div>
+
+  <div class="score-grid">
+    <div class="score-card">
+      <div class="label">核心焦虑指数 (GAD-7)</div>
+      <div class="score" id="coreScore">0</div>
+      <div class="score-label" id="coreLabel">——</div>
+    </div>
+    <div class="score-card">
+      <div class="label">综合评估分</div>
+      <div class="score" id="fullScore">0</div>
+      <div class="score-label" id="fullLabel">——</div>
+    </div>
+  </div>
+
+  <div class="dim-breakdown" id="dimBreakdown">
+    <h3>📊 四维分解</h3>
+  </div>
+
+  <div class="result-section" id="resultInterpretation">
+    <h3>📖 综合解读</h3>
+    <p id="resultText"></p>
+  </div>
+
+  <div class="result-section" id="resultSuggestion">
+    <h3>💡 针对你的建议</h3>
+    <ul id="suggestionList"></ul>
+  </div>
+
+  <div class="result-cta">
+    <p>💬 想和树洞聊聊你的焦虑吗？把心里的感受说出来，本身就是治愈的开始。</p>
+    <button class="btn-primary" onclick="talkToTreehole()">来找树洞说说 →</button>
+  </div>
+
+  <div id="anxietySaveIndicator" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#8B9D8B;"></div>
+
+  <div class="result-footer">
+    <a onclick="restart()">← 重新测评</a>
+    &nbsp;·&nbsp;
+    <a href="index.html">🏠 返回主页</a>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ─── 16 题：每个问题包含场景化描述和维度归属 ───
+const questions = [
+  // Page 1: 情绪状态 (Q1-Q4)
+  {
+    id: 1, dim: 'emotion', core: true,
+    text: '一起床就觉得心里不踏实，像有什么不好的事要发生但又说不上来。一整天都处于一种"说不上紧张但就是松不下来"的状态。'
+  },
+  {
+    id: 2, dim: 'emotion', core: true,
+    text: '脑子像卡了带一样，反复播放那些"万一……"的念头——万一搞砸了怎么办？万一ta其实是对我有意见？虽然理智上知道想也没用，但就是停不下来。'
+  },
+  {
+    id: 3, dim: 'emotion', core: true,
+    text: '不仅担心大事（工作、学业、健康），连日常小事也让你反复琢磨——别人随口的一句话、一条没马上回复的消息、明天的日程安排，都能在心里盘旋很久。'
+  },
+  {
+    id: 4, dim: 'emotion', core: true,
+    text: '身体很累，但脑子像在跑马拉松——躺下了也关不了机，各种念头此起彼伏，翻来覆去就是静不下来。'
+  },
+  // Page 2: 躯体感受 (Q5-Q8)
+  {
+    id: 5, dim: 'body', core: false,
+    text: '很容易被吓到——别人轻轻叫你一声、突然响起的声音、甚至手机震动都会让你"激灵"一下，心跳瞬间加速。'
+  },
+  {
+    id: 6, dim: 'body', core: false,
+    text: '身体发出各种信号：心慌、胸闷、手心出汗、手微微发抖、肩颈像背了块铁板一样酸痛僵硬，或者肠胃不舒服——紧张时胃疼、想吐、拉肚子。'
+  },
+  {
+    id: 7, dim: 'body', core: false,
+    text: '要么躺下睡不着、要么半夜三四点突然醒了就再也睡不着，或者一晚上都在做乱七八糟的梦，醒了比没睡还累。'
+  },
+  {
+    id: 8, dim: 'body', core: false,
+    text: '说不上哪不舒服但就是"不对劲"——去医院检查也没查出问题，但身体的各种不适感却真实存在。'
+  },
+  // Page 3: 认知思维 (Q9-Q12)
+  {
+    id: 9, dim: 'cognition', core: false,
+    text: '脑子像蒙了一层雾——工作时/学习时注意力没法集中，看了半天材料却一个字都没读进去，或者别人跟你说话，你"嗯"了一声但根本没听进去。'
+  },
+  {
+    id: 10, dim: 'cognition', core: false,
+    text: '一到晚上就"反刍"——白天说过的话、做过的事、没做好的地方，在脑子里一遍遍重播，为自己说错的话尴尬，为没做好的事懊悔。'
+  },
+  {
+    id: 11, dim: 'cognition', core: false,
+    text: '一点点小问题就自动想到最坏的结果——领导说"来一下"就觉得自己要被批评了、伴侣没回消息就觉得感情出问题了，脑子里自动上演各种"恐怖剧本"。'
+  },
+  {
+    id: 12, dim: 'cognition', core: false,
+    text: '因为焦虑而开始回避——不太想回消息、不想接电话、找理由推掉社交邀约，或者把不想面对的事情一拖再拖。'
+  },
+  // Page 4: 社会功能 (Q13-Q16)
+  {
+    id: 13, dim: 'social', core: false,
+    text: '和人相处时总担心自己说错话、被讨厌、被评判。总感觉别人在注意你的一举一动，聚会或开会时会不自在。'
+  },
+  {
+    id: 14, dim: 'social', core: false,
+    text: '对还没发生的事情提前焦虑：明天的会议、下周的汇报、甚至几个月后的考试或旅行，从现在就揪着心开始担心。'
+  },
+  {
+    id: 15, dim: 'social', core: false,
+    text: '总觉得疲惫不堪，明明没干什么体力活，但整个人像被抽空了一样，提不起精神做任何事，包括自己喜欢的事情。'
+  },
+  {
+    id: 16, dim: 'social', core: false,
+    text: '你发现这些感受已经开始影响你的工作表现/学业成绩/人际关系了，但你好像被困在里面，不知道怎么停下来。'
+  }
+];
+
+const dimLabels = {
+  emotion: { name: '情绪状态', color: '#D4A88C', short: '情绪' },
+  body:    { name: '躯体感受', color: '#A8C4B0', short: '躯体' },
+  cognition: { name: '认知思维', color: '#B8A8D4', short: '认知' },
+  social:  { name: '社会功能', color: '#D4A8B8', short: '功能' }
+};
+
+const pageDims = ['emotion', 'body', 'cognition', 'social'];
+const pageDescs = {
+  emotion: '最近两周，你的内心状态是什么样的？读一读下面这些描述，看看多少符合你。',
+  body: '焦虑从来不只是在头脑里——它也在你的身体里。看看你最近有没有这些身体反应。',
+  cognition: '焦虑是怎么影响你的想法的？读读下面这些场景，有没有觉得很熟悉？',
+  social: '焦虑如何悄悄影响你的日常生活、人际关系和未来？'
+};
+
+const likertOpts = [
+  { val: 0, label: '完全不会' },
+  { val: 1, label: '偶尔几天' },
+  { val: 2, label: '半数以上天数' },
+  { val: 3, label: '几乎每天' }
+];
+
+const PAGE_SIZE = 4;
+const TOTAL_PAGES = 4;
+let currentPage = 0;
+let answers = new Array(questions.length).fill(-1);
+
+// ─── Scoring ───
+function getCoreScore() {
+  return questions.reduce((s, q, i) => q.core && answers[i] >= 0 ? s + answers[i] : s, 0);
+}
+function getFullScore() {
+  return answers.reduce((s, v) => v >= 0 ? s + v : s, 0);
+}
+function getDimScore(dim) {
+  const dimQs = questions.reduce((ids, q, i) => q.dim === dim ? [...ids, i] : ids, []);
+  const sum = dimQs.reduce((s, i) => answers[i] >= 0 ? s + answers[i] : s, 0);
+  const max = dimQs.length * 3;
+  return { sum, max, pct: max > 0 ? Math.round((sum / max) * 100) : 0 };
+}
+function allAnsweredOnPage(page) {
+  const start = page * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, questions.length);
+  for (let i = start; i < end; i++) { if (answers[i] < 0) return false; }
+  return true;
+}
+
+function getSeverity(score, max) {
+  const pct = score / max;
+  if (pct <= 0.2) return { level: 'minimal', label: '较低' };
+  if (pct <= 0.4) return { level: 'mild', label: '轻度倾向' };
+  if (pct <= 0.65) return { level: 'moderate', label: '中等水平' };
+  return { level: 'severe', label: '偏高' };
+}
+
+function getCoreSeverity(score) {
+  if (score <= 4)  return { level: 'minimal', label: '在正常范围内', desc: '你的焦虑水平在正常范围内。偶尔的紧张和担忧是生活的一部分，你不必过分担心。' };
+  if (score <= 9)  return { level: 'mild', label: '轻度焦虑倾向', desc: '你有一些轻度的焦虑倾向。这可能是压力积累的信号——身体和情绪在提醒你：该照顾一下自己了。' };
+  if (score <= 14) return { level: 'moderate', label: '中度焦虑', desc: '你的焦虑水平已经超出了轻度范围，可能在多个方面影响到了你的生活。这是一个值得重视的信号。' };
+  return { level: 'severe', label: '较高焦虑水平', desc: '你的焦虑水平较高。请记住：这不是你的错，也不是你"想太多"。这只是一个信号，告诉你需要专业的支持。' };
+}
+
+const suggestionsMap = {
+  minimal: [
+    '偶尔的焦虑是正常而且有用的——它在提醒你关心自己',
+    '保持目前的良好习惯：规律作息、适度运动、留出放空的时间',
+    '可以尝试正念冥想或深呼吸练习，作为日常心理保健',
+    '持续关注自己的情绪变化，不必过分担心'
+  ],
+  mild: [
+    '每天给自己留出 10 分钟的"放空时间"——不刷手机、不想事情，只是坐着或散步',
+    '试试"焦虑日记"：把担心的东西写下来，问自己"这件事最坏的可能是什么？发生的概率有多大？"',
+    '减少咖啡因和酒精的摄入，它们可能加重身体的焦虑反应',
+    '如果这种感觉持续超过两周，建议找信任的人聊聊'
+  ],
+  moderate: [
+    '你已经很努力了。停下来承认这一点——而不是责怪自己为什么"想不开"',
+    '强烈建议预约心理咨询师进行一次评估——就像定期体检一样，心理也需要(emoji: 🩷)',
+    '每天坚持做放松练习（深呼吸、渐进式肌肉放松、正念冥想），即使只做 5 分钟',
+    '保证充足睡眠（7-8小时），睡眠不足是焦虑的最大放大器',
+    '告诉身边一两个信任的人你正在经历什么，不需要一个人扛着',
+    '减少社交媒体和新闻的输入——信息过载是焦虑的助燃剂'
+  ],
+  severe: [
+    '你现在感受的这一切都是有原因的，不是你的错。焦虑是一种真实的生理和心理状态',
+    '请尽快联系心理咨询师或精神科医生，进行一次专业评估——这和感冒了要看医生一样正常',
+    '告诉身边信任的人你正在经历什么，让 ta 们支持你。你不需要独自承受',
+    '暂时避免做重大决定——焦虑状态下，我们容易把事情想得更糟',
+    '焦虑不是你的全部，它只是你此刻正在经历的一种感受。它会变化的',
+    '如果觉得难以承受，请拨打心理援助热线（全国24小时：010-82951332）。任何时候都有人愿意倾听'
+  ]
+};
+
+// ─── Render ───
+function startQuiz() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-questions').classList.add('active');
+  currentPage = 0;
+  renderPage();
+}
+
+function renderPage() {
+  const area = document.getElementById('questionArea');
+  const start = currentPage * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, questions.length);
+  const pageItems = questions.slice(start, end);
+  const dim = pageDims[currentPage];
+  const d = dimLabels[dim];
+
+  // Page header
+  document.getElementById('pageHeader').innerHTML = `
+    <div class="dim-name">${d.name} · ${currentPage + 1}/${TOTAL_PAGES}</div>
+    <div class="dim-desc">${pageDescs[dim]}</div>
+  `;
+
+  // Questions
+  let html = '';
+  pageItems.forEach((q, idx) => {
+    const realIdx = start + idx;
+    const answered = answers[realIdx] >= 0;
+    html += `<div class="q-item ${answered ? 'answered' : ''}" id="qitem-${realIdx}">
+      <div class="q-text">
+        <span class="q-num ${answered ? 'done' : ''}">${q.id}</span>
+        ${q.text}
+      </div>
+      <div class="likert-row" data-q="${realIdx}">
+        ${likertOpts.map(o => `
+          <div class="opt">
+            <input type="radio" name="q${realIdx}" value="${o.val}"
+              id="q${realIdx}_v${o.val}" ${answers[realIdx] === o.val ? 'checked' : ''}
+              onchange="setAnswer(${realIdx}, ${o.val})">
+            <label for="q${realIdx}_v${o.val}">
+              <span class="lbl-val">${o.val}</span>
+              <span class="lbl-txt">${o.label}</span>
+            </label>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  });
+  area.innerHTML = html;
+
+  // Progress
+  const pct = ((currentPage + 1) / TOTAL_PAGES) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${currentPage + 1} / ${TOTAL_PAGES}`;
+
+  // Buttons
+  document.getElementById('btnPrev').style.display = currentPage === 0 ? 'none' : 'block';
+  const btnNext = document.getElementById('btnNext');
+  btnNext.textContent = currentPage === TOTAL_PAGES - 1 ? '下一步 →' : '下一页 →';
+  btnNext.disabled = !allAnsweredOnPage(currentPage);
+}
+
+function setAnswer(idx, val) {
+  answers[idx] = val;
+  document.getElementById(`qitem-${idx}`).classList.add('answered');
+  const numEl = document.querySelector(`#qitem-${idx} .q-num`);
+  if (numEl) numEl.classList.add('done');
+  if (allAnsweredOnPage(currentPage)) {
+    document.getElementById('btnNext').disabled = false;
+  }
+}
+
+function nextPage() {
+  if (!allAnsweredOnPage(currentPage)) return;
+  if (currentPage < TOTAL_PAGES - 1) {
+    currentPage++;
+    renderPage();
+  } else {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-open').classList.add('active');
+  }
+}
+
+function prevPage() {
+  if (currentPage > 0) { currentPage--; renderPage(); }
+}
+
+// ─── Results ───
+// ── Save assessment to user account (if logged in) ──
+async function saveAnxietyAssessment() {
+  const token = localStorage.getItem('treehole_token');
+  if (!token) return;
+  try {
+    const core = getCoreScore();
+    const full = getFullScore();
+    const coreSev = getCoreSeverity(core);
+    const fullSev = getSeverity(full, 48);
+    const dims = pageDims.map(d => {
+      const s = getDimScore(d);
+      return { name: dimLabels[d].name, score: s.sum, max: s.max, pct: s.pct };
+    });
+    const resp = await fetch('/api/assessments', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        type: 'anxiety',
+        scores: { core_score: core, core_severity: coreSev.label, full_score: full, full_severity: fullSev.label, dimensions: dims },
+        answers: answers,
+        summary: coreSev.desc
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      document.getElementById('anxietySaveIndicator').textContent = '✅ 结果已保存到你的账户';
+      document.getElementById('anxietySaveIndicator').style.display = 'block';
+    }
+  } catch(e) { /* not logged in, silently ignore */ }
+}
+
+function showResults() {
+  const core = getCoreScore();
+  const full = getFullScore();
+  const coreSev = getCoreSeverity(core);
+  const fullSev = getSeverity(full, 48);
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-results').classList.add('active');
+
+  // Core score
+  document.getElementById('coreScore').textContent = core + '/21';
+  const coreEl = document.getElementById('coreLabel');
+  coreEl.textContent = coreSev.label;
+  coreEl.className = 'score-label ' + coreSev.level;
+
+  // Full score
+  document.getElementById('fullScore').textContent = full + '/48';
+  const fullEl = document.getElementById('fullLabel');
+  fullEl.textContent = fullSev.label;
+  fullEl.className = 'score-label ' + fullSev.level;
+
+  // Dimension breakdown
+  let dimHtml = '';
+  pageDims.forEach(dim => {
+    const d = dimLabels[dim];
+    const s = getDimScore(dim);
+    const sev = getSeverity(s.sum, s.max);
+    dimHtml += `
+      <div class="dim-bar-wrap">
+        <div class="dim-bar-label">
+          <span class="dn">${d.name}</span>
+          <span class="dv">${s.sum}/${s.max} · ${sev.label}</span>
+        </div>
+        <div class="dim-bar-track">
+          <div class="dim-bar-fill" style="width:${s.pct}%;background:${d.color}"></div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('dimBreakdown').innerHTML = `<h3>📊 四维分解</h3>` + dimHtml;
+
+  // Interpretation
+  document.getElementById('resultText').textContent = coreSev.desc;
+
+  // Suggestions
+  const sug = suggestionsMap[coreSev.level] || suggestionsMap.mild;
+  document.getElementById('suggestionList').innerHTML = sug.map(s => `<li>${s}</li>`).join('');
+
+  document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
+  // Save results if logged in
+  setTimeout(saveAnxietyAssessment, 200);
+}
+
+function talkToTreehole() {
+  const core = getCoreScore();
+  const arr = getDimScore('emotion');
+  alert('💬 树洞对话即将上线！\n\n你目前的评估概览：\n核心焦虑指数：' + core + '/21\n综合评分：' + getFullScore() + '/48\n\n很快你就能在这里和专属树洞聊聊你的感受 🌱\n（功能开发中，敬请期待）');
+}
+
+function restart() {
+  answers = new Array(questions.length).fill(-1);
+  currentPage = 0;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-welcome').classList.add('active');
+  document.getElementById('progressFill').style.width = '0%';
+}
+</script>
+</body>
+</html>

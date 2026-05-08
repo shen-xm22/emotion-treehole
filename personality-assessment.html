@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>性格测评 · 树洞情绪站</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #F5F0EB;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #3D2C2A;
+  }
+
+  /* ── Container ── */
+  .container {
+    width: 100%;
+    max-width: 680px;
+    min-height: 540px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 28px;
+    box-shadow: 0 8px 40px rgba(180,140,120,0.15), 0 2px 8px rgba(180,140,120,0.08);
+    padding: 40px 36px;
+    position: relative;
+    transition: all 0.4s ease;
+  }
+
+  /* ── Screens ── */
+  .screen {
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Welcome Screen ── */
+  .welcome-icon {
+    font-size: 56px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+  .welcome-title {
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    color: #3D2C2A;
+    margin-bottom: 8px;
+  }
+  .welcome-sub {
+    font-size: 15px;
+    color: #8F7A72;
+    text-align: center;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+  .welcome-desc {
+    background: #F8F3EF;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+  }
+  .welcome-desc p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #5C4540;
+  }
+  .welcome-desc p + p { margin-top: 10px; }
+  .dimension-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 24px;
+    justify-content: center;
+  }
+  .dimension-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    background: #EDE6DF;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #5C4540;
+  }
+  .dimension-tag .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .btn-start {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #D4A88C 0%, #C4906E 100%);
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+  }
+  .btn-start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(196,144,110,0.35);
+  }
+  .btn-start:active { transform: translateY(0); }
+
+  /* ── Progress Bar ── */
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #EDE6DF;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #D4A88C, #C4906E);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+  .progress-label {
+    font-size: 13px;
+    color: #8F7A72;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* ── Question Screen ── */
+  .dimension-label {
+    font-size: 13px;
+    color: #B39A8E;
+    margin-bottom: 4px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .dimension-label strong { color: #8F7A72; }
+
+  .q-number {
+    font-size: 14px;
+    color: #B39A8E;
+    margin-bottom: 16px;
+  }
+
+  /* ── Likert Grid (aligned A & B columns) ── */
+  .likert-grid {
+    display: grid;
+    grid-template-columns: 1.2fr repeat(5, 1fr);
+    gap: 4px;
+    align-items: stretch;
+  }
+  .lg-row {
+    display: contents;
+  }
+  .lg-header .lg-opt {
+    text-align: center;
+    font-size: 10px;
+    color: #B39A8E;
+    padding: 4px 2px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    line-height: 1.3;
+  }
+  .lg-header .lg-opt .lg-num {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8F7A72;
+  }
+  .lg-cell-label {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px 8px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #3D2C2A;
+    font-weight: 500;
+  }
+  .lg-cell-label .lg-prefix {
+    font-weight: 600;
+    color: #C4906E;
+    margin-right: 4px;
+    flex-shrink: 0;
+  }
+  .lg-cell-opt {
+    position: relative;
+    text-align: center;
+  }
+  .lg-cell-opt input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+    pointer-events: none;
+  }
+  .lg-cell-opt label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 44px;
+    border-radius: 10px;
+    background: #FAF7F4;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    font-size: 15px;
+    font-weight: 600;
+    color: #B39A8E;
+  }
+  .lg-cell-opt label:hover {
+    background: #F0E8E0;
+    border-color: #E0D1C5;
+  }
+  .lg-cell-opt input[type="radio"]:checked + label {
+    background: #EDE0D4;
+    border-color: #C4906E;
+    color: #5C3E30;
+    box-shadow: 0 2px 8px rgba(196,144,110,0.2);
+  }
+  .lg-row-gap { height: 8px; }
+
+  /* ── Navigation ── */
+  .nav-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .nav-btn.prev {
+    background: #EDE6DF;
+    color: #5C4540;
+  }
+  .nav-btn.prev:hover { background: #E3D9D0; }
+  .nav-btn.prev:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #EDE6DF;
+  }
+
+  .nav-btn.next {
+    background: linear-gradient(135deg, #D4A88C, #C4906E);
+    color: #fff;
+  }
+  .nav-btn.next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(196,144,110,0.3);
+  }
+  .nav-btn.next:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ── Results Screen ── */
+  .result-loading {
+    text-align: center;
+    padding: 40px 0;
+  }
+  .result-loading .loader {
+    width: 48px; height: 48px;
+    border: 4px solid #EDE6DF;
+    border-top-color: #C4906E;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-loading p {
+    color: #8F7A72;
+    font-size: 15px;
+  }
+
+  .result-content { display: none; }
+  .result-content.show { display: block; }
+
+  .result-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .result-type-icon { font-size: 48px; }
+  .result-type-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #3D2C2A;
+    margin-top: 8px;
+  }
+  .result-type-sub {
+    font-size: 14px;
+    color: #8F7A72;
+    margin-top: 4px;
+  }
+
+  .chart-wrap {
+    max-width: 340px;
+    margin: 0 auto 24px;
+    position: relative;
+  }
+
+  .result-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .score-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: #F8F3EF;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #5C4540;
+  }
+  .score-badge .val {
+    font-weight: 700;
+    color: #3D2C2A;
+  }
+  .score-badge .bar-mini {
+    width: 50px; height: 4px;
+    background: #EDE6DF;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-badge .bar-mini-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .result-description {
+    background: #F8F3EF;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    line-height: 1.8;
+    font-size: 14px;
+    color: #5C4540;
+    white-space: pre-line;
+  }
+
+  .result-dim-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .dim-detail-item {
+    padding: 14px 18px;
+    background: #FAF7F4;
+    border-radius: 12px;
+    border-left: 3px solid #D4A88C;
+  }
+  .dim-detail-item .dim-name {
+    font-weight: 600;
+    color: #3D2C2A;
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+  .dim-detail-item .dim-text {
+    font-size: 13px;
+    color: #5C4540;
+    line-height: 1.6;
+  }
+  .dim-detail-item.high { border-left-color: #7B9A6B; }
+  .dim-detail-item.low { border-left-color: #B39A8E; }
+  .dim-detail-item.mid { border-left-color: #D4A88C; }
+
+  .result-cta {
+    text-align: center;
+    padding: 16px;
+    background: #EDE0D4;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .result-cta:hover {
+    background: #E3D0C0;
+    transform: translateY(-2px);
+  }
+  .result-cta p {
+    font-size: 15px;
+    font-weight: 600;
+    color: #5C4540;
+  }
+  .result-cta .sub {
+    font-size: 13px;
+    font-weight: 400;
+    color: #8F7A72;
+    margin-top: 4px;
+  }
+
+  .btn-restart {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    border: 2px solid #D4A88C;
+    background: transparent;
+    border-radius: 14px;
+    font-size: 14px;
+    color: #8F7A72;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-restart:hover {
+    background: #F8F3EF;
+    color: #5C4540;
+  }
+
+  .disclaimer {
+    font-size: 11px;
+    color: #B39A8E;
+    text-align: center;
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D4C5B8; border-radius: 3px; }
+
+  @media (max-width: 520px) {
+    .likert-grid {
+      grid-template-columns: 0.8fr repeat(5, 1fr);
+      gap: 3px;
+    }
+    .lg-cell-label {
+      font-size: 12px;
+      padding: 6px 4px 6px 0;
+    }
+    .lg-header .lg-opt {
+      font-size: 9px;
+      padding: 2px 1px 4px;
+    }
+    .lg-header .lg-opt .lg-num { font-size: 11px; }
+    .lg-cell-opt label {
+      min-height: 36px;
+      font-size: 13px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+
+  <!-- ═══════════ Welcome Screen ═══════════ -->
+  <div class="screen active" id="screen-welcome">
+    <div class="welcome-icon">🧩</div>
+    <h1 class="welcome-title">性格测评</h1>
+    <p class="welcome-sub">五个核心维度 · 十道简单选择题<br>五分钟，发现一个更完整的自己</p>
+    <div class="welcome-desc">
+      <p>每个人的性格就像一幅拼图——<strong>外向 vs 内敛、随性 vs 自律、感性 vs 理性</strong>……这些特质组合在一起，构成了独一无二的你。</p>
+      <p>这个测评基于心理学界广泛认可的<strong>「大五人格模型」</strong>，帮助你从<strong>外向性、宜人性、尽责性、情绪稳定性、开放性</strong>五个维度了解自己的性格轮廓。</p>
+    </div>
+    <div class="dimension-preview">
+      <span class="dimension-tag"><span class="dot" style="background:#D4A88C"></span>外向性</span>
+      <span class="dimension-tag"><span class="dot" style="background:#7B9A6B"></span>宜人性</span>
+      <span class="dimension-tag"><span class="dot" style="background:#8BA9B4"></span>尽责性</span>
+      <span class="dimension-tag"><span class="dot" style="background:#C48E9A"></span>情绪稳定</span>
+      <span class="dimension-tag"><span class="dot" style="background:#B8A07B"></span>开放性</span>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">开始测评 →</button>
+  </div>
+
+  <!-- ═══════════ Question Screens ═══════════ -->
+  <div class="screen" id="screen-questions">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-label" id="progressLabel">1 / 5</span>
+    </div>
+    <div id="questionArea"></div>
+  </div>
+
+  <!-- ═══════════ Results Screen ═══════════ -->
+  <div class="screen" id="screen-results">
+    <div class="result-loading" id="resultLoading">
+      <div class="loader"></div>
+      <p>正在分析你的性格图谱…</p>
+    </div>
+    <div class="result-content" id="resultContent">
+      <div class="result-header">
+        <div class="result-type-icon" id="resultIcon">🧸</div>
+        <div class="result-type-name" id="resultTypeName">温柔靠谱型</div>
+        <div class="result-type-sub" id="resultTypeSub">话不多但心里有数，值得信赖的存在</div>
+      </div>
+
+      <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+
+      <div class="result-scores" id="scoreBadges"></div>
+      <div class="result-description" id="resultDesc"></div>
+      <div class="result-dim-details" id="dimDetails"></div>
+
+      <div id="perSaveIndicator" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#8B9D8B;"></div>
+      <div class="result-cta" onclick="talkToTreehole()">
+        <p>💬 想和树洞聊聊你的结果吗？</p>
+        <div class="sub">把你的性格地图交给树洞，一起探索更多可能</div>
+      </div>
+      <div style="text-align:center;margin-top:12px">
+        <a href="index.html" style="color:#B39A8E;font-size:12px;text-decoration:underline">🏠 返回主页</a>
+      </div>
+      <button class="btn-restart" onclick="restartQuiz()">重新测评</button>
+      <div class="disclaimer">⚠️ 本测评结果仅供参考与自我了解，不构成任何医学诊断。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// Quiz Data
+// ═══════════════════════════════════════════════
+
+const dimensions = [
+  { id: 'E', name: '外向性', en: 'Extraversion', color: '#D4A88C', low: '独处充电', high: '社交活跃' },
+  { id: 'A', name: '宜人性', en: 'Agreeableness', color: '#7B9A6B', low: '直接独立', high: '温和合作' },
+  { id: 'C', name: '尽责性', en: 'Conscientiousness', color: '#8BA9B4', low: '随性自由', high: '计划有序' },
+  { id: 'N', name: '情绪稳定性', en: 'Emotional Stability', color: '#C48E9A', low: '敏感易虑', high: '沉稳淡定' },
+  { id: 'O', name: '开放性', en: 'Openness', color: '#B8A07B', low: '务实传统', high: '好奇创新' }
+];
+
+const questions = [
+  {
+    dimIdx: 0,
+    a: { text: '我在人群中很容易打开话匣子，喜欢和不同的人交流', dir: '+' },
+    b: { text: '比起热闹的聚会，我更喜欢一个人安静地待着', dir: '-', reverse: true }
+  },
+  {
+    dimIdx: 1,
+    a: { text: '我通常会先考虑别人的感受，尽量避免冲突', dir: '+' },
+    b: { text: '我说话比较直接，不会太在意别人怎么看', dir: '-', reverse: true }
+  },
+  {
+    dimIdx: 2,
+    a: { text: '我做事习惯提前计划，喜欢井井有条', dir: '+' },
+    b: { text: '我比较随性，计划赶不上变化是常有的事', dir: '-', reverse: true }
+  },
+  {
+    dimIdx: 3,
+    a: { text: '我很容易多想一件小事，翻来覆去睡不着', dir: '-', reverse: true },
+    b: { text: '大多数时候我心态很稳，不容易被小事影响', dir: '+' }
+  },
+  {
+    dimIdx: 4,
+    a: { text: '我对新事物充满好奇，愿意尝试没做过的事', dir: '+' },
+    b: { text: '我比较恋旧，熟悉的东西让我更安心', dir: '-', reverse: true }
+  }
+];
+
+const likertLabels = ['非常不符', '不太符合', '一般', '比较符合', '非常符合'];
+
+// ═══════════════════════════════════════════════
+// State
+// ═══════════════════════════════════════════════
+
+let currentQ = 0;
+const answers = [
+  { a: null, b: null },
+  { a: null, b: null },
+  { a: null, b: null },
+  { a: null, b: null },
+  { a: null, b: null }
+];
+
+// ═══════════════════════════════════════════════
+// Navigation
+// ═══════════════════════════════════════════════
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startQuiz() {
+  currentQ = 0;
+  answers.forEach(a => { a.a = null; a.b = null; });
+  showScreen('screen-questions');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  const dim = dimensions[q.dimIdx];
+  const pct = ((currentQ) / questions.length * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${currentQ + 1} / ${questions.length}`;
+
+  const area = document.getElementById('questionArea');
+  area.style.animation = 'none';
+  area.offsetHeight;
+  area.style.animation = 'fadeIn 0.4s ease';
+
+  area.innerHTML = `
+    <div class="dimension-label">维度 · <strong>${dim.name}</strong> <span style="color:#B39A8E">/ ${dim.en}</span></div>
+    <div class="q-number">第 ${currentQ + 1} 题（共 ${questions.length} 题）</div>
+    <div class="lg-row-gap"></div>
+
+    <div class="likert-grid">
+      <!-- Header row -->
+      <div class="lg-row lg-header">
+        <div class="lg-cell-label"></div>
+        ${[0,1,2,3,4].map(i => `
+          <div class="lg-opt"><span class="lg-num">${i+1}</span><span>${likertLabels[i]}</span></div>
+        `).join('')}
+      </div>
+
+      <!-- A row -->
+      <div class="lg-row">
+        <div class="lg-cell-label"><span class="lg-prefix">A.</span> ${q.a.text}</div>
+        ${[1,2,3,4,5].map(v => `
+          <div class="lg-cell-opt">
+            <input type="radio" name="q${currentQ}a" value="${v}" id="q${currentQ}a${v}"
+              ${answers[currentQ].a === v ? 'checked' : ''}
+              onchange="setAnswer(${currentQ},'a',${v})">
+            <label for="q${currentQ}a${v}">${v}</label>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- B row -->
+      <div class="lg-row">
+        <div class="lg-cell-label"><span class="lg-prefix">B.</span> ${q.b.text}</div>
+        ${[1,2,3,4,5].map(v => `
+          <div class="lg-cell-opt">
+            <input type="radio" name="q${currentQ}b" value="${v}" id="q${currentQ}b${v}"
+              ${answers[currentQ].b === v ? 'checked' : ''}
+              onchange="setAnswer(${currentQ},'b',${v})">
+            <label for="q${currentQ}b${v}">${v}</label>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="nav-btn prev" onclick="prevQuestion()" ${currentQ === 0 ? 'disabled' : ''}>← 上一题</button>
+      <button class="nav-btn next" onclick="nextQuestion()" ${answers[currentQ].a === null || answers[currentQ].b === null ? 'disabled' : ''}>
+        ${currentQ === questions.length - 1 ? '查看结果 →' : '下一题 →'}
+      </button>
+    </div>
+  `;
+}
+
+function setAnswer(qIdx, which, val) {
+  answers[qIdx][which] = val;
+  // Update button state
+  const btn = document.querySelector('.nav-btn.next');
+  if (answers[currentQ].a !== null && answers[currentQ].b !== null) {
+    btn.disabled = false;
+  }
+}
+
+function nextQuestion() {
+  if (answers[currentQ].a === null || answers[currentQ].b === null) return;
+  if (currentQ < questions.length - 1) {
+    currentQ++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Results
+// ═══════════════════════════════════════════════
+
+function showResults() {
+  showScreen('screen-results');
+  document.getElementById('resultLoading').style.display = 'block';
+  document.getElementById('resultContent').classList.remove('show');
+
+  setTimeout(() => {
+    computeResults();
+    document.getElementById('resultLoading').style.display = 'none';
+    document.getElementById('resultContent').classList.add('show');
+  }, 1200);
+}
+
+function computeResults() {
+  // Calculate dimension scores
+  const scores = {};
+  dimensions.forEach((dim, i) => {
+    const q = questions[i];
+    const aVal = answers[i].a;
+    const bVal = answers[i].b;
+    const aScore = q.a.reverse ? (6 - aVal) : aVal;
+    const bScore = q.b.reverse ? (6 - bVal) : bVal;
+    scores[dim.id] = Math.round(((aScore + bScore) / 2) * 10) / 10;
+  });
+
+  // Determine type
+  const typeData = getTypeName(scores);
+
+  // Display
+  document.getElementById('resultIcon').textContent = typeData.icon;
+  document.getElementById('resultTypeName').textContent = typeData.name;
+  document.getElementById('resultTypeSub').textContent = typeData.tagline;
+
+  // Score badges
+  const badgesEl = document.getElementById('scoreBadges');
+  badgesEl.innerHTML = dimensions.map(dim => {
+    const val = scores[dim.id];
+    const fColor = dim.color;
+    return `<div class="score-badge">
+      <span style="font-weight:600;color:${fColor}">${dim.name}</span>
+      <span class="val">${val.toFixed(1)}</span>
+      <div class="bar-mini"><div class="bar-mini-fill" style="width:${(val/5)*100}%;background:${fColor}"></div></div>
+    </div>`;
+  }).join('');
+
+  // Description
+  document.getElementById('resultDesc').textContent = typeData.description;
+
+  // Dim details
+  const detailsEl = document.getElementById('dimDetails');
+  detailsEl.innerHTML = dimensions.map(dim => {
+    const val = scores[dim.id];
+    let cls = 'mid';
+    let label = '';
+    let note = '';
+    if (val >= 3.7) { cls = 'high'; label = '偏高'; note = dim.high; }
+    else if (val <= 2.3) { cls = 'low'; label = '偏低'; note = dim.low; }
+    else { label = '中等'; note = '处于中间水平，随情境而变'; }
+    return `<div class="dim-detail-item ${cls}">
+      <div class="dim-name">${dim.name} · ${val.toFixed(1)} 分 <span style="font-weight:400;color:#8F7A72;font-size:12px">（${label}）</span></div>
+      <div class="dim-text">${note}</div>
+    </div>`;
+  }).join('');
+
+  // Radar Chart
+  renderRadar(scores);
+
+  // Save to user account if logged in
+  savePersonalityAssessment(scores, typeData);
+}
+
+// ── Save assessment to user account (if logged in) ──
+async function savePersonalityAssessment(scores, typeData) {
+  const token = localStorage.getItem('treehole_token');
+  if (!token) return;
+  try {
+    const resp = await fetch('/api/assessments', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        type: 'personality',
+        scores: { dimension_scores: scores, type: typeData.name },
+        answers: answers,
+        summary: typeData.description
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      document.getElementById('perSaveIndicator').textContent = '✅ 结果已保存到你的账户';
+      document.getElementById('perSaveIndicator').style.display = 'block';
+    }
+  } catch(e) { /* not logged in, silently ignore */ }
+}
+
+// ═══════════════════════════════════════════════
+// Personality Type Engine
+// ═══════════════════════════════════════════════
+
+function getTypeName(s) {
+  const e = s.E, a = s.A, c = s.C, n = s.N, o = s.O;
+  const high = e >= 3.7, lowE = e <= 2.3;
+  const highA = a >= 3.7, lowA = a <= 2.3;
+  const highC = c >= 3.7, lowC = c <= 2.3;
+  const highS = n >= 3.7, lowS = n <= 2.3; // highS = stable
+  const highO = o >= 3.7, lowO = o <= 2.3;
+
+  // Determine primary pattern
+  let type = null;
+
+  if (high && highA && highC) type = { icon: '🦊', name: '社交靠谱型', tag: '既有温度又有条理', desc: '你属于那种既能在人群中自如交流，又能把事情安排得妥妥当当的人。朋友觉得你靠谱，同事觉得你得力。\n\n你的社交能力不是那种喧哗型的，而是一种让人舒服的亲和力。同时你对自己的事情有责任感，答应的事一定会做到。\n\n*值得留意的是*：你有时候会把太多人的事揽在自己身上。偶尔允许自己"顾不上别人"，不是自私，是自我保护。' };
+
+  if (high && lowA && lowC) type = { icon: '🦅', name: '自由野马型', tag: '爱自由、爱社交，懒得被管', desc: '你天生爱交朋友、爱新鲜，最受不了的就是被条条框框管着。你的魅力在于那种不羁的活力——想到什么就去做，不喜欢拐弯抹角。\n\n你说话直接，做事随性，有人觉得你有点"野"，但也有人因此喜欢你。\n\n*值得留意的是*：自由很好，但有时候稍微耐下心来做完一件事，那种成就感可能比新鲜感更持久。' };
+
+  if (!high && !lowE && highA && highC) type = { icon: '🧸', name: '温柔靠谱型', tag: '话不多但心里有数，值得信赖', desc: '你不一定是人群中最活跃的那个，但熟悉你的人都知道——你靠得住。\n\n你做事有计划、有交代，在乎别人的感受，但又不至于委屈自己讨好别人。你给人的安全感不是靠说出来的，是做出来的。\n\n*值得留意的是*：你有时候对自己要求太高了。偶尔允许自己"摆烂"一下，天不会塌的。试试把"必须做好"改成"做完了就行"。' };
+
+  if (!high && !lowE && lowA && highC) type = { icon: '🦌', name: '独行实干型', tag: '不玩社交套路，专注做自己的事', desc: '你对社交那套不太感冒——不喜欢寒暄，不做面子功夫。但你做事认真、靠谱，交到你手里的事基本不用人操心。\n\n你可能朋友不多，但留下的都是真心的。你不说漂亮话，但你做漂亮事。\n\n*值得留意的是*：偶尔主动一点，让在乎你的人知道你也在乎他们——有时候"说出来"比"做出来"更让人感受到温度。' };
+
+  if (lowS && highO) type = { icon: '🌙', name: '敏感探索型', tag: '内心丰富敏锐，对世界有独特的感知', desc: '你有一颗特别细腻的心。别人可能没注意到的东西，你早就感受到了。你的想象力丰富，对美、对情感、对未知都有一种天然的向往。\n\n这种敏感是你的天赋——你比大多数人更能理解别人的情绪，也更容易被艺术、自然和深度的对话打动。\n\n*值得留意的是*：敏感是把双刃剑。你比别人更容易累，更容易多想。记得给自己留出"关机"的时间，不是每个情绪都需要被分析。' };
+
+  if (highS && lowO) type = { icon: '🌳', name: '稳如泰山型', tag: '心态稳、喜欢熟悉，让人心安的存在', desc: '你是那种在任何情况下都能保持冷静的人。身边的朋友遇到事了会第一个想到找你聊聊——不是要你给建议，而是你的存在本身就让人安心。\n\n你不太喜欢变来变去，熟悉的东西让你感到踏实。你务实、可靠，不会轻易被情绪带着跑。\n\n*值得留意的是*：稳定是优势，但有时候一点点冒险和无伤大雅的改变，可能会给你带来意想不到的惊喜。' };
+
+  if (high && lowS) type = { icon: '☀️', name: '热情敏感型', tag: '外向又敏感，热烈又细腻', desc: '你是一个矛盾又迷人的人。在人群中你热情开朗，好像没什么能难倒你。但只有你自己知道，你其实很在意别人的看法，容易多想。\n\n你的热忱是真的，你的敏感也是真的。这两种特质在你身上并存，让你既有感染力，又有深度。\n\n*值得留意的是*：照顾好自己的情绪电池。你在外面给了太多能量，回家记得给自己充电。' };
+
+  if (!high && !lowE && lowS) type = { icon: '🍂', name: '内敛细腻型', tag: '表面平静，内心有大千世界', desc: '你可能不是那种第一眼就让人记住的类型，但相处久了会发现——你心里装的远比表现出来的多。\n\n你不喜欢张扬，但你对人对事有自己的判断和感受。你可能不怎么主动找别人聊天，但你很在意那些主动靠近你的人。\n\n*值得留意的是*：你的感受值得被听见。试着偶尔把心里的话说出来，你会发现有人真的很想了解你。' };
+
+  if (highS && highO) type = { icon: '🏔️', name: '从容探索者', tag: '内心沉稳，又对世界充满好奇', desc: '你有一种很难得的平衡——心态稳得住，但同时对新事物保持开放。你不会轻易被焦虑裹挟，也不固执于老一套。\n\n这种从容加好奇的组合，让你既能享受探索未知的乐趣，又不会在变化中迷失自己。\n\n*值得留意的是*：你已经在一种很健康的状态了。继续保持，记得偶尔分享你的发现给身边的人。' };
+
+  // Fallback: custom generation
+  if (!type) {
+    let name = '平衡型', icon = '🪐', tag = '多维度的你，无法被简单定义';
+    let desc = '你的性格在各个维度上都处于比较平衡的水平。这意味着你适应性很强——\n\n';
+
+    const highs = [];
+    const lows = [];
+    if (high) highs.push('外向');
+    if (highA) highs.push('亲和');
+    if (highC) highs.push('自律');
+    if (highS) highs.push('淡定');
+    if (highO) highs.push('开放');
+    if (lowE) lows.push('内敛');
+    if (lowA) lows.push('直接');
+    if (lowC) lows.push('随性');
+    if (lowS) lows.push('敏感');
+    if (lowO) lows.push('务实');
+
+    if (highs.length > 0) desc += `你有明显的「${highs.join('、')}」倾向，这些特质让你在相应的场景中表现自如。\n\n`;
+    if (lows.length > 0) desc += `同时你在「${lows.join('、')}」方面得分较低，这意味着你在那些方面有自己的节奏和偏好。\n\n`;
+    desc += '你的性格不是任何一种标签能概括的——不同情境下你会展现出不同的一面。这不是模糊，而是一种灵活。\n\n*值得留意的是*：留意那些让你感到舒服和不舒服的场景，它们能帮你更了解自己真正的偏好。';
+
+    type = { icon, name, tag, desc };
+  }
+
+  return type;
+}
+
+// ═══════════════════════════════════════════════
+// Radar Chart (Chart.js)
+// ═══════════════════════════════════════════════
+
+let radarInstance = null;
+
+function renderRadar(scores) {
+  const canvas = document.getElementById('radarChart');
+  if (radarInstance) radarInstance.destroy();
+
+  const labels = dimensions.map(d => d.name);
+  const data = dimensions.map(d => scores[d.id]);
+
+  const ctx = canvas.getContext('2d');
+  radarInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: '你的得分',
+        data: data,
+        backgroundColor: 'rgba(212,168,140,0.15)',
+        borderColor: '#C4906E',
+        borderWidth: 2.5,
+        pointBackgroundColor: dimensions.map(d => d.color),
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          beginAtZero: false,
+          min: 1,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            font: { size: 11, family: '-apple-system, PingFang SC, sans-serif' },
+            color: '#B39A8E',
+            backdropColor: 'transparent'
+          },
+          grid: { color: 'rgba(179,154,142,0.15)' },
+          angleLines: { color: 'rgba(179,154,142,0.15)' },
+          pointLabels: {
+            font: { size: 13, family: '-apple-system, PingFang SC, sans-serif', weight: '500' },
+            color: '#5C4540'
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(61,44,42,0.9)',
+          titleFont: { size: 13 },
+          bodyFont: { size: 13 },
+          padding: 12,
+          cornerRadius: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.parsed.r.toFixed(1)} / 5`
+          }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════
+// Actions
+// ═══════════════════════════════════════════════
+
+function talkToTreehole() {
+  // Scroll to top smoothly
+  document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
+  // Could trigger a modal or navigate to treehole chat
+  alert('✨ 树洞功能即将上线！\n\n未来你可以带着测评结果来找树洞聊聊，\n树洞会记住你的性格档案，给你更懂你的回应。');
+}
+
+function restartQuiz() {
+  if (radarInstance) radarInstance.destroy();
+  radarInstance = null;
+  currentQ = 0;
+  answers.forEach(a => { a.a = null; a.b = null; });
+  showScreen('screen-welcome');
+}
+</script>
+</body>
+</html>

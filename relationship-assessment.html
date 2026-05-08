@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>亲密关系评估 · 树洞情绪站</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: #F5F0EB; min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; color: #3D2C2A;
+  }
+  .container {
+    width: 100%; max-width: 660px;
+    background: rgba(255,255,255,0.90);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-radius: 28px;
+    box-shadow: 0 8px 40px rgba(180,140,120,0.15), 0 2px 8px rgba(180,140,120,0.08);
+    padding: 36px 32px; position: relative;
+  }
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .welc-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
+  .welc-title { font-size: 26px; font-weight: 700; text-align: center; color: #3D2C2A; margin-bottom: 4px; }
+  .welc-sub { font-size: 14px; color: #8F7A72; text-align: center; margin-bottom: 18px; line-height: 1.6; }
+  .welc-box { background: #FAF7F4; border-radius: 16px; padding: 18px 22px; margin-bottom: 16px; font-size: 13px; line-height: 1.8; color: #5C4540; }
+  .welc-box strong { color: #3D2C2A; }
+  .welc-box p + p { margin-top: 10px; }
+  .welc-box .dim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .welc-box .dim-item { background: #F0E8E0; border-radius: 10px; padding: 8px 12px; font-size: 12px; color: #5C4540; text-align: center; }
+  .welc-note { background: #EDE0D4; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #6E554E; line-height: 1.6; }
+  .welc-note .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .btn-primary {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #D4A88C, #C4906E);
+    color: #fff; border: none; border-radius: 16px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease; letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(196,144,110,0.35); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { background: #D5CBC3; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn-secondary {
+    flex: 1; padding: 16px; background: #EDE6DF; color: #6E554E; border: none; border-radius: 16px;
+    font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;
+  }
+  .btn-secondary:hover { background: #E2D8CE; }
+  .progress-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .progress-bar { flex: 1; height: 6px; background: #EDE6DF; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #D4A88C, #C4906E); border-radius: 3px; transition: width 0.5s ease; width: 0%; }
+  .progress-label { font-size: 13px; color: #8F7A72; white-space: nowrap; font-weight: 500; }
+  .page-header { margin-bottom: 14px; }
+  .page-header .dim-name { font-size: 13px; font-weight: 600; color: #C4906E; letter-spacing: 1px; margin-bottom: 2px; }
+  .page-header .dim-desc { font-size: 14px; color: #5C4540; line-height: 1.5; }
+  .q-item { padding: 16px 18px; border-radius: 16px; background: #FAF7F4; margin-bottom: 12px; transition: all 0.25s; border: 2px solid transparent; }
+  .q-item:hover { border-color: #EDE6DF; }
+  .q-item.answered { background: #F5EDE6; border-color: #EADCCF; }
+  .q-item .q-text { font-size: 15px; line-height: 1.7; color: #3D2C2A; margin-bottom: 12px; font-weight: 500; }
+  .q-item .q-text .q-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #EDE6DF; text-align: center; line-height: 22px; font-size: 11px; font-weight: 600; color: #8F7A72; margin-right: 6px; flex-shrink: 0; }
+  .q-item .q-text .q-num.done { background: #D4A88C; color: #fff; }
+  .q-item .q-tag { display: inline-block; font-size: 10px; padding: 2px 10px; border-radius: 10px; margin-bottom: 6px; font-weight: 500; }
+  .q-item .q-tag.tag-anxiety { background: #FDE2D4; color: #A05A3A; }
+  .q-item .q-tag.tag-avoidance { background: #D4E8E2; color: #2D7A6E; }
+  .q-item .q-tag.tag-reverse { background: #E8D4E0; color: #7A4D6E; }
+  .likert-row { display: flex; gap: 6px; }
+  .likert-row .opt { flex: 1; text-align: center; position: relative; }
+  .likert-row .opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+  .likert-row .opt label { display: block; padding: 8px 2px; border-radius: 12px; background: #fff; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; }
+  .likert-row .opt .lbl-val { display: block; font-size: 14px; font-weight: 600; margin-bottom: 1px; color: #8F7A72; }
+  .likert-row .opt .lbl-txt { display: block; font-size: 10px; color: #A8988E; }
+  .likert-row .opt label:hover { background: #F0E8E0; border-color: #E0D1C5; }
+  .likert-row .opt input:checked + label { background: #EADCCF; border-color: #C4906E; }
+  .likert-row .opt input:checked + label .lbl-val { color: #5C3E30; }
+  .nav-row { display: flex; gap: 12px; margin-top: 18px; }
+  .nav-row .btn-primary { flex: 1; }
+  .open-box { margin: 16px 0; }
+  .open-box label { display: block; font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #3D2C2A; }
+  .open-box label .sub { font-weight: 400; font-size: 13px; color: #8F7A72; display: block; margin-top: 4px; }
+  .open-box textarea { width: 100%; min-height: 140px; padding: 16px; border: 2px solid #EDE6DF; border-radius: 16px; font-family: inherit; font-size: 14px; line-height: 1.7; color: #3D2C2A; background: #FAF7F4; resize: vertical; transition: border-color 0.2s; }
+  .open-box textarea:focus { outline: none; border-color: #C4906E; background: #fff; }
+  .open-box textarea::placeholder { color: #BFB0A6; }
+  .result-header { text-align: center; margin-bottom: 22px; }
+  .result-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .result-header p { font-size: 14px; color: #8F7A72; line-height: 1.5; }
+  .result-badge-wrap { text-align: center; margin-bottom: 22px; }
+  .result-badge { display: inline-flex; flex-direction: column; align-items: center; padding: 24px 36px; border-radius: 24px; background: #FAF7F4; }
+  .result-badge .type-icon { font-size: 48px; margin-bottom: 6px; }
+  .result-badge .type-name { font-size: 22px; font-weight: 700; color: #3D2C2A; }
+  .result-badge .type-sub { font-size: 13px; color: #8F7A72; margin-top: 2px; }
+  .score-2d { display: flex; gap: 16px; margin-bottom: 22px; }
+  .score-2d .score-card { flex: 1; background: #FAF7F4; border-radius: 16px; padding: 18px; text-align: center; }
+  .score-2d .score-card .label { font-size: 12px; color: #8F7A72; margin-bottom: 4px; }
+  .score-2d .score-card .score { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #D4A88C, #C4906E); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .score-2d .score-card .score-label { display: inline-block; margin-top: 4px; padding: 3px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .score-2d .score-card .score-label.low { background: #D4EDDA; color: #155724; }
+  .score-2d .score-card .score-label.high { background: #F8D7DA; color: #721C24; }
+  .result-section { background: #FAF7F4; border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; }
+  .result-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; color: #3D2C2A; }
+  .result-section p, .result-section li { font-size: 13px; line-height: 1.7; color: #5C4540; }
+  .result-section ul { padding-left: 18px; }
+  .result-section ul li { margin-bottom: 4px; }
+  .result-cta { margin-top: 20px; background: #F0E8E0; border-radius: 16px; padding: 20px; text-align: center; }
+  .result-cta p { font-size: 14px; color: #5C4540; margin-bottom: 12px; }
+  .result-cta .btn-primary { max-width: 280px; margin: 0 auto; }
+  .result-footer { margin-top: 16px; text-align: center; }
+  .result-footer a { color: #B39A8E; font-size: 12px; text-decoration: underline; cursor: pointer; transition: color 0.2s; }
+  .result-footer a:hover { color: #8F7A72; }
+  @media (max-width: 480px) {
+    .container { padding: 24px 18px; border-radius: 20px; }
+    .welc-title { font-size: 22px; }
+    .welc-box .dim-grid { grid-template-columns: 1fr; }
+    .likert-row .opt label { padding: 6px 1px; }
+    .likert-row .opt .lbl-val { font-size: 13px; }
+    .score-2d { flex-direction: column; gap: 10px; }
+    .q-item { padding: 14px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- WELCOME -->
+<div class="screen active" id="screen-welcome">
+  <div class="welc-icon">🫂</div>
+  <div class="welc-title">亲密关系风格评估</div>
+  <div class="welc-sub">14 道情境自评 · 约 4 分钟 · 基于 ECR 依恋理论</div>
+  <div class="welc-box">
+    <p>你在亲密关系中的模式，往往不是"性格问题"，而是你的 <strong>依恋风格</strong> 在悄悄起作用。本测评从两个核心维度帮你认识自己：</p>
+    <div class="dim-grid">
+      <div class="dim-item">💭 焦虑维度<br><span style="font-size:11px;color:#8F7A72;">是否担心被抛弃</span></div>
+      <div class="dim-item">🧊 回避维度<br><span style="font-size:11px;color:#8F7A72;">是否抗拒亲密靠近</span></div>
+    </div>
+    <p style="margin-top:10px">请想象你在一段<strong>恋爱关系</strong>中（有恋人的请以现任为参考，没有的请回忆或想象一段重要的关系），阅读每道题的情境，选择最符合你的选项。</p>
+  </div>
+  <div class="welc-note">
+    <span class="icon">🕊️</span>
+    <span><strong>给自己一点温柔：</strong>依恋风格没有"好坏"之分——安全型也有烦恼，焦虑型和回避型也各有优势。认识它，是为了更好地理解自己，而不是评判自己。</span>
+  </div>
+  <button class="btn-primary" onclick="startQuiz()">开始评估 →</button>
+</div>
+
+<!-- QUESTIONS -->
+<div class="screen" id="screen-questions">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-label" id="progressLabel">1 / 4</span>
+  </div>
+  <div id="pageHeader" class="page-header"></div>
+  <div id="questionArea"></div>
+  <div class="nav-row">
+    <button class="btn-secondary" id="btnPrev" onclick="prevPage()">← 上一页</button>
+    <button class="btn-primary" id="btnNext" onclick="nextPage()">下一页 →</button>
+  </div>
+</div>
+
+<!-- OPEN ENDED -->
+<div class="screen" id="screen-open">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <span class="progress-label">最后一问</span>
+  </div>
+  <div class="open-box">
+    <label>想和树洞说点什么吗？<span class="sub">关于关系、关于爱、或者关于你心中的那个结——写下来本身就是疗愈的开始。</span></label>
+    <textarea id="openAnswer" placeholder="比如：我在关系里总是……可能和从小的经历有关吧…"></textarea>
+  </div>
+  <div class="nav-row">
+    <button class="btn-secondary" onclick="showResults()">跳过 → 看结果</button>
+    <button class="btn-primary" onclick="showResults()">写好了 →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="screen-results">
+  <div class="result-header">
+    <h2>🌱 你的依恋风格画像</h2>
+    <p>综合焦虑与回避两个维度的分析</p>
+  </div>
+  <div class="result-badge-wrap">
+    <div class="result-badge" id="typeBadge"></div>
+  </div>
+  <div class="score-2d">
+    <div class="score-card">
+      <div class="label">💭 焦虑维度</div>
+      <div class="score" id="anxietyScore">0</div>
+      <div class="score-label" id="anxietyLabel">——</div>
+    </div>
+    <div class="score-card">
+      <div class="label">🧊 回避维度</div>
+      <div class="score" id="avoidanceScore">0</div>
+      <div class="score-label" id="avoidanceLabel">——</div>
+    </div>
+  </div>
+  <div class="result-section">
+    <h3>📖 你的依恋风格解读</h3>
+    <p id="resultText"></p>
+  </div>
+  <div class="result-section">
+    <h3>💡 给成长中的你</h3>
+    <ul id="suggestionList"></ul>
+  </div>
+  <div class="result-cta">
+    <p>💬 想和树洞聊聊你的亲密关系模式吗？</p>
+    <button class="btn-primary" onclick="talkToTreehole()">来找树洞说说 →</button>
+  </div>
+  <div id="relSaveIndicator" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#8B9D8B;"></div>
+  <div class="result-footer">
+    <a onclick="restart()">← 重新测评</a>
+    &nbsp;·&nbsp;
+    <a href="index.html">🏠 返回主页</a>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ─── 14 题：7 Anxiety + 7 Avoidance ───
+const questions = [
+  // P1: 焦虑维度 — Q1-Q4 (4题)
+  { id: 1, dim: 'anxiety', reverse: false,
+    text: '当对方没有及时回复消息时，你会不自觉地想："ta是不是不在乎我了？" 这种感觉会持续蔓延，直到得到回应才安心。' },
+  { id: 2, dim: 'anxiety', reverse: false,
+    text: '你常常需要对方反复确认"你爱我"——如果ta没有主动表达，你就会开始怀疑自己是不是不够好、不值得被爱。' },
+  { id: 3, dim: 'anxiety', reverse: false,
+    text: '你会下意识地关注对方的一举一动——语气的变化、回复的速度、细微的态度差异——试图从中捕捉关系正在"变淡"的信号。' },
+  { id: 4, dim: 'anxiety', reverse: true,
+    text: '你相信即使对方有自己的生活和社交空间，你们之间的感情也不会因此受到影响。' },
+  // P2: 回避维度 — Q5-Q7 (3题)
+  { id: 5, dim: 'avoidance', reverse: false,
+    text: '当关系变得越来越亲密时，你会下意识地想要拉开一点距离，觉得"靠太近了"，需要自己的空间来喘口气。' },
+  { id: 6, dim: 'avoidance', reverse: false,
+    text: '你不习惯让对方知道你内心深处的感受——说出来会让你觉得脆弱，好像给了对方一把可以伤害你的钥匙。' },
+  { id: 7, dim: 'avoidance', reverse: false,
+    text: '对方想要更亲近你时，你反而会感到不自在，甚至隐隐有一种想逃开的冲动——你也不确定自己为什么会有这种感觉。' },
+  // P3: 焦虑维度 — Q8-Q10 (3题)
+  { id: 8, dim: 'anxiety', reverse: false,
+    text: '你们吵架或冷战的时候，你会非常害怕这段关系会就此结束——哪怕只是个小矛盾，你也会感到"这次可能真的要完了"。' },
+  { id: 9, dim: 'anxiety', reverse: false,
+    text: '"我到底在ta心里重不重要？"——这个问题时不时就会冒出来，让你心里空落落的，需要对方做一些事情来填补。' },
+  { id: 10, dim: 'anxiety', reverse: false,
+    text: '如果对方有一段时间表现得不如平时热情，你会反复回想自己是不是做错了什么，是不是惹ta不高兴了。' },
+  // P4: 回避维度 — Q11-Q14 (4题)
+  { id: 11, dim: 'avoidance', reverse: false,
+    text: '对方对你表达感情或做出亲密举动时，你心里会有点不知所措，不知道该怎么回应，有时甚至会装作没注意到。' },
+  { id: 12, dim: 'avoidance', reverse: true,
+    text: '你觉得和恋人分享生活的点点滴滴是一件很自然、很舒服的事情。' },
+  { id: 13, dim: 'avoidance', reverse: false,
+    text: '当关系出现问题时，你的第一反应是"先让我自己待一会儿"——不太想沟通，也不太知道该说什么。' },
+  { id: 14, dim: 'avoidance', reverse: false,
+    text: '你觉得自己不需要依赖任何人也能过得很好——独立比亲密更让你感到安全。' }
+];
+
+const PAGE_SIZES = [4, 3, 3, 4];
+const TOTAL_PAGES = PAGE_SIZES.length;
+const TOTAL_QS = questions.length;
+
+const pageDims = [
+  { name: '靠近的渴望', desc: '你是不是那个"总在确认"的人？', emoji: '💭' },
+  { name: '距离与保护', desc: '你需要多少"个人空间"？', emoji: '🧊' },
+  { name: '安全感的波动', desc: '在关系中，你容易感到不安吗？', emoji: '💭' },
+  { name: '亲密的边界', desc: '你离"走近"有多远？', emoji: '🧊' }
+];
+
+const likertOpts = [
+  { val: 1, label: '完全不符' },
+  { val: 2, label: '不太符合' },
+  { val: 3, label: '有时符合' },
+  { val: 4, label: '比较符合' },
+  { val: 5, label: '非常符合' }
+];
+
+let currentPage = 0;
+let answers = new Array(TOTAL_QS).fill(-1);
+
+function getPageStart(page) {
+  let s = 0;
+  for (let i = 0; i < page; i++) s += PAGE_SIZES[i];
+  return s;
+}
+
+function allAnsweredOnPage(page) {
+  const start = getPageStart(page);
+  for (let i = start; i < start + PAGE_SIZES[page]; i++) {
+    if (answers[i] < 0) return false;
+  }
+  return true;
+}
+
+function getDimScore(dim) {
+  let items = [];
+  questions.forEach((q, i) => {
+    if (answers[i] >= 0 && q.dim === dim) {
+      let v = answers[i];
+      if (q.reverse) v = 6 - v;
+      items.push(v);
+    }
+  });
+  if (items.length === 0) return 0;
+  let avg = items.reduce((s, v) => s + v, 0) / items.length;
+  return Math.round(avg * 10) / 10;
+}
+
+function getAttachmentType(anx, avd) {
+  const ha = anx >= 3.0, hv = avd >= 3.0;
+  if (!ha && !hv) return 'secure';
+  if (ha && !hv) return 'anxious';
+  if (!ha && hv) return 'avoidant';
+  return 'fearful';
+}
+
+const typeInfo = {
+  secure: {
+    icon: '🌳', name: '安全型依恋',
+    sub: '你拥有在亲密关系中"自如靠近"的能力',
+    desc: '你通常能够自在地与他人亲近，也享受独处。你信任伴侣，也相信自己值得被爱。当关系出现矛盾时，你不会过度恐慌也不会选择逃避，倾向于沟通和解决。你有建立稳定、健康亲密关系的潜力。',
+    suggestions: [
+      '你的安全型风格是一份礼物——你可以在关系中保持亲密而不迷失自我',
+      '注意不要因为自己"情绪稳定"，就忽视伴侣可能需要更多情感回应的需求',
+      '继续保持坦诚沟通的习惯，这是健康关系的核心',
+      '如果你在一段让你"变得焦虑"的关系里，也不用怀疑自己——关系是双方的'
+    ]
+  },
+  anxious: {
+    icon: '💗', name: '焦虑型依恋（痴迷型）',
+    sub: '你渴望被爱，但总担心会失去',
+    desc: '你在亲密关系中很容易投入全部的感情，但也容易被"不被爱"的恐惧笼罩。你需要很多确认和回应来获得安全感。这不是你"想太多"，而是你的依恋系统在提醒你——你非常在意这段关系。这种敏感既是你的软肋，也是你的天赋——你往往是最先察觉到关系变化的人。',
+    suggestions: [
+      '你的渴望被爱不是缺点——它只是说明你重视关系',
+      '试着练习"自我安抚"：当焦虑袭来时，先深呼吸三次，再判断事件是否真的值得担忧',
+      '学习区分"事实"和"感受"：ta没回消息≠ta不在乎你，但你的焦虑感受是真实的',
+      '和伴侣坦诚沟通你的"情感需求"，而不是期待ta自动猜到',
+      '可以尝试写作或咨询，探索你依恋风格的来源——这会带来深层的理解'
+    ]
+  },
+  avoidant: {
+    icon: '🦔', name: '回避型依恋（疏离型）',
+    sub: '你重视独立，但内心也有靠近的渴望',
+    desc: '你习惯了靠自己，把独立视为安全。当关系变得太亲密时，你会本能地后退——这不是你不爱对方，而是你的自我保护机制启动了。你内心深处其实也渴望被理解和接纳，只是靠近意味着风险。你在关系中往往是"先放手"的那个人，但这不一定是因为不在乎。',
+    suggestions: [
+      '你的独立是一种生存智慧，但真正的亲密需要"适度依赖"',
+      '试着在小事上练习依赖——让伴侣帮你一次小忙，或者分享一件小事的心情',
+      '关注自己"想逃"的时刻：那可能不是对方太近了，而是你的保护机制太敏感了',
+      '练习使用"我觉得……"句式来表达感受，而不是完全封闭自己',
+      '给自己时间——改变依恋风格是一个过程，不需要一步到位'
+    ]
+  },
+  fearful: {
+    icon: '🌪️', name: '混乱型依恋（恐惧型）',
+    sub: '你既渴望亲密，又害怕受到伤害',
+    desc: '你内心充满了矛盾：你渴望一段深刻的爱情，但当爱情靠近时，你又感到不安和恐惧。你可能上一秒还在热烈地爱着，下一秒就突然想推开对方。这常常让你和伴侣都感到困惑。请记住这是你内心保护机制在起作用——你不想受伤，所以你宁愿先推开。',
+    suggestions: [
+      '你内心同时住着"渴望被爱的小孩"和"保护自己的大人"——两者都是你，都值得被理解',
+      '重要的第一步：认识到自己的模式，停止自责。这不是你的错',
+      '在关系中尝试"慢慢来"——不要一开始就投入全部，也不要一感到害怕就全盘撤回',
+      '强烈建议考虑心理咨询——依恋创伤的修复，往往需要一个安全的专业关系作为起点',
+      '也可以从阅读开始：推荐《关系的重建》、《依恋》这两本书',
+      '请对自己温柔一点——你的矛盾不是混乱，而是你还没有找到信任关系的方式'
+    ]
+  }
+};
+
+function startQuiz() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-questions').classList.add('active');
+  currentPage = 0; renderPage();
+}
+
+function renderPage() {
+  const area = document.getElementById('questionArea');
+  const start = getPageStart(currentPage);
+  const size = PAGE_SIZES[currentPage];
+  const items = questions.slice(start, start + size);
+  const pd = pageDims[currentPage];
+
+  document.getElementById('pageHeader').innerHTML =
+    `<div class="dim-name">${pd.emoji} ${pd.name} · ${currentPage+1}/${TOTAL_PAGES}</div>
+     <div class="dim-desc">${pd.desc}</div>`;
+
+  let html = '';
+  items.forEach((q, idx) => {
+    const ri = start + idx;
+    const done = answers[ri] >= 0;
+    const tc = q.dim === 'anxiety' ? 'tag-anxiety' : 'tag-avoidance';
+    const tl = q.reverse ? (q.dim === 'anxiety' ? '焦虑(反向)' : '回避(反向)') : (q.dim === 'anxiety' ? '焦虑倾向' : '回避倾向');
+    html += `<div class="q-item ${done?'answered':''}" id="qitem-${ri}">
+      <span class="q-tag ${tc}">${tl}</span>
+      <div class="q-text"><span class="q-num ${done?'done':''}">${q.id}</span>${q.text}</div>
+      <div class="likert-row">`;
+    likertOpts.forEach(o => {
+      html += `<div class="opt"><input type="radio" name="q${ri}" value="${o.val}" id="q${ri}_v${o.val}" ${answers[ri]===o.val?'checked':''} onchange="setAnswer(${ri},${o.val})"><label for="q${ri}_v${o.val}"><span class="lbl-val">${o.val}</span><span class="lbl-txt">${o.label}</span></label></div>`;
+    });
+    html += `</div></div>`;
+  });
+  area.innerHTML = html;
+
+  const doneStart = getPageStart(currentPage);
+  const lastOnPage = doneStart + size;
+  const pct = Math.round((lastOnPage / TOTAL_QS) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${currentPage+1} / ${TOTAL_PAGES}`;
+  document.getElementById('btnPrev').style.display = currentPage === 0 ? 'none' : 'block';
+  const bn = document.getElementById('btnNext');
+  bn.textContent = currentPage === TOTAL_PAGES - 1 ? '下一步 →' : '下一页 →';
+  bn.disabled = !allAnsweredOnPage(currentPage);
+}
+
+function setAnswer(idx, val) {
+  answers[idx] = val;
+  document.getElementById('qitem-' + idx).classList.add('answered');
+  const el = document.querySelector('#qitem-' + idx + ' .q-num');
+  if (el) el.classList.add('done');
+  if (allAnsweredOnPage(currentPage)) document.getElementById('btnNext').disabled = false;
+}
+
+function nextPage() {
+  if (!allAnsweredOnPage(currentPage)) return;
+  if (currentPage < TOTAL_PAGES - 1) { currentPage++; renderPage(); }
+  else { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('screen-open').classList.add('active'); }
+}
+
+function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
+
+// ── Save assessment to user account (if logged in) ──
+async function saveRelationshipAssessment() {
+  const token = localStorage.getItem('treehole_token');
+  if (!token) return;
+  try {
+    const an = getDimScore('anxiety'), av = getDimScore('avoidance');
+    const t = getAttachmentType(an, av), info = typeInfo[t];
+    const resp = await fetch('/api/assessments', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        type: 'relationship',
+        scores: { anxiety: Math.round(an*10)/10, avoidance: Math.round(av*10)/10, type: info.name },
+        answers: answers,
+        summary: info.desc || info.name
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      document.getElementById('relSaveIndicator').textContent = '✅ 结果已保存到你的账户';
+      document.getElementById('relSaveIndicator').style.display = 'block';
+    }
+  } catch(e) { /* not logged in, silently ignore */ }
+}
+
+function showResults() {
+  const an = getDimScore('anxiety'), av = getDimScore('avoidance');
+  const t = getAttachmentType(an, av), info = typeInfo[t];
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-results').classList.add('active');
+  document.getElementById('typeBadge').innerHTML = `<div class="type-icon">${info.icon}</div><div class="type-name">${info.name}</div><div class="type-sub">${info.sub}</div>`;
+  document.getElementById('anxietyScore').textContent = an.toFixed(1);
+  document.getElementById('avoidanceScore').textContent = av.toFixed(1);
+  const al = document.getElementById('anxietyLabel'), vl = document.getElementById('avoidanceLabel');
+  al.textContent = an >= 3.0 ? '偏高' : '较低'; al.className = 'score-label ' + (an >= 3.0 ? 'high' : 'low');
+  vl.textContent = av >= 3.0 ? '偏高' : '较低'; vl.className = 'score-label ' + (av >= 3.0 ? 'high' : 'low');
+  document.getElementById('resultText').textContent = info.desc;
+  document.getElementById('suggestionList').innerHTML = info.suggestions.map(s => '<li>' + s + '</li>').join('');
+  document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
+  setTimeout(saveRelationshipAssessment, 200);
+}
+
+function talkToTreehole() {
+  const an = getDimScore('anxiety'), av = getDimScore('avoidance');
+  const t = getAttachmentType(an, av), info = typeInfo[t];
+  alert('💬 树洞对话即将上线！\n\n' + info.icon + ' ' + info.name + '\n焦虑维度：' + an.toFixed(1) + '/5\n回避维度：' + av.toFixed(1) + '/5\n\n很快就能和树洞聊聊你的关系模式了 🌱');
+}
+
+function restart() {
+  answers = new Array(TOTAL_QS).fill(-1); currentPage = 0;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-welcome').classList.add('active');
+  document.getElementById('progressFill').style.width = '0%';
+}
+</script>
+</body>
+</html>

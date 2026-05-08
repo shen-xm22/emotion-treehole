@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌿 情绪树洞 | 说说你的心事</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --sage:      #8B9D8B;
+      --sage-lt:   #C4D3C4;
+      --sage-pt:   #E8F0E8;
+      --rose:      #E8C4C8;
+      --rose-lt:   #F5E4E6;
+      --lavender:  #C9C0D3;
+      --lavender-lt: #EAE5F1;
+      --warm-bg:   #FAF6F1;
+      --cream:     #FDFBF9;
+      --brown:     #5D4E37;
+      --brown-lt:  #8B7D6A;
+      --shadow:    0 8px 32px rgba(93,78,55,0.10);
+      --radius:    20px;
+      --transition: 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+    }
+    html { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'Noto Sans SC', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--warm-bg);
+      color: var(--brown);
+      line-height: 1.7;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== Nature Background (from index.html) ===== */
+    .bg-nature {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+      background: linear-gradient(175deg,
+        #F6F0E8 0%,      #EDE8DA 18%,     #E0E1CF 38%,
+        #D1D7C2 55%,     #C2CEB3 72%,     #B6C5A6 85%,     #AEBFA0 100%
+      );
+    }
+    .sun-beam {
+      position: absolute; inset: -60% -40%;
+      background: radial-gradient(ellipse at 30% 15%, rgba(255,236,210,0.28) 0%, rgba(245,226,195,0.12) 25%, rgba(255,236,210,0.05) 45%, transparent 60%);
+      animation: driftSun 24s ease-in-out infinite alternate;
+      mix-blend-mode: overlay;
+    }
+    @keyframes driftSun {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(3%,2%) scale(1.05); }
+      100% { transform: translate(-3%,-1%) scale(0.97); }
+    }
+    .sun-beam-secondary {
+      position: absolute; inset: -30% -30%;
+      background: radial-gradient(ellipse at 75% 40%, rgba(245,227,200,0.18) 0%, rgba(240,220,190,0.08) 30%, transparent 55%);
+      animation: driftSun2 30s ease-in-out infinite alternate;
+      mix-blend-mode: overlay;
+    }
+    @keyframes driftSun2 {
+      0%   { transform: translate(0,0) scale(1); }
+      100% { transform: translate(4%,-3%) scale(1.08); }
+    }
+    .ground-glow {
+      position: absolute; bottom: -20%; left: 0; right: 0; height: 60%;
+      background: radial-gradient(ellipse at 50% 100%, rgba(180,200,160,0.20) 0%, rgba(170,190,150,0.08) 40%, transparent 70%);
+      animation: groundPulse 20s ease-in-out infinite alternate;
+    }
+    @keyframes groundPulse {
+      0%   { opacity: 0.7; transform: scaleY(1); }
+      100% { opacity: 1; transform: scaleY(1.05); }
+    }
+    .forest-blob {
+      position: absolute; border-radius: 50%; filter: blur(80px);
+      will-change: transform, opacity;
+    }
+    .forest-blob.sage-mist { width:700px; height:600px; background:var(--sage-lt); top:10%; left:-10%; opacity:0.12; animation:blobDrift1 35s ease-in-out infinite alternate; }
+    .forest-blob.rose-mist { width:500px; height:500px; background:var(--rose); bottom:15%; right:-8%; opacity:0.07; animation:blobDrift2 28s ease-in-out infinite alternate; }
+    .forest-blob.lav-mist { width:400px; height:400px; background:var(--lavender-lt); top:45%; right:-5%; opacity:0.09; animation:blobDrift3 32s ease-in-out infinite alternate; }
+    @keyframes blobDrift1 { 0%{transform:translate(0,0)scale(1)} 33%{transform:translate(40px,-25px)scale(1.06)} 66%{transform:translate(-30px,35px)scale(0.96)} 100%{transform:translate(20px,10px)scale(1.03)} }
+    @keyframes blobDrift2 { 0%{transform:translate(0,0)scale(1)} 50%{transform:translate(-35px,-20px)scale(1.08)} 100%{transform:translate(25px,30px)scale(0.95)} }
+    @keyframes blobDrift3 { 0%{transform:translate(0,0)scale(1)} 50%{transform:translate(25px,15px)scale(0.95)} 100%{transform:translate(-30px,-20px)scale(1.05)} }
+    .forest-blob.warm-glow {
+      width:600px; height:600px;
+      background:radial-gradient(circle, #EEE3D0, transparent);
+      top:50%; left:50%; transform:translate(-50%,-50%); opacity:0.08;
+      animation:blobDrift1 40s ease-in-out infinite alternate;
+    }
+    .forest-texture {
+      position:absolute; inset:0; opacity:0.025;
+      background-image: radial-gradient(circle at 15% 30%, var(--sage) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 70% 25%, var(--sage-lt) 0.6px, transparent 0.6px);
+      background-size: 100px 100px, 180px 180px;
+      animation: textureShift 80s linear infinite alternate;
+    }
+    @keyframes textureShift {
+      0% { background-position: 0 0, 50px 30px; }
+      100% { background-position: 60px 40px, 100px 80px; }
+    }
+    .vignette { position:absolute; inset:0; background:radial-gradient(ellipse at center, transparent 35%, rgba(93,78,55,0.06) 100%); }
+
+    /* ===== Floating Decorations ===== */
+    .deco-container { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+    .deco-leaf { position:absolute; opacity:0.10; font-size:28px; animation: floatLeaf 14s ease-in-out infinite; }
+    .deco-leaf:nth-child(1){top:8%;left:3%;animation-delay:0s}
+    .deco-leaf:nth-child(2){top:20%;right:6%;animation-delay:-3.5s;font-size:22px}
+    .deco-leaf:nth-child(3){bottom:30%;left:5%;animation-delay:-7s;font-size:24px}
+    .deco-leaf:nth-child(4){bottom:15%;right:3%;animation-delay:-10.5s;font-size:30px}
+    @keyframes floatLeaf {
+      0%,100%{transform:translateY(0)rotate(0deg)}
+      25%{transform:translateY(-18px)rotate(5deg)}
+      50%{transform:translateY(-8px)rotate(-3deg)}
+      75%{transform:translateY(-20px)rotate(4deg)}
+    }
+
+    /* ===== Header ===== */
+    header {
+      flex-shrink: 0;
+      padding: 12px 24px;
+      background: rgba(250,246,241,0.88);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 100;
+      border-bottom: 1px solid rgba(93,78,55,0.06);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--brown); font-weight: 600; font-size: 18px; }
+    .logo-icon { font-size: 28px; }
+    header nav { display: flex; align-items: center; gap: 24px; }
+    header nav a { text-decoration: none; color: var(--brown-lt); font-size: 14px; font-weight: 500; transition: color 0.3s; }
+    header nav a:hover { color: var(--brown); }
+    .header-back { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 50px; background: var(--sage-pt); color: var(--sage) !important; font-size: 13px !important; }
+
+    /* ===== Chat Area ===== */
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+    .chat-container::-webkit-scrollbar { width: 5px; }
+    .chat-container::-webkit-scrollbar-track { background: transparent; }
+    .chat-container::-webkit-scrollbar-thumb { background: var(--sage-lt); border-radius: 3px; }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: none;
+      align-self: flex-start;
+      background: rgba(253,251,249,0.90);
+      backdrop-filter: blur(8px);
+      border-radius: 16px 16px 16px 4px;
+      padding: 14px 20px;
+      box-shadow: 0 2px 12px rgba(93,78,55,0.06);
+      gap: 4px;
+    }
+    .typing-indicator.active { display: flex; }
+    .typing-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--sage);
+      animation: typingBounce 1.2s ease-in-out infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%,60%,100% { transform: translateY(0); }
+      30% { transform: translateY(-8px); }
+    }
+
+    /* ===== Message Bubbles ===== */
+    .msg {
+      max-width: 82%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 15px;
+      line-height: 1.7;
+      word-wrap: break-word;
+      animation: msgIn 0.35s ease both;
+      position: relative;
+    }
+    @keyframes msgIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: rgba(253,251,249,0.92);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 12px rgba(93,78,55,0.06);
+      border-radius: 16px 16px 16px 4px;
+      color: var(--brown);
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--sage);
+      color: #fff;
+      border-radius: 16px 16px 4px 16px;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: var(--brown-lt);
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    .msg.user .msg-time {
+      text-align: right;
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* ===== Welcome message ===== */
+    .welcome-card {
+      align-self: center;
+      text-align: center;
+      background: rgba(253,251,249,0.80);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      padding: 28px 24px;
+      max-width: 360px;
+      box-shadow: 0 2px 20px rgba(93,78,55,0.06);
+      margin: 10px 0;
+      animation: msgIn 0.6s ease both;
+    }
+    .welcome-card .icon { font-size: 40px; margin-bottom: 8px; }
+    .welcome-card h3 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+    .welcome-card p { font-size: 13px; color: var(--brown-lt); font-weight: 300; }
+
+    /* ===== Input Area ===== */
+    .input-area {
+      flex-shrink: 0;
+      padding: 12px 16px 16px;
+      background: linear-gradient(0deg, rgba(250,246,241,0.95) 0%, rgba(250,246,241,0.80) 80%, transparent 100%);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .input-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      background: rgba(253,251,249,0.92);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      border: 1.5px solid rgba(139,157,139,0.15);
+      transition: border-color 0.3s;
+      overflow: hidden;
+    }
+    .input-wrapper:focus-within { border-color: var(--sage); }
+    #msgInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--brown);
+      padding: 12px 16px;
+      resize: none;
+      max-height: 100px;
+      line-height: 1.5;
+    }
+    #msgInput::placeholder { color: var(--brown-lt); opacity: 0.5; }
+    #sendBtn {
+      width: 42px; height: 42px;
+      border: none;
+      background: var(--sage);
+      color: #fff;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      margin: 6px;
+      flex-shrink: 0;
+    }
+    #sendBtn:hover { background: #798C79; transform: scale(1.05); }
+    #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ===== Status bar ===== */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--brown-lt);
+      opacity: 0.5;
+      padding: 4px 0;
+    }
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--sage); }
+    .status-dot.connecting { animation: pulsing 1.2s ease infinite; }
+    @keyframes pulsing { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ===== Topic Tags ===== */
+    .topic-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 6px 0 2px;
+    }
+    .topic-tag {
+      font-size: 12px;
+      padding: 4px 14px;
+      border-radius: 50px;
+      border: 1px solid rgba(139,157,139,0.2);
+      background: rgba(253,251,249,0.6);
+      color: var(--brown-lt);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .topic-tag:hover {
+      background: var(--sage-pt);
+      border-color: var(--sage);
+      color: var(--sage);
+    }
+
+    /* ===== Auth Display in Header ===== */
+    .auth-display { display: flex; align-items: center; gap: 8px; }
+    .auth-display .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%; background: var(--sage);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: var(--transition); flex-shrink: 0;
+    }
+    .auth-display .user-avatar:hover { transform: scale(1.05); }
+    .auth-btn { font-size: 13px; color: var(--brown-lt); text-decoration: none; font-weight: 500; transition: color 0.3s; }
+    .auth-btn:hover { color: var(--brown); }
+    .auth-btn.register { background: var(--sage); color: #fff; padding: 6px 14px; border-radius: 50px; }
+    .auth-btn.register:hover { background: #798C79; }
+
+    /* ===== Login Prompt Overlay ===== */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(93,78,55,0.20);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .login-overlay.show { opacity: 1; pointer-events: auto; }
+    .login-overlay-card {
+      background: rgba(253,251,249,0.97);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 40px 36px 32px;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(93,78,55,0.15);
+      border: 1px solid rgba(139,157,139,0.10);
+      transform: translateY(20px);
+      transition: transform 0.4s ease;
+    }
+    .login-overlay.show .login-overlay-card { transform: translateY(0); }
+    .login-overlay-card .icon { font-size: 48px; margin-bottom: 12px; }
+    .login-overlay-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+    .login-overlay-card p { font-size: 14px; color: var(--brown-lt); line-height: 1.6; margin-bottom: 20px; }
+    .login-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .login-btns .btn {
+      padding: 10px 24px; border-radius: 50px; font-size: 14px; font-weight: 500;
+      font-family: inherit; border: none; cursor: pointer; text-decoration: none;
+      transition: var(--transition);
+    }
+    .login-btns .btn-primary { background: var(--sage); color: #fff; }
+    .login-btns .btn-primary:hover { background: #798C79; transform: translateY(-1px); }
+    .login-btns .btn-secondary { background: transparent; color: var(--brown-lt); border: 1px solid var(--brown-lt); }
+    .login-btns .btn-secondary:hover { background: var(--sage-pt); border-color: var(--sage); color: var(--sage); }
+
+    /* ===== Profile Onboarding Modal ===== */
+    .profile-modal {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(93,78,55,0.20);
+      backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .profile-modal.show { opacity: 1; pointer-events: auto; }
+    .profile-modal-card {
+      background: rgba(253,251,249,0.97);
+      backdrop-filter: blur(16px);
+      border-radius: 24px;
+      padding: 36px 32px;
+      max-width: 440px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(93,78,55,0.15);
+      border: 1px solid rgba(139,157,139,0.10);
+      transform: translateY(20px);
+      transition: transform 0.4s ease;
+    }
+    .profile-modal.show .profile-modal-card { transform: translateY(0); }
+    .profile-modal-card h3 { font-size: 20px; font-weight: 600; text-align: center; margin-bottom: 4px; }
+    .profile-modal-card .sub { font-size: 13px; color: var(--brown-lt); text-align: center; margin-bottom: 20px; }
+    .profile-form { display: flex; flex-direction: column; gap: 14px; }
+    .pf-group { display: flex; flex-direction: column; gap: 4px; }
+    .pf-group label { font-size: 13px; font-weight: 500; color: var(--brown-lt); }
+    .pf-group input, .pf-group select {
+      padding: 10px 14px;
+      border: 1.5px solid rgba(139,157,139,0.20);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: rgba(255,255,255,0.7);
+      color: var(--brown);
+      transition: border-color 0.3s;
+      outline: none;
+    }
+    .pf-group input:focus, .pf-group select:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(139,157,139,0.10);
+    }
+    .pf-group input::placeholder { color: rgba(139,125,106,0.4); }
+    .pf-row { display: flex; gap: 12px; }
+    .pf-row .pf-group { flex: 1; }
+    .hobbies-tags {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 6px 0;
+    }
+    .hobby-tag {
+      font-size: 12px; padding: 4px 12px; border-radius: 50px;
+      border: 1px solid rgba(139,157,139,0.2);
+      background: rgba(253,251,249,0.6);
+      color: var(--brown-lt); cursor: pointer;
+      transition: all 0.3s;
+    }
+    .hobby-tag:hover { border-color: var(--sage); color: var(--sage); }
+    .hobby-tag.selected { background: var(--sage); color: #fff; border-color: var(--sage); }
+    .profile-actions {
+      display: flex; gap: 10px; margin-top: 8px;
+    }
+    .profile-actions .btn {
+      flex: 1; padding: 12px; border-radius: 12px;
+      font-size: 14px; font-weight: 500;
+      font-family: inherit; border: none; cursor: pointer;
+      transition: var(--transition); text-align: center;
+    }
+    .profile-actions .btn-save { background: var(--sage); color: #fff; }
+    .profile-actions .btn-save:hover { background: #798C79; }
+    .profile-actions .btn-skip { background: transparent; color: var(--brown-lt); border: 1px solid rgba(139,157,139,0.2); }
+    .profile-actions .btn-skip:hover { background: var(--sage-pt); }
+
+    .pf-success {
+      text-align: center; padding: 20px 0;
+      display: none;
+    }
+    .pf-success .icon { font-size: 48px; margin-bottom: 8px; }
+    .pf-success h4 { font-weight: 600; margin-bottom: 4px; }
+    .pf-success p { font-size: 13px; color: var(--brown-lt); }
+
+    /* ===== Loading Overlay ===== */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(250,246,241,0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      transition: opacity 0.5s ease;
+    }
+    .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--sage-lt);
+      border-top-color: var(--sage);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-overlay p { font-size: 14px; color: var(--brown-lt); font-weight: 300; }
+
+    /* ===== Smooth scroll offset ===== */
+    .scroll-anchor { height: 4px; flex-shrink: 0; }
+
+    @media (max-width: 500px) {
+      .msg { max-width: 90%; font-size: 14px; padding: 12px 14px; }
+      .input-area { padding: 10px 12px 14px; }
+      header { padding: 10px 16px; }
+      header nav a.header-back { font-size: 12px !important; padding: 4px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Background (copied from index.html) -->
+  <div class="bg-nature">
+    <div class="sun-beam"></div>
+    <div class="sun-beam-secondary"></div>
+    <div class="ground-glow"></div>
+    <div class="forest-blob sage-mist"></div>
+    <div class="forest-blob rose-mist"></div>
+    <div class="forest-blob lav-mist"></div>
+    <div class="forest-blob warm-glow"></div>
+    <div class="forest-texture"></div>
+    <div class="vignette"></div>
+  </div>
+  <div class="deco-container">
+    <span class="deco-leaf">🍃</span>
+    <span class="deco-leaf">🌿</span>
+    <span class="deco-leaf">🍂</span>
+    <span class="deco-leaf">🌱</span>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="index.html" class="logo"><span class="logo-icon">🌿</span><span>情绪树洞</span></a>
+    <nav>
+      <a href="index.html#modules" class="header-back">← 返回首页</a>
+      <a href="#" id="newChatBtn" style="padding:6px 14px;border-radius:50px;background:var(--sage-pt);color:var(--sage) !important;font-size:13px !important;">↻ 新对话</a>
+    </nav>
+  </header>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <p>正在敲敲门，看看树洞在不在……</p>
+  </div>
+
+  <!-- Chat Messages Area -->
+  <div class="chat-container" id="chatContainer">
+    <div class="welcome-card" id="welcomeCard">
+      <div class="icon">🌱</div>
+      <h3>抱抱自己，深呼吸</h3>
+      <p>这里很安全，你想说什么都可以。树洞在听。</p>
+    </div>
+  </div>
+
+  <!-- Typing Indicator -->
+  <div class="typing-indicator" id="typingIndicator">
+    <span class="typing-dot"></span>
+    <span class="typing-dot"></span>
+    <span class="typing-dot"></span>
+  </div>
+
+  <!-- Quick Topic Tags (shown when no messages yet) -->
+  <div style="flex-shrink:0;padding:0 16px 6px;text-align:center;" id="topicArea">
+    <div class="topic-tags" style="justify-content:center;">
+      <span class="topic-tag" data-topic="最近压力很大">😮‍💨 最近压力很大</span>
+      <span class="topic-tag" data-topic="和对象吵架了">💔 和对象吵架了</span>
+      <span class="topic-tag" data-topic="工作好累">💼 工作好累</span>
+      <span class="topic-tag" data-topic="失眠睡不着">🌙 失眠睡不着</span>
+      <span class="topic-tag" data-topic="不知道要做什么">🌀 不知道要做什么</span>
+    </div>
+  </div>
+
+  <!-- Input Area -->
+  <div class="input-area">
+    <div class="input-wrapper">
+      <textarea id="msgInput" rows="1" placeholder="说说你的心事…" maxlength="500"></textarea>
+      <button id="sendBtn" disabled aria-label="发送">✉</button>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">连接中…</span>
+  </div>
+
+  <div class="scroll-anchor" id="scrollAnchor"></div>
+
+  <!-- ===== Login Prompt Overlay ===== -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-overlay-card">
+      <div class="icon">🔒</div>
+      <h3>登录后体验更完整</h3>
+      <p>登录后，AI 会记住你的测评结果和个人信息，<br>给你更贴心的陪伴和更有针对性的回应。</p>
+      <div class="login-btns">
+        <a href="auth.html?redirect=treehole.html" class="btn btn-primary">登录 / 注册</a>
+        <button class="btn btn-secondary" onclick="dismissLoginPrompt()">先逛逛 →</button>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--brown-lt);opacity:0.6;">匿名使用也不会记录你的个人信息哦</div>
+    </div>
+  </div>
+
+  <!-- ===== Profile Onboarding Modal ===== -->
+  <div class="profile-modal" id="profileModal">
+    <div class="profile-modal-card" id="profileModalCard">
+      <!-- Form content -->
+      <div id="profileFormContent">
+        <h3>👤 让树洞更懂你</h3>
+        <p class="sub">这些信息会让我们的聊天更贴心，也可以跳过不填</p>
+        <div class="profile-form">
+          <div class="pf-group">
+            <label>怎么称呼你？</label>
+            <input type="text" id="pfNickname" placeholder="你的名字或昵称" maxlength="20">
+          </div>
+          <div class="pf-row">
+            <div class="pf-group">
+              <label>🌟 星座</label>
+              <select id="pfZodiac">
+                <option value="">请选择</option>
+                <option value="白羊座">♈ 白羊座 3/21-4/19</option>
+                <option value="金牛座">♉ 金牛座 4/20-5/20</option>
+                <option value="双子座">♊ 双子座 5/21-6/21</option>
+                <option value="巨蟹座">♋ 巨蟹座 6/22-7/22</option>
+                <option value="狮子座">♌ 狮子座 7/23-8/22</option>
+                <option value="处女座">♍ 处女座 8/23-9/22</option>
+                <option value="天秤座">♎ 天秤座 9/23-10/23</option>
+                <option value="天蝎座">♏ 天蝎座 10/24-11/22</option>
+                <option value="射手座">♐ 射手座 11/23-12/21</option>
+                <option value="摩羯座">♑ 摩羯座 12/22-1/19</option>
+                <option value="水瓶座">♒ 水瓶座 1/20-2/18</option>
+                <option value="双鱼座">♓ 双鱼座 2/19-3/20</option>
+              </select>
+            </div>
+            <div class="pf-group">
+              <label>🧠 MBTI</label>
+              <select id="pfMbti">
+                <option value="">请选择</option>
+                <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
+                <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
+                <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
+                <option>ISTP</option><option>ISFP</option><option>ESTP</option><option>ESFP</option>
+              </select>
+            </div>
+          </div>
+          <div class="pf-row">
+            <div class="pf-group">
+              <label>🎂 出生日期</label>
+              <input type="date" id="pfBirth">
+            </div>
+            <div class="pf-group">
+              <label>⚤ 性别</label>
+              <select id="pfGender">
+                <option value="">不透露</option>
+                <option value="男">男</option>
+                <option value="女">女</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+          </div>
+          <div class="pf-group">
+            <label>🎯 爱好（点选，可多选）</label>
+            <div class="hobbies-tags" id="hobbiesTags">
+              <span class="hobby-tag">阅读</span>
+              <span class="hobby-tag">音乐</span>
+              <span class="hobby-tag">电影</span>
+              <span class="hobby-tag">运动</span>
+              <span class="hobby-tag">旅行</span>
+              <span class="hobby-tag">摄影</span>
+              <span class="hobby-tag">绘画</span>
+              <span class="hobby-tag">游戏</span>
+              <span class="hobby-tag">烹饪</span>
+              <span class="hobby-tag">写作</span>
+              <span class="hobby-tag">手工</span>
+              <span class="hobby-tag">宠物</span>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button class="btn btn-skip" onclick="skipProfile()">跳过</button>
+            <button class="btn btn-save" onclick="saveProfile()">保存 ✨</button>
+          </div>
+        </div>
+      </div>
+      <!-- Success state -->
+      <div class="pf-success" id="profileSuccess">
+        <div class="icon">🌿</div>
+        <h4>谢谢你告诉我这些</h4>
+        <p>树洞已经记住你了，聊聊你的心事吧</p>
+        <button class="btn btn-save" onclick="closeProfileModal()" style="margin-top:16px;padding:10px 28px;border-radius:50px;border:none;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;">开始聊天 →</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Configuration =====
+    const API_BASE = '';
+
+    let sessionId = localStorage.getItem('treehole_session');
+    let isSending = false;
+    let initDone = false;
+
+    // ===== DOM Elements =====
+    const chatEl = document.getElementById('chatContainer');
+    const inputEl = document.getElementById('msgInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingEl = document.getElementById('typingIndicator');
+    const loadingEl = document.getElementById('loadingOverlay');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const topicArea = document.getElementById('topicArea');
+    const welcomeCard = document.getElementById('welcomeCard');
+    const loginOverlay = document.getElementById('loginOverlay');
+    const profileModal = document.getElementById('profileModal');
+
+    // ===== Auth Utilities =====
+    function getToken() { return localStorage.getItem('treehole_token'); }
+    function getUser() {
+      try { return JSON.parse(localStorage.getItem('treehole_user')); }
+      catch(e) { return null; }
+    }
+    function isLoggedIn() { return !!getToken(); }
+
+    function renderAuth() {
+      const header = document.querySelector('header');
+      if (!header) return;
+      const existing = document.querySelector('.auth-display-treehole');
+      if (existing) existing.remove();
+
+      const el = document.createElement('div');
+      el.className = 'auth-display auth-display-treehole';
+      el.style.marginLeft = 'auto';
+
+      if (!isLoggedIn()) {
+        el.innerHTML = '<a href="auth.html?redirect=treehole.html" class="auth-btn">登录</a><a href="auth.html?redirect=treehole.html" class="auth-btn register">注册</a>';
+      } else {
+        const user = getUser();
+        const initial = user && user.username ? user.username.charAt(0).toUpperCase() : '?';
+        el.innerHTML = '<span class="user-avatar" title="' + (user?.username || '') + '">' + initial + '</span>';
+        el.style.cursor = 'pointer';
+        el.onclick = function(e) {
+          if (confirm('退出登录？')) {
+            localStorage.removeItem('treehole_token');
+            localStorage.removeItem('treehole_user');
+            window.location.reload();
+          }
+        };
+      }
+
+      const nav = header.querySelector('nav');
+      if (nav) nav.before(el);
+    }
+
+    // ===== Login Prompt =====
+    function shouldShowLoginPrompt() {
+      // Show login prompt once per session
+      if (isLoggedIn()) return false;
+      return !sessionStorage.getItem('treehole_logindismissed');
+    }
+
+    function showLoginPrompt() {
+      loginOverlay.classList.add('show');
+    }
+
+    function dismissLoginPrompt() {
+      sessionStorage.setItem('treehole_logindismissed', '1');
+      loginOverlay.classList.remove('show');
+    }
+
+    // ===== Profile Onboarding =====
+    let profileSkipFlag = false;
+
+    async function checkProfileOnboarding() {
+      if (!isLoggedIn()) return;
+      if (sessionStorage.getItem('treehole_profileskipped')) return;
+      if (profileSkipFlag) return;
+
+      try {
+        const resp = await fetch(API_BASE + '/api/profile', {
+          headers: { 'Authorization': 'Bearer ' + getToken() }
+        });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.profile_empty) {
+          setTimeout(() => showProfileModal(), 800);
+        }
+      } catch(e) {
+        console.log('Profile check failed:', e);
+      }
+    }
+
+    function showProfileModal() {
+      // Reset form
+      document.getElementById('profileFormContent').style.display = '';
+      document.getElementById('profileSuccess').style.display = 'none';
+      profileModal.classList.add('show');
+    }
+
+    function closeProfileModal() {
+      profileModal.classList.remove('show');
+    }
+
+    function skipProfile() {
+      sessionStorage.setItem('treehole_profileskipped', '1');
+      profileSkipFlag = true;
+      closeProfileModal();
+    }
+
+    function getSelectedHobbies() {
+      return Array.from(document.querySelectorAll('.hobby-tag.selected')).map(el => el.textContent.trim());
+    }
+
+    async function saveProfile() {
+      const data = {
+        nickname: document.getElementById('pfNickname').value.trim(),
+        zodiac: document.getElementById('pfZodiac').value,
+        mbti: document.getElementById('pfMbti').value,
+        birth_date: document.getElementById('pfBirth').value,
+        gender: document.getElementById('pfGender').value,
+        hobbies: getSelectedHobbies()
+      };
+
+      // If nothing filled, treat as skip
+      if (!data.nickname && !data.zodiac && !data.mbti && !data.birth_date && !data.gender && data.hobbies.length === 0) {
+        skipProfile();
+        return;
+      }
+
+      try {
+        const resp = await fetch(API_BASE + '/api/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getToken()
+          },
+          body: JSON.stringify(data)
+        });
+        if (!resp.ok) throw new Error('保存失败');
+
+        // Show success
+        document.getElementById('profileFormContent').style.display = 'none';
+        document.getElementById('profileSuccess').style.display = 'block';
+        sessionStorage.setItem('treehole_profileskipped', '1');
+      } catch(err) {
+        alert('保存失败，请稍后再试：' + err.message);
+      }
+    }
+
+    // Hobby tags toggle
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('hobby-tag')) {
+        e.target.classList.toggle('selected');
+      }
+    });
+
+    // ===== Utility =====
+    function scrollToBottom(smooth) {
+      chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    }
+
+    function getTimeStr() {
+      const now = new Date();
+      return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+    }
+
+    function setStatus(text, ok) {
+      statusText.textContent = text;
+      statusDot.className = 'status-dot' + (ok ? '' : ' connecting');
+    }
+
+    // ===== Add Message to Chat =====
+    function addMessage(role, content) {
+      if (role === 'ai' && !initDone) {
+        welcomeCard.style.display = 'none';
+      }
+      const div = document.createElement('div');
+      div.className = 'msg ' + (role === 'ai' ? 'ai' : 'user');
+      div.innerHTML = '<div class="msg-text">' + escapeHtml(content) + '</div>';
+      if (role === 'user') {
+        div.innerHTML += '<div class="msg-time">' + getTimeStr() + '</div>';
+      }
+      chatEl.appendChild(div);
+      scrollToBottom(true);
+    }
+
+    function escapeHtml(text) {
+      const d = document.createElement('div');
+      d.textContent = text;
+      return d.innerHTML;
+    }
+
+    // ===== API Calls =====
+    async function initTreehole() {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+
+      // ===== Try to restore history =====
+      if (sessionId) {
+        try {
+          const histResp = await fetch(API_BASE + '/api/chat/history', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ sessionId: sessionId })
+          });
+          if (histResp.ok) {
+            const hist = await histResp.json();
+            if (hist.messages && hist.messages.length > 0) {
+              // Restore messages, skipping system role
+              hist.messages.forEach(m => {
+                if (m.role === 'user' || m.role === 'assistant') {
+                  addMessage(m.role === 'assistant' ? 'ai' : 'user', m.content);
+                }
+              });
+              initDone = true;
+              loadingEl.classList.add('hidden');
+              setStatus('已连接', true);
+              sendBtn.disabled = false;
+              inputEl.focus();
+              // Show welcome card but with subtle text
+              welcomeCard.querySelector('h3').textContent = '🌱 欢迎回来';
+              welcomeCard.querySelector('p').textContent = '继续我们上次的聊天吧。';
+              welcomeCard.style.display = 'block';
+              checkProfileOnboarding();
+              if (shouldShowLoginPrompt()) setTimeout(showLoginPrompt, 500);
+              return;
+            }
+          }
+        } catch(e) {
+          console.warn('History restore failed, starting fresh');
+        }
+      }
+
+      // ===== No history → create new session =====
+      if (!sessionId) {
+        sessionId = 'th_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+        localStorage.setItem('treehole_session', sessionId);
+      }
+
+      // Show login prompt if applicable
+      if (shouldShowLoginPrompt()) {
+        setTimeout(showLoginPrompt, 500);
+      }
+
+      // Check profile onboarding
+      checkProfileOnboarding();
+
+      try {
+        setStatus('树洞准备中…', false);
+
+        const resp = await fetch(API_BASE + '/api/chat/init', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            sessionId: sessionId,
+            assessments: {},
+            freeWrite: ''
+          })
+        });
+
+        if (!resp.ok) throw new Error('服务器返回 ' + resp.status);
+
+        const data = await resp.json();
+        initDone = true;
+
+        addMessage('ai', data.greeting);
+        welcomeCard.querySelector('h3').textContent = '✨ 树洞已开启';
+        welcomeCard.querySelector('p').textContent = '你的心事，我会好好记住。想聊什么都可以。';
+        welcomeCard.style.display = 'block';
+
+        loadingEl.classList.add('hidden');
+        setStatus('已连接', true);
+        sendBtn.disabled = false;
+        inputEl.focus();
+      } catch (err) {
+        console.error('Init error:', err);
+        loadingEl.classList.add('hidden');
+        addMessage('ai', '嗨，我在这里呢。虽然暂时没连上服务器，但你想说什么可以先跟我说。');
+        setStatus('离线模式', false);
+        sendBtn.disabled = false;
+        welcomeCard.style.display = 'none';
+      }
+    }
+
+    async function sendMessage(text) {
+      if (isSending || !text.trim()) return;
+      isSending = true;
+      sendBtn.disabled = true;
+      topicArea.style.display = 'none';
+
+      addMessage('user', text.trim());
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+
+      typingEl.classList.add('active');
+      setStatus('树洞正在思考…', false);
+      scrollToBottom(true);
+
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        const token = getToken();
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        const resp = await fetch(API_BASE + '/api/chat/message', {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            sessionId: sessionId,
+            message: text.trim()
+          })
+        });
+
+        typingEl.classList.remove('active');
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(errText);
+        }
+
+        const data = await resp.json();
+        addMessage('ai', data.reply);
+        setStatus('已连接', true);
+      } catch (err) {
+        console.error('Send error:', err);
+        typingEl.classList.remove('active');
+        let fallback = '嗯，我在听。你继续说，我在这里。';
+        if (err.message && err.message.includes('502')) {
+          fallback = '嗯，我还在。有时需要想一下，你介意等一小会儿吗？';
+        }
+        addMessage('ai', fallback);
+        setStatus('连接不稳定', false);
+      } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+        if (!inputEl.value.trim()) inputEl.focus();
+      }
+    }
+
+    // ===== New Chat =====
+    function newChat() {
+      if (isSending) return;
+      sessionId = 'th_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+      localStorage.setItem('treehole_session', sessionId);
+      initDone = false;
+
+      const msgs = chatEl.querySelectorAll('.msg');
+      msgs.forEach(m => m.remove());
+      welcomeCard.querySelector('h3').textContent = '🌱 抱抱自己，深呼吸';
+      welcomeCard.querySelector('p').textContent = '这里很安全，你想说什么都可以。树洞在听。';
+      welcomeCard.style.display = 'block';
+      topicArea.style.display = '';
+      typingEl.classList.remove('active');
+      setStatus('连接中…', false);
+
+      loadingEl.classList.remove('hidden');
+      initTreehole();
+    }
+
+    // ===== Event Listeners =====
+    sendBtn.addEventListener('click', () => sendMessage(inputEl.value));
+
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(inputEl.value);
+      }
+    });
+
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 100) + 'px';
+    });
+
+    document.querySelectorAll('.topic-tag').forEach(tag => {
+      tag.addEventListener('click', () => sendMessage(tag.dataset.topic));
+    });
+
+    document.getElementById('newChatBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('开始新对话？之前的对话记录不会丢失。')) {
+        newChat();
+      }
+    });
+
+    // ===== Init =====
+    renderAuth();
+    initTreehole();
+  </script>
+</body>
+</html>
