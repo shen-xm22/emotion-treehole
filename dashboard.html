@@ -319,7 +319,7 @@ function renderDashboard() {
   if (p.gender) tags.push('⚤ ' + p.gender);
   if (p.hobbies && p.hobbies.length) tags.push(...p.hobbies.slice(0,3).map(h => '🎯 ' + h));
 
-  const createdDate = userData.created_at ? new Date(userData.created_at + 'Z').toLocaleDateString('zh-CN') : '—';
+  const createdDate = userData.created_at ? new Date(userData.created_at).toLocaleDateString('zh-CN') : '—';
 
   app.innerHTML = `
     <div class="profile-card">
@@ -428,7 +428,7 @@ function renderAssessments() {
   }
 
   return assessments.map(a => {
-    const d = new Date(a.created_at + 'Z');
+    const d = new Date(a.created_at);
     const dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
     const scores = a.scores || {};
     let summaryLine = a.summary || '';
