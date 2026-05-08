@@ -44,7 +44,8 @@ JWT_EXPIRY_HOURS = 72
 # ─── Auth 辅助函数 ──────────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    return bcrypt.hash(password)
+    # bcrypt 限制最长 72 字节
+    return bcrypt.hash(password[:72].encode("utf-8"))
 
 def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.verify(password, password_hash)
@@ -151,7 +152,7 @@ def init_db():
 class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=2, max_length=30)
     email: str = Field(..., max_length=100)
-    password: str = Field(..., min_length=6, max_length=100)
+    password: str = Field(..., min_length=6, max_length=72)
 
 class LoginRequest(BaseModel):
     email: str = Field(..., max_length=100)
