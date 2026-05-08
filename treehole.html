@@ -521,6 +521,11 @@
   <!-- Header -->
   <header>
     <a href="index.html" class="logo"><span class="logo-icon">🌿</span><span>情绪树洞</span></a>
+    <div class="session-context" id="sessionContext" style="display:none;flex:1;min-width:0;align-items:center;gap:8px;padding:0 10px;font-size:13px;overflow:hidden">
+      <a href="dashboard.html" style="white-space:nowrap;color:var(--brown-lt);text-decoration:none;flex-shrink:0">← 会话列表</a>
+      <span style="color:var(--brown-lt)">·</span>
+      <span id="sessionTitleDisplay" style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="点击修改标题"></span>
+    </div>
     <nav>
       <a href="index.html#modules" class="header-back">← 返回首页</a>
       <a href="#" id="newChatBtn" style="padding:6px 14px;border-radius:50px;background:var(--sage-pt);color:var(--sage) !important;font-size:13px !important;">↻ 新对话</a>
@@ -684,7 +689,13 @@
     // ===== Configuration =====
     const API_BASE = '';
 
-    let sessionId = localStorage.getItem('treehole_session');
+    // Parse URL params
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSession = urlParams.get('session');
+
+    // Session ID: URL param > localStorage fallback
+    let sessionId = urlSession || localStorage.getItem('treehole_session');
+    let sessionTitle = '';
     let isSending = false;
     let initDone = false;
 
@@ -883,6 +894,40 @@
       const token = getToken();
       if (token) headers['Authorization'] = 'Bearer ' + token;
 
+      // ===== Session management =====
+      if (isLoggedIn()) {
+        // Logged-in: session must come from URL (or create new later)
+        if (!urlSession) {
+          // No session specified → redirect to dashboard
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        // Show session context in header
+        const ctx = document.getElementById('sessionContext');
+        if (ctx) ctx.style.display = 'flex';
+
+        // Load session info
+        try {
+          const sessResp = await fetch(API_BASE + '/api/chat/sessions', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (sessResp.ok) {
+            const sessData = await sessResp.json();
+            const curSess = (sessData.sessions || []).find(s => s.session_id === urlSession);
+            if (curSess && curSess.title) {
+              sessionTitle = curSess.title;
+              document.getElementById('sessionTitleDisplay').textContent = sessionTitle;
+            }
+          }
+        } catch(e) { /* ignore */ }
+      } else {
+        // Not logged-in: use localStorage fallback
+        if (!sessionId) {
+          sessionId = 'th_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+          localStorage.setItem('treehole_session', sessionId);
+        }
+      }
+
       // ===== Try to restore history =====
       if (sessionId) {
         try {
@@ -1026,6 +1071,20 @@
     // ===== New Chat =====
     function newChat() {
       if (isSending) return;
+
+      // Logged-in: create session via API, redirect to URL param
+      if (isLoggedIn()) {
+        fetch(API_BASE + '/api/chat/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() }
+        })
+        .then(r => r.json())
+        .then(d => { window.location.href = 'treehole.html?session=' + encodeURIComponent(d.session_id); })
+        .catch(() => { alert('创建会话失败，请重试'); });
+        return;
+      }
+
+      // Not logged-in: local session as before
       sessionId = 'th_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
       localStorage.setItem('treehole_session', sessionId);
       initDone = false;
@@ -1072,6 +1131,27 @@
     // ===== Init =====
     renderAuth();
     initTreehole();
+
+    // Session title click to rename
+    document.addEventListener('click', function(e) {
+      const titleEl = document.getElementById('sessionTitleDisplay');
+      const ctx = document.getElementById('sessionContext');
+      if (!e.target || e.target !== titleEl || !ctx || ctx.style.display === 'none') return;
+      const current = titleEl.textContent || '新树洞';
+      const newTitle = prompt('修改会话标题：', current);
+      if (newTitle && newTitle.trim() && newTitle !== current) {
+        const sid = urlSession;
+        if (sid) {
+          fetch(API_BASE + '/api/chat/sessions/' + encodeURIComponent(sid), {
+            method: 'PATCH',
+            headers: { 'Content-Type':'application/json', 'Authorization':'Bearer ' + getToken() },
+            body: JSON.stringify({ title: newTitle.trim() })
+          }).then(r => {
+            if (r.ok) { titleEl.textContent = newTitle.trim(); sessionTitle = newTitle.trim(); }
+          }).catch(() => {});
+        }
+      }
+    });
   </script>
 </body>
 </html>

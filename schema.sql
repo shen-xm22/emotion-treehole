@@ -62,3 +62,17 @@ CREATE INDEX IF NOT EXISTS idx_conversations_sid ON conversations(session_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_ts ON conversations(created_at);
 CREATE INDEX IF NOT EXISTS idx_assessment_results_uid ON assessment_results(user_id);
 CREATE INDEX IF NOT EXISTS idx_assessment_results_type ON assessment_results(type);
+
+-- ===== 树洞会话管理 =====
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    session_id TEXT PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL DEFAULT '新树洞',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_uid ON chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_uid ON conversations(user_id);

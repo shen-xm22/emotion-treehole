@@ -125,6 +125,31 @@ header {
   font-size: 13px; color: var(--brown); line-height: 1.6;
 }
 
+/* Session List */
+.sessions-list { display: flex; flex-direction: column; gap: 8px; }
+.session-item {
+  background: var(--card-bg); border-radius: 12px; padding: 12px 16px;
+  border: 1px solid rgba(139,157,139,0.08); cursor: pointer;
+  transition: var(--transition); display: flex; align-items: center; gap: 12px;
+}
+.session-item:hover { border-color: rgba(139,157,139,0.25); }
+.session-icon { font-size: 18px; flex-shrink: 0; }
+.session-info { flex: 1; min-width: 0; }
+.session-title { font-weight: 600; font-size: 14px; }
+.session-meta { font-size: 11px; color: var(--brown-lt); margin-top: 1px; }
+.session-delete {
+  font-size: 16px; color: var(--brown-lt); opacity: 0.4; cursor: pointer;
+  transition: var(--transition); background: none; border: none; padding: 4px;
+}
+.session-delete:hover { opacity: 0.8; color: #C44; }
+.session-new {
+  background: transparent; border: 1.5px dashed rgba(139,157,139,0.25);
+  border-radius: 12px; padding: 12px 16px; cursor: pointer;
+  transition: var(--transition); text-align: center; font-size: 13px; color: var(--brown-lt);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.session-new:hover { border-color: var(--sage); color: var(--brown); background: rgba(139,157,139,0.04); }
+
 .empty-state { text-align: center; padding: 40px 0; color: var(--brown-lt); }
 .empty-state .icon { font-size: 32px; margin-bottom: 8px; }
 .empty-state p { font-size: 14px; margin-bottom: 16px; }
@@ -275,6 +300,7 @@ async function loadDashboard() {
     if (u) localStorage.setItem('treehole_user', JSON.stringify({...u, username: user.username}));
 
     renderDashboard();
+    loadSessions();
     document.getElementById('loadingState').style.display = 'none';
   } catch(e) {
     if (e.status === 401) {
@@ -338,6 +364,11 @@ function renderDashboard() {
 
     <div class="section-title">📋 测评记录</div>
     <div class="assess-list" id="assessList">${renderAssessments()}</div>
+
+    <div class="section-title" style="margin-top:24px">💬 树洞会话</div>
+    <div class="sessions-list" id="sessionsList">
+      <div class="empty-state"><div class="loader" style="width:24px;height:24px;margin:0 auto 8px"></div><p>加载会话中…</p></div>
+    </div>
 
     <div class="quick-actions">
       <a href="anxiety-assessment.html" class="qaction">
@@ -457,6 +488,76 @@ function renderAssessments() {
 function toggleDetail(id) {
   const el = document.getElementById(id);
   el.classList.toggle('open');
+}
+
+// ── Session List ──
+let sessions = [];
+
+async function loadSessions() {
+  try {
+    const data = await apiGet('/api/chat/sessions');
+    sessions = data.sessions || [];
+  } catch(e) {
+    sessions = [];
+  }
+  renderSessions();
+}
+
+function renderSessions() {
+  const el = document.getElementById('sessionsList');
+  if (!el) return;
+
+  let html = '';
+  if (sessions.length === 0) {
+    html = '<div class="empty-state"><div class="icon">💬</div><p>还没有树洞会话<br>创建一个新树洞开始聊天吧</p></div>';
+  } else {
+    html = sessions.map(s => {
+      const d = new Date(s.updated_at || s.created_at);
+      const dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+      const sessionId = encodeURIComponent(s.session_id);
+      return `<div class="session-item" onclick="window.location.href='treehole.html?session=${sessionId}'">
+        <span class="session-icon">🌿</span>
+        <div class="session-info">
+          <div class="session-title">${escapeHtml(s.title)}</div>
+          <div class="session-meta">${dateStr}</div>
+        </div>
+        <button class="session-delete" onclick="event.stopPropagation();deleteSession('${sessionId}')" title="删除会话">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  html += `<div class="session-new" onclick="createSession()">＋ 新建树洞</div>`;
+  el.innerHTML = html;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+async function createSession() {
+  try {
+    const data = await apiPost('/api/chat/sessions', {});
+    window.location.href = 'treehole.html?session=' + encodeURIComponent(data.session_id);
+  } catch(e) {
+    alert('创建失败，请重试');
+  }
+}
+
+async function deleteSession(sessionId) {
+  if (!confirm('确定删除这个树洞会话？所有对话记录将永久丢失。')) return;
+  try {
+    const resp = await fetch(API_BASE + '/api/chat/sessions/' + sessionId, {
+      method: 'DELETE',
+      headers: {'Authorization': 'Bearer ' + getToken()}
+    });
+    if (!resp.ok) throw new Error('删除失败');
+    sessions = sessions.filter(s => s.session_id !== sessionId);
+    renderSessions();
+  } catch(e) {
+    alert('删除失败，请重试');
+  }
 }
 
 // ── Edit Profile ──

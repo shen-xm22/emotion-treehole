@@ -878,6 +878,17 @@ async def chat_init(req: ChatInitRequest, request: Request):
         ).eq("user_id", user_id).order("created_at", desc=True).execute()
         user_context = build_user_profile_context(uprof, arows_result.data)
 
+        # 确保 chat_sessions 记录存在
+        sess_check = supabase.table("chat_sessions").select("session_id").eq("session_id", req.sessionId).execute()
+        if not sess_check.data:
+            supabase.table("chat_sessions").insert({
+                "session_id": req.sessionId,
+                "user_id": user_id,
+                "title": "新树洞",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }).execute()
+
     system_prompt = build_system_prompt(all_assessments, profile, session_count + 1, user_context)
 
     # 4. 生成欢迎语
@@ -893,11 +904,14 @@ async def chat_init(req: ChatInitRequest, request: Request):
         )
 
     # 5. 存入对话记录
-    supabase.table("conversations").insert({
+    greet_data = {
         "session_id": req.sessionId,
         "role": "assistant",
         "content": greeting,
-    }).execute()
+    }
+    if user_id:
+        greet_data["user_id"] = user_id
+    supabase.table("conversations").insert(greet_data).execute()
 
     # 6. 更新会话次数
     profile["sessionCount"] = session_count + 1
@@ -914,12 +928,18 @@ async def chat_init(req: ChatInitRequest, request: Request):
 @app.post("/api/chat/message")
 async def chat_message(req: ChatMessageRequest, request: Request):
     """发送消息，AI 带着记忆和测评理解回复。"""
+    # 0. 获取登录状态
+    user_id = get_user_id_from_request(request)
+
     # 1. 存入用户消息
-    supabase.table("conversations").insert({
+    user_msg = {
         "session_id": req.sessionId,
         "role": "user",
         "content": req.message,
-    }).execute()
+    }
+    if user_id:
+        user_msg["user_id"] = user_id
+    supabase.table("conversations").insert(user_msg).execute()
 
     # 2. 提取记忆
     extract_and_update_profile(req.sessionId, req.message)
@@ -942,7 +962,6 @@ async def chat_message(req: ChatMessageRequest, request: Request):
 
     # 5. 如果已登录，注入用户系统画像
     user_context = ""
-    user_id = get_user_id_from_request(request)
     if user_id:
         uprof_result = supabase.table("user_profiles").select("*").eq("user_id", user_id).execute()
         uprof = uprof_result.data[0] if uprof_result.data else {}
@@ -971,11 +990,14 @@ async def chat_message(req: ChatMessageRequest, request: Request):
         raise HTTPException(502, f"AI 响应失败: {str(e)}")
 
     # 8. 存入 AI 回复
-    supabase.table("conversations").insert({
+    ai_msg = {
         "session_id": req.sessionId,
         "role": "assistant",
         "content": reply,
-    }).execute()
+    }
+    if user_id:
+        ai_msg["user_id"] = user_id
+    supabase.table("conversations").insert(ai_msg).execute()
 
     return {"reply": reply, "sessionId": req.sessionId}
 
@@ -998,6 +1020,85 @@ async def chat_history(sessionId: str = Body(..., embed=True)):
             for r in result.data
         ]
     }
+
+
+# ─── 会话管理 ────────────────────────────────────────────
+
+
+@app.get("/api/chat/sessions")
+async def list_sessions(request: Request):
+    """获取当前用户的树洞会话列表。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    result = supabase.table("chat_sessions").select(
+        "session_id, title, created_at, updated_at"
+    ).eq("user_id", user_id).order("updated_at", desc=True).execute()
+
+    return {"sessions": result.data}
+
+
+@app.post("/api/chat/sessions")
+async def create_session(request: Request):
+    """创建新的树洞会话。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    session_id = "sess_" + secrets.token_hex(8)
+    now = datetime.now(timezone.utc).isoformat()
+
+    count_result = supabase.table("chat_sessions").select("session_id", count="exact").eq("user_id", user_id).execute()
+    count = getattr(count_result, "count", 0) or 0
+
+    title = f"树洞 #{count + 1}"
+
+    supabase.table("chat_sessions").insert({
+        "session_id": session_id,
+        "user_id": user_id,
+        "title": title,
+        "created_at": now,
+        "updated_at": now,
+    }).execute()
+
+    return {"session_id": session_id, "title": title, "created_at": now}
+
+
+@app.patch("/api/chat/sessions/{session_id}")
+async def update_session(session_id: str, request: Request, title: str = Body(..., embed=True)):
+    """修改会话标题。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    result = supabase.table("chat_sessions").select("user_id").eq("session_id", session_id).execute()
+    if not result.data or result.data[0]["user_id"] != user_id:
+        raise HTTPException(404, "会话不存在")
+
+    supabase.table("chat_sessions").update({
+        "title": title,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }).eq("session_id", session_id).execute()
+
+    return {"ok": True}
+
+
+@app.delete("/api/chat/sessions/{session_id}")
+async def delete_session(session_id: str, request: Request):
+    """删除会话及所有对话记录。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    result = supabase.table("chat_sessions").select("user_id").eq("session_id", session_id).execute()
+    if not result.data or result.data[0]["user_id"] != user_id:
+        raise HTTPException(404, "会话不存在")
+
+    supabase.table("conversations").delete().eq("session_id", session_id).execute()
+    supabase.table("chat_sessions").delete().eq("session_id", session_id).execute()
+
+    return {"ok": True}
 
 
 # ─── 启动 ────────────────────────────────────────────────
