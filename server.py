@@ -8,6 +8,7 @@ import json
 import logging
 import traceback
 import secrets
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
@@ -18,7 +19,6 @@ logger = logging.getLogger('treehole')
 
 import httpx
 import jwt as pyjwt
-from passlib.hash import bcrypt
 from fastapi import FastAPI, HTTPException, Request, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -44,11 +44,13 @@ JWT_EXPIRY_HOURS = 72
 # ─── Auth 辅助函数 ──────────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    # bcrypt 限制最长 72 字节
-    return bcrypt.hash(password[:72].encode("utf-8"))
+    salt = secrets.token_hex(16)
+    pwd_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000).hex()
+    return f"{salt}${pwd_hash}"
 
-def verify_password(password: str, password_hash: str) -> bool:
-    return bcrypt.verify(password, password_hash)
+def verify_password(password: str, stored: str) -> bool:
+    salt, pwd_hash = stored.split("$", 1)
+    return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000).hex() == pwd_hash
 
 def create_token(user_id: int) -> str:
     payload = {
