@@ -664,7 +664,7 @@ async def call_deepseek(messages: list) -> str:
                 "model": DEEPSEEK_MODEL,
                 "messages": messages,
                 "temperature": 0.7,
-                "max_tokens": 500,
+                "max_tokens": 2048,
                 "top_p": 0.9,
             },
         )
