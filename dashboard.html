@@ -536,11 +536,16 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+let sessionBusy = false;
 async function createSession() {
+  if (sessionBusy) return;
+  sessionBusy = true;
+  setTimeout(() => { sessionBusy = false; }, 3000);
   try {
     const data = await apiPost('/api/chat/sessions', {});
     window.location.href = 'treehole.html?session=' + encodeURIComponent(data.session_id);
   } catch(e) {
+    sessionBusy = false;
     alert('创建失败，请重试');
   }
 }

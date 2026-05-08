@@ -487,6 +487,16 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-overlay p { font-size: 14px; color: var(--brown-lt); font-weight: 300; }
 
+    /* ===== Wake-up hint ===== */
+    .wakeup-hint {
+      align-self: center;
+      font-size: 12px;
+      color: var(--brown-lt);
+      opacity: 0.6;
+      animation: msgIn 0.3s ease both;
+      padding: 6px 0;
+    }
+
     /* ===== Smooth scroll offset ===== */
     .scroll-anchor { height: 4px; flex-shrink: 0; }
 
@@ -688,6 +698,33 @@
   <script>
     // ===== Configuration =====
     const API_BASE = '';
+
+    // ===== Retry & Keep-alive =====
+    let wakeHintTimer = null;
+
+    function showWakeUpHint() {
+      const existing = document.getElementById('wakeup-hint');
+      if (existing) return;
+      const hint = document.createElement('div');
+      hint.id = 'wakeup-hint';
+      hint.className = 'wakeup-hint';
+      hint.textContent = '☕ 树洞正在开灯，稍等一下…';
+      chatEl.appendChild(hint);
+      scrollToBottom(true);
+      clearTimeout(wakeHintTimer);
+      wakeHintTimer = setTimeout(() => {
+        const h = document.getElementById('wakeup-hint');
+        if (h) h.remove();
+      }, 3000);
+    }
+
+    function startKeepAlive() {
+      setInterval(async () => {
+        try {
+          await fetch(API_BASE + '/api/health', { method: 'GET' });
+        } catch(e) { /* silent - expected when server sleeps */ }
+      }, 300000); // 5 min
+    }
 
     // Parse URL params
     const urlParams = new URLSearchParams(window.location.search);
@@ -1029,43 +1066,59 @@
       setStatus('树洞正在思考…', false);
       scrollToBottom(true);
 
-      try {
-        const headers = { 'Content-Type': 'application/json' };
-        const token = getToken();
-        if (token) headers['Authorization'] = 'Bearer ' + token;
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getToken();
+      if (token) headers['Authorization'] = 'Bearer ' + token;
 
-        const resp = await fetch(API_BASE + '/api/chat/message', {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify({
-            sessionId: sessionId,
-            message: text.trim()
-          })
-        });
+      let wakeShown = false;
+      let lastError = null;
 
-        typingEl.classList.remove('active');
-        if (!resp.ok) {
-          const errText = await resp.text();
-          throw new Error(errText);
+      for (let attempt = 0; attempt <= 2; attempt++) {
+        if (attempt > 0) {
+          if (!wakeShown) {
+            showWakeUpHint();
+            setStatus('服务器正在唤醒…', false);
+            wakeShown = true;
+          }
+          await new Promise(r => setTimeout(r, attempt * 1500));
         }
 
-        const data = await resp.json();
-        addMessage('ai', data.reply);
-        setStatus('已连接', true);
-      } catch (err) {
-        console.error('Send error:', err);
-        typingEl.classList.remove('active');
-        let fallback = '嗯，我在听。你继续说，我在这里。';
-        if (err.message && err.message.includes('502')) {
-          fallback = '嗯，我还在。有时需要想一下，你介意等一小会儿吗？';
+        try {
+          const resp = await fetch(API_BASE + '/api/chat/message', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+              sessionId: sessionId,
+              message: text.trim()
+            })
+          });
+
+          typingEl.classList.remove('active');
+          if (!resp.ok) {
+            const errText = await resp.text();
+            throw new Error(errText);
+          }
+
+          const data = await resp.json();
+          addMessage('ai', data.reply);
+          setStatus('已连接', true);
+          isSending = false;
+          sendBtn.disabled = false;
+          if (!inputEl.value.trim()) inputEl.focus();
+          return;
+        } catch (err) {
+          lastError = err;
+          console.warn(`重试 ${attempt + 1}/3 失败:`, err.message);
         }
-        addMessage('ai', fallback);
-        setStatus('连接不稳定', false);
-      } finally {
-        isSending = false;
-        sendBtn.disabled = false;
-        if (!inputEl.value.trim()) inputEl.focus();
       }
+
+      // All 3 attempts failed
+      typingEl.classList.remove('active');
+      addMessage('ai', '嗯，我在听。你继续说，我在这里。');
+      setStatus('连接不稳定', false);
+      isSending = false;
+      sendBtn.disabled = false;
+      if (!inputEl.value.trim()) inputEl.focus();
     }
 
     // ===== New Chat =====
@@ -1121,8 +1174,13 @@
       tag.addEventListener('click', () => sendMessage(tag.dataset.topic));
     });
 
+    // ===== New Chat Button (debounced) =====
+    let newChatBusy = false;
     document.getElementById('newChatBtn').addEventListener('click', (e) => {
       e.preventDefault();
+      if (newChatBusy) return;
+      newChatBusy = true;
+      setTimeout(() => { newChatBusy = false; }, 3000);
       if (confirm('开始新对话？之前的对话记录不会丢失。')) {
         newChat();
       }
@@ -1131,6 +1189,7 @@
     // ===== Init =====
     renderAuth();
     initTreehole();
+    startKeepAlive();
 
     // Session title click to rename
     document.addEventListener('click', function(e) {
