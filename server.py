@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 # ─── 配置 ───────────────────────────────────────────────
 
 DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-5b8d6781ac7d42fdb070efb980c38bdf")
-DEEPSEEK_MODEL = "deepseek-v4-pro"  # DeepSeek V4 Pro (2026-04-24 正式发布)
+DEEPSEEK_MODEL = "deepseek-v4-flash"  # DeepSeek V4 Flash + 思考模式
 DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 
 # Supabase (PostgreSQL)
@@ -652,7 +652,7 @@ def extract_and_update_profile(session_id: str, user_message: str):
 
 
 async def call_deepseek(messages: list) -> str:
-    """调用 DeepSeek V4 Pro，返回回答文本。"""
+    """调用 DeepSeek V4 Flash（思考模式），返回回答文本。"""
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
             f"{DEEPSEEK_BASE_URL}/chat/completions",
@@ -663,9 +663,9 @@ async def call_deepseek(messages: list) -> str:
             json={
                 "model": DEEPSEEK_MODEL,
                 "messages": messages,
-                "temperature": 0.7,
                 "max_tokens": 2048,
-                "top_p": 0.9,
+                "thinking": {"type": "enabled"},
+                "reasoning_effort": "high",
             },
         )
         if resp.status_code == 401:
@@ -673,7 +673,8 @@ async def call_deepseek(messages: list) -> str:
         if resp.status_code == 429:
             raise HTTPException(429, "API 调用太频繁，稍后再试")
         resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"]
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
 
 
 # ─── API 路由 ────────────────────────────────────────────
