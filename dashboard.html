@@ -553,7 +553,7 @@ function renderAssessments() {
         ${renderDetail(scores, a.type, a.id)}
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.08)">
           <a href="${links[a.type] || '#'}" style="font-size:12px;color:#8B9D8B;text-decoration:none">📋 重新测评 →</a>
-          <a href="treehole.html" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>
+          <a href="#" onclick="event.preventDefault(); goTreeholeFromAssessment('${a.type}', '${a.id}')" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>
         </div>
       </div>
     </div>`;
@@ -696,6 +696,15 @@ async function createSession() {
   } catch(e) {
     sessionBusy = false;
     alert('创建失败，请重试');
+  }
+}
+
+async function goTreeholeFromAssessment(type, id) {
+  try {
+    const data = await apiPost('/api/chat/sessions', {});
+    window.location.href = 'treehole.html?session=' + encodeURIComponent(data.session_id);
+  } catch(e) {
+    alert('创建会话失败，请重试');
   }
 }
 
