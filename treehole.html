@@ -455,6 +455,61 @@
     .profile-actions .btn-skip { background: transparent; color: var(--brown-lt); border: 1px solid rgba(139,157,139,0.2); }
     .profile-actions .btn-skip:hover { background: var(--sage-pt); }
 
+    /* ===== Styled selects ===== */
+    .pf-group select, .edit-field select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238B7D6A' stroke-width='1.5' fill='none' stroke-linecap='round' /%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 12px;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+    .pf-group select:hover, .edit-field select:hover {
+      border-color: var(--sage);
+    }
+
+    /* ===== Custom hobby input ===== */
+    .hobby-add-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .hobby-add-row input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1.5px solid rgba(139,157,139,0.20);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      background: rgba(255,255,255,0.7);
+      color: var(--brown);
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .hobby-add-row input:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(139,157,139,0.10);
+    }
+    .hobby-add-row input::placeholder { color: rgba(139,125,106,0.4); }
+    .hobby-add-btn {
+      padding: 8px 14px;
+      border: 1.5px solid var(--sage);
+      background: transparent;
+      color: var(--sage);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    .hobby-add-btn:hover {
+      background: var(--sage-pt);
+    }
+
     .pf-success {
       text-align: center; padding: 20px 0;
       display: none;
@@ -640,6 +695,7 @@
               <label>🧠 MBTI</label>
               <select id="pfMbti">
                 <option value="">请选择</option>
+                <option value="">🤷 不清楚</option>
                 <option>INTJ</option><option>INTP</option><option>ENTJ</option><option>ENTP</option>
                 <option>INFJ</option><option>INFP</option><option>ENFJ</option><option>ENFP</option>
                 <option>ISTJ</option><option>ISFJ</option><option>ESTJ</option><option>ESFJ</option>
@@ -677,6 +733,10 @@
               <span class="hobby-tag">写作</span>
               <span class="hobby-tag">手工</span>
               <span class="hobby-tag">宠物</span>
+            </div>
+            <div class="hobby-add-row">
+              <input type="text" id="pfHobbyInput" placeholder="输入自定义爱好…" maxlength="20">
+              <button class="hobby-add-btn" onclick="addCustomHobby('pf')">＋添加</button>
             </div>
           </div>
           <div class="profile-actions">
@@ -841,6 +901,33 @@
       profileSkipFlag = true;
       closeProfileModal();
     }
+
+    function addCustomHobby(prefix) {
+      const input = document.getElementById(prefix + 'HobbyInput');
+      const text = input.value.trim();
+      if (!text) return;
+      // Check if already exists
+      const container = document.getElementById(prefix + 'HobbiesTags');
+      const existing = Array.from(container.querySelectorAll('.hobby-tag')).map(el => el.textContent.trim());
+      if (existing.includes(text)) { input.value = ''; return; }
+      const tag = document.createElement('span');
+      tag.className = 'hobby-tag selected';
+      tag.textContent = text;
+      container.appendChild(tag);
+      input.value = '';
+    }
+
+    // Enter key support for custom hobby
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        const input = e.target.closest('.hobby-add-row')?.querySelector('input');
+        if (input) {
+          e.preventDefault();
+          const prefix = input.id.replace('HobbyInput', '');
+          addCustomHobby(prefix);
+        }
+      }
+    });
 
     function getSelectedHobbies() {
       return Array.from(document.querySelectorAll('.hobby-tag.selected')).map(el => el.textContent.trim());
