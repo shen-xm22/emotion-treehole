@@ -115,6 +115,11 @@ async def serve_relationship():
 async def serve_personality():
     return FileResponse(os.path.join(BASE_DIR, "personality-assessment.html"))
 
+@app.get("/love-radar")
+@app.get("/love-radar.html")
+async def serve_love_radar():
+    return FileResponse(os.path.join(BASE_DIR, "love-radar.html"))
+
 @app.get("/auth")
 @app.get("/auth.html")
 async def serve_auth():
@@ -169,7 +174,7 @@ class ProfileUpdateRequest(BaseModel):
     hobbies: list = []
 
 class SaveAssessmentRequest(BaseModel):
-    type: str = Field(..., pattern=r'^(anxiety|relationship|personality)$')
+    type: str = Field(..., pattern=r'^(anxiety|relationship|personality|love_radar)$')
     scores: dict = {}
     answers: Any = {}
     summary: str = ''
@@ -269,6 +274,10 @@ def build_user_profile_context(user_profile: dict, assessment_records: list) -> 
             tp = scores.get("type", "")
             dims = " ".join([f"{k}{v}/5" for k, v in ds.items()])
             parts.append(f"性格评估({created}): {tp} ({dims})")
+        elif t == "love_radar":
+            tn = scores.get("typeName", "")
+            tg = scores.get("tagline", "")
+            parts.append(f"恋爱人格评估({created}): {tn}「{tg}」")
     return "\n".join(parts)
 
 

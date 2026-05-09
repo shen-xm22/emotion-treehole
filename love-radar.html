@@ -746,6 +746,9 @@ function showResult() {
   else h.style.display = 'none';
 
   drawRadar(norm, mainType.id === 99 ? null : mainType);
+
+  // Save results if logged in
+  setTimeout(() => saveLoveRadarAssessment(norm, mainType, secondType, isHidden), 200);
 }
 
 function findClosestTypes(userVec, typeList) {
@@ -876,6 +879,38 @@ function drawRadar(userVec, mainType) {
     ctx.fillStyle = 'rgba(185, 149, 109, 0.6)';
     ctx.fillRect(maxSize-108, 22, 8, 8);
     ctx.fillText('类型', maxSize-96, 29);
+  }
+}
+
+// ── Save assessment to user account (if logged in) ──
+async function saveLoveRadarAssessment(norm, mainType, secondType, isHidden) {
+  const token = localStorage.getItem('treehole_token');
+  if (!token) return;
+  try {
+    const bmType = TYPES.find(t => t.id === mainType.bestMatch);
+    const smType = TYPES.find(t => t.id === mainType.secondMatch);
+    await fetch('/api/assessments', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({
+        type: 'love_radar',
+        scores: {
+          typeName: mainType.name,
+          typeEmoji: mainType.emoji,
+          tagline: mainType.tagline,
+          dims: norm,
+          bestMatch: mainType.bestMatch,
+          secondMatch: mainType.secondMatch,
+          bestMatchName: bmType ? bmType.name : '',
+          secondMatchName: smType ? smType.name : '',
+          isHidden: isHidden
+        },
+        answers: state.answers,
+        summary: mainType.name + ' — ' + mainType.tagline
+      })
+    });
+  } catch(e) {
+    console.warn('save love_radar failed:', e);
   }
 }
 
