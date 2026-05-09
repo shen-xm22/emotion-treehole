@@ -700,6 +700,7 @@ async function saveProfile() {
       profileData.profile = data;
       profileData.profile_empty = false;
       renderDashboard();
+      loadSessions();
       closeEdit();
     }
   } catch(e) {
