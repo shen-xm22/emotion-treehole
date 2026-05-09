@@ -1054,12 +1054,17 @@
 
       // ===== Try to restore history =====
       if (sessionId) {
+        let histTimeout;
         try {
+          const histController = new AbortController();
+          histTimeout = setTimeout(() => histController.abort(), 8000);
           const histResp = await fetch(API_BASE + '/api/chat/history', {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({ sessionId: sessionId })
+            body: JSON.stringify({ sessionId: sessionId }),
+            signal: histController.signal
           });
+          clearTimeout(histTimeout);
           if (histResp.ok) {
             const hist = await histResp.json();
             if (hist.messages && hist.messages.length > 0) {
@@ -1084,6 +1089,7 @@
             }
           }
         } catch(e) {
+          clearTimeout(histTimeout);
           console.warn('History restore failed, starting fresh');
         }
       }
@@ -1102,8 +1108,13 @@
       // Check profile onboarding
       checkProfileOnboarding();
 
+      let initTimeout;
       try {
         setStatus('树洞准备中…', false);
+
+        // 25 秒超时：防止服务器冷启动 / DeepSeek 慢时永远卡住
+        const controller = new AbortController();
+        initTimeout = setTimeout(() => controller.abort(), 25000);
 
         const resp = await fetch(API_BASE + '/api/chat/init', {
           method: 'POST',
@@ -1112,8 +1123,10 @@
             sessionId: sessionId,
             assessments: {},
             freeWrite: ''
-          })
+          }),
+          signal: controller.signal
         });
+        clearTimeout(initTimeout);
 
         if (!resp.ok) throw new Error('服务器返回 ' + resp.status);
 
@@ -1130,7 +1143,11 @@
         sendBtn.disabled = false;
         inputEl.focus();
       } catch (err) {
+        clearTimeout(initTimeout);
         console.error('Init error:', err);
+        if (err.name === 'AbortError') {
+          console.warn('Init request timed out after 25s');
+        }
         loadingEl.classList.add('hidden');
         addMessage('ai', '嗨，我在这里呢。虽然暂时没连上服务器，但你想说什么可以先跟我说。');
         setStatus('离线模式', false);
