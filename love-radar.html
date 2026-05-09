@@ -235,6 +235,13 @@
 </style>
 </head>
 <body>
+
+<!-- Top nav -->
+<div style="position:fixed;top:16px;right:20px;z-index:200;display:flex;gap:8px;font-size:13px">
+  <a href="index.html" style="color:#b0979d;text-decoration:none;padding:6px 14px;border-radius:50px;background:rgba(255,255,255,0.7);border:1px solid rgba(201,151,158,0.15);transition:all 0.2s" onmouseover="this.style.borderColor='#c9979e';this.style.color='#c9979e'" onmouseout="this.style.borderColor='rgba(201,151,158,0.15)';this.style.color='#b0979d'">🏠 主页</a>
+  <a href="dashboard.html" style="color:#b0979d;text-decoration:none;padding:6px 14px;border-radius:50px;background:rgba(255,255,255,0.7);border:1px solid rgba(201,151,158,0.15);transition:all 0.2s" onmouseover="this.style.borderColor='#c9979e';this.style.color='#c9979e'" onmouseout="this.style.borderColor='rgba(201,151,158,0.15)';this.style.color='#b0979d'">📋 个人中心</a>
+</div>
+
 <div class="container">
 
   <!-- ====== START ====== -->
@@ -310,6 +317,7 @@
     </div>
     <div class="btn-group">
       <button class="btn-secondary" onclick="retake()">🔄 再测一次</button>
+      <button class="btn-secondary" onclick="window.location.href='dashboard.html'">📋 查看个人中心</button>
       <button class="btn-primary" onclick="showShare()">📤 分享结果</button>
     </div>
   </div>
