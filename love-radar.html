@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情人匹配图鉴 — 测测你的恋爱风格</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #faf5f2 0%, #f4ece8 50%, #efe7e3 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    color: #4a3f42;
+  }
+  .container { max-width: 600px; width: 100%; margin: 0 auto; padding-bottom: 40px; }
+  .card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(201, 151, 158, 0.15);
+    border-radius: 22px;
+    padding: 36px 28px;
+    box-shadow: 0 6px 36px rgba(160, 120, 130, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #c9979e, #dbb0ba, #e3c4cb);
+    opacity: 0.5;
+  }
+
+  /* ====== Start ====== */
+  #start-screen { text-align: center; padding: 50px 0 40px; }
+  .logo-emoji { font-size: 80px; margin-bottom: 10px; }
+  .logo-title {
+    font-size: 34px; font-weight: 700;
+    background: linear-gradient(135deg, #c28b93, #d4a5af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+  .logo-sub { color: #b0979d; font-size: 15px; margin-bottom: 30px; line-height: 1.7; }
+  .btn-start {
+    display: inline-block; padding: 14px 52px;
+    background: linear-gradient(135deg, #c9979e, #dbb0ba);
+    color: #fff;
+    border: none; border-radius: 50px;
+    font-size: 18px; font-weight: 600;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(201, 151, 158, 0.3);
+    letter-spacing: 1px;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(201, 151, 158, 0.4); }
+  .info-row {
+    display: flex; justify-content: center; gap: 20px;
+    margin: 16px 0 26px; font-size: 13px; color: #b0979d;
+  }
+  .info-row span { display: flex; align-items: center; gap: 4px; }
+
+  /* ====== Question ====== */
+  #question-screen { display: none; }
+  .progress-container { margin-bottom: 18px; }
+  .progress-bar-bg { height: 4px; background: #ede0e3; border-radius: 2px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #c9979e, #dbb0ba); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-text { font-size: 13px; color: #b0979d; text-align: right; margin-top: 5px; }
+  .q-badge {
+    display: inline-block; padding: 3px 12px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    background: rgba(201, 151, 158, 0.1); color: #b0808a;
+    margin-bottom: 10px;
+  }
+  .q-hidden-badge { background: rgba(212, 165, 143, 0.15); color: #b8956d; }
+  .q-scene { font-size: 15px; line-height: 1.7; color: #6b5459; margin-bottom: 12px; }
+  .q-question { font-size: 17px; font-weight: 600; line-height: 1.6; margin-bottom: 20px; color: #4a3f42; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: block; width: 100%;
+    padding: 14px 18px;
+    background: #fff;
+    border: 1.5px solid #e6d3d7;
+    border-radius: 14px;
+    color: #4a3f42;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.5;
+  }
+  .option-btn:hover {
+    border-color: #c9979e;
+    background: rgba(201, 151, 158, 0.04);
+    transform: translateX(4px);
+  }
+  .option-btn.selected {
+    border-color: #c9979e;
+    background: rgba(201, 151, 158, 0.08);
+    box-shadow: 0 0 0 2px rgba(201, 151, 158, 0.12);
+  }
+  .option-label {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #ede0e3;
+    color: #b0808a;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 10px;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .option-btn:hover .option-label { background: #e0cfd3; }
+  .option-btn.selected .option-label { background: #c9979e; color: #fff; }
+  .option-text { flex: 1; }
+  .option-row { display: flex; align-items: flex-start; }
+  .nav-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 16px;
+  }
+  .btn-back {
+    padding: 8px 18px; background: none;
+    border: 1px solid #e6d3d7; border-radius: 50px;
+    color: #b0979d; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: #c9979e; color: #c9979e; }
+  .btn-back:disabled { opacity: 0.25; cursor: not-allowed; }
+
+
+  /* ====== Match compatibility ====== */
+  .result-match { margin: 16px 0 14px; text-align: center; }
+  .result-match-title { font-size: 14px; font-weight: 700; color: #8a6d73; margin-bottom: 12px; letter-spacing: 0.5px; }
+  .result-match-boxes { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .match-box {
+    flex: 1; min-width: 150px; max-width: 200px;
+    padding: 16px 14px 14px; border-radius: 16px;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .match-box.primary {
+    background: rgba(201, 151, 158, 0.12);
+    border: 1.5px solid rgba(201, 151, 158, 0.25);
+  }
+  .match-box.secondary {
+    background: rgba(201, 151, 158, 0.06);
+    border: 1.5px solid rgba(201, 151, 158, 0.12);
+  }
+  .match-box-label { font-size: 10px; color: #b09095; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+  .match-box-emoji { font-size: 28px; display: block; margin-bottom: 2px; }
+  .match-box-name { font-size: 16px; font-weight: 700; color: #4a3f42; }
+  .match-box:hover { transform: translateY(-2px); }
+
+  /* ====== Result ====== */
+  #result-screen { display: none; text-align: center; }
+  .result-header { text-align: center; margin-bottom: 16px; }
+  .result-emoji { font-size: 72px; margin-bottom: 0; }
+  .result-type {
+    font-size: 26px; font-weight: 700;
+    background: linear-gradient(135deg, #c28b93, #d4a5af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .result-tagline {
+    display: inline-block; padding: 3px 14px; border-radius: 20px;
+    font-size: 13px; background: rgba(201, 151, 158, 0.1); color: #b0808a;
+    margin-top: 2px;
+  }
+  .result-desc {
+    font-size: 14px; line-height: 1.8; color: #6b5459;
+    text-align: left; margin-bottom: 14px;
+    padding: 14px 18px;
+    background: rgba(237, 224, 227, 0.35);
+    border-radius: 12px;
+  }
+  .result-chart-container {
+    display: flex; justify-content: center;
+    margin: 4px 0 0; padding: 0;
+  }
+  #radarChart { width: 340px; height: 340px; }
+  .result-extra {
+    display: flex; justify-content: center; gap: 16px;
+    margin: 6px 0 14px; flex-wrap: wrap;
+  }
+  .extra-box {
+    padding: 10px 18px;
+    background: rgba(237, 224, 227, 0.25);
+    border-radius: 12px; border: 1px solid #e6d3d7;
+    text-align: center; min-width: 130px;
+  }
+  .extra-box-title { font-size: 10px; color: #b0979d; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 1px; }
+  .extra-box-value { font-size: 15px; font-weight: 600; color: #4a3f42; }
+  .btn-group { display: flex; gap: 12px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  .btn-secondary {
+    padding: 11px 26px;
+    background: #fff; border: 1.5px solid #e6d3d7;
+    border-radius: 50px; color: #4a3f42;
+    font-size: 14px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: #c9979e; color: #c9979e; }
+  .btn-primary {
+    padding: 11px 30px;
+    background: linear-gradient(135deg, #c9979e, #dbb0ba);
+    border: none; border-radius: 50px;
+    color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 2px 12px rgba(201, 151, 158, 0.2);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(201, 151, 158, 0.3); }
+  .result-hidden {
+    border: 1px dashed #cba982;
+    background: rgba(212, 165, 143, 0.08);
+    padding: 10px 14px; border-radius: 10px;
+    margin: 6px 0; font-size: 13px; color: #a8845e;
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 24px 16px; border-radius: 18px; }
+    .logo-title { font-size: 28px; }
+    .logo-emoji { font-size: 64px; }
+    .q-question { font-size: 15px; }
+    .result-emoji { font-size: 56px; }
+    .result-type { font-size: 22px; }
+    #radarChart { width: 280px; height: 280px; }
+    .extra-box { min-width: 110px; padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ====== START ====== -->
+  <div id="start-screen" class="card">
+    <div class="logo-emoji">💘</div>
+    <div class="logo-title">情人匹配图鉴</div>
+    <div class="logo-sub">
+      23 道题 · 测出你的恋爱人格<br>
+      情景+态度混搭，反正很准
+    </div>
+    <div class="info-row">
+      <span>⏱️ 4-6 分钟</span>
+      <span>📋 17 种结果</span>
+      <span>🎲 含隐藏人格</span>
+    </div>
+    <button class="btn-start" onclick="startTest()">开始测试 🫶</button>
+  </div>
+
+  <!-- ====== Question ====== -->
+  <div id="question-screen" class="card">
+    <div class="progress-container">
+      <div class="progress-bar-bg">
+        <div id="progress-fill" class="progress-bar-fill" style="width:0%"></div>
+      </div>
+      <div id="progress-text" class="progress-text">1 / 20</div>
+    </div>
+    <div id="q-type-badge" class="q-badge">🔥 情景题</div>
+    <div id="q-scene" class="q-scene"></div>
+    <div id="q-question" class="q-question"></div>
+    <div id="q-options" class="options"></div>
+    <div class="nav-row">
+      <button id="btn-back" class="btn-back" onclick="goBack()" disabled>← 上一题</button>
+      <div></div>
+    </div>
+  </div>
+
+  <!-- ====== Result ====== -->
+  <div id="result-screen" class="card">
+    <div class="result-header">
+      <div class="result-emoji" id="r-emoji">🕰️</div>
+      <div class="result-type" id="r-name">老派约会选手</div>
+      <div class="result-tagline" id="r-tagline">"等一封信"</div>
+    </div>
+    <div class="result-desc" id="r-desc"></div>
+    <div id="r-hidden" class="result-hidden"></div>
+    <div class="result-chart-container">
+      <canvas id="radarChart" width="340" height="340"></canvas>
+    </div>
+    <div class="result-match">
+      <div class="result-match-title">💞 人格契合推荐</div>
+      <div class="result-match-boxes">
+        <div class="match-box primary">
+          <div class="match-box-label">🌟 最佳契合</div>
+          <span class="match-box-emoji" id="r-match-best-emoji"></span>
+          <div class="match-box-name" id="r-match-best"></div>
+        </div>
+        <div class="match-box secondary">
+          <div class="match-box-label">✨ 次佳契合</div>
+          <span class="match-box-emoji" id="r-match-second-emoji"></span>
+          <div class="match-box-name" id="r-match-second"></div>
+        </div>
+      </div>
+    </div>
+    <div class="result-extra">
+      <div class="extra-box">
+        <div class="extra-box-title">🎭 你可能也接近</div>
+        <div class="extra-box-value" id="r-second"></div>
+      </div>
+      <div class="extra-box">
+        <div class="extra-box-title">🔁 你的反面</div>
+        <div class="extra-box-value" id="r-opposite"></div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn-secondary" onclick="retake()">🔄 再测一次</button>
+      <button class="btn-primary" onclick="showShare()">📤 分享结果</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ================================================================
+// DIMENSIONS
+// ================================================================
+const DIM_NAMES = {
+  T1:'节奏偏好', T2:'投入方式', T3:'确认需求',
+  D1:'独立需求', D2:'情感交融', D3:'社交边界',
+  E1:'表达方式', E2:'安全感来源', E3:'冲突处理',
+  M1:'关系态度', M2:'专一度', M3:'未来导向',
+  R1:'关系角色', R2:'情绪主导', R3:'自我风格'
+};
+const DIM_CODES = Object.keys(DIM_NAMES);
+const DIM_SHORT = {
+  T1:'节奏', T2:'投入', T3:'名分',
+  D1:'独立', D2:'交融', D3:'边界',
+  E1:'表达', E2:'安全', E3:'冲突',
+  M1:'态度', M2:'专一', M3:'未来',
+  R1:'角色', R2:'情绪', R3:'自我'
+};
+
+// ================================================================
+// PERSONALITY TYPES (17)
+// ================================================================
+const TYPES = [
+  { id:1, emoji:"🕰️", name:"老派约会选手", tagline:"等一封信",
+    desc:"别人在 app 上滑到手指抽筋，你还在等一个顺其自然的相遇。你不是跟不上时代，你只是觉得感情这回事，慢一点才看得清。消息你也会回，但比起满屏的「在干嘛」，你更想有人坐下来跟你好好吃顿饭。这个时代确实对你不太友好，但你这样的人，遇到那个对的人的时候，一出手就是王炸。",
+    vector:{ T1:1.5, T2:-1.5, T3:2, D1:0, D2:-0.5, D3:0, E1:-1.5, E2:0, E3:-0.5, M1:1.5, M2:2, M3:2, R1:0.5, R2:-0.5, R3:-0.5 } ,
+    bestMatch:16, secondMatch:7 },{ id:2, emoji:"🔥", name:"Situationship 王者", tagline:"别问在干嘛",
+    desc:"暧昧是你的舒适区——被问「我们是什么关系」的时候你的大脑直接蓝屏。你不是不想负责，你只是觉得现在这样就挺好的：有话聊、有期待、不用吵架谁洗碗。你嘴上说喜欢不确定性，其实你只是害怕一段关系变成责任之后就走样了。行吧，但偶尔也可以问问自己：你是真喜欢这种状态，还是在等一个让你愿意确定的人？",
+    vector:{ T1:-1, T2:0.5, T3:-2, D1:1, D2:0, D3:-1, E1:0.5, E2:0, E3:-0.5, M1:-1.5, M2:-1, M3:-1.5, R1:0, R2:0.5, R3:0.5 } ,
+    bestMatch:3, secondMatch:9 },{ id:3, emoji:"🪭", name:"并行恋爱选手", tagline:"多线不渣人",
+    desc:"你的原则很清晰：没确定之前大家都是自由的。ABCD 你都在认真聊，你说这叫信息搜集阶段，不叫养鱼。效率确实高，但小心别聊串了——那天你对着 A 说了 B 的口头禅，场面一度非常尴尬。不过说真的，哪天你遇到一个让你心甘情愿关掉其他窗口的人，那才是真·你赢了。",
+    vector:{ T1:-1.5, T2:0.5, T3:-1.5, D1:1, D2:-0.5, D3:-1, E1:0, E2:-0.5, E3:-0.5, M1:-1.5, M2:-2, M3:-1, R1:0, R2:0, R3:1 } ,
+    bestMatch:2, secondMatch:9 },{ id:4, emoji:"🐙", name:"贴贴怪", tagline:"别走抱紧我",
+    desc:"你的恋爱核心需求就是：贴在一起。消息要秒回，周末要见面，睡前要打电话。你从来不觉得黏人是缺点——爱一个人就是想跟她/他一直在一起啊。你的世界很小，但里面全是 TA。",
+    vector:{ T1:0.5, T2:1.5, T3:1, D1:-2, D2:2, D3:2, E1:2, E2:1.5, E3:1, M1:0.5, M2:1.5, M3:1, R1:-0.5, R2:1.5, R3:0.5 } ,
+    bestMatch:8, secondMatch:12 },{ id:5, emoji:"🏠", name:"室友型恋人", tagline:"各玩各的手机",
+    desc:"你最理想的画面是两个人各占沙发一端各玩各的手机，偶尔抬头相视一笑。你不管人、不查岗、不粘人——你以为这叫信任，其实有一半是因为你确实需要自己的空间。这没什么不好，但你最好找个跟你一样需要空间的人，不然 TA 会觉得「你好像不需要我」。你不是不需要，你只是爱得比较省电模式——也挺好，找对电池就行。",
+    vector:{ T1:-0.5, T2:-1, T3:-0.5, D1:2, D2:-2, D3:-2, E1:-1, E2:-1, E3:0, M1:0, M2:1, M3:0.5, R1:-0.5, R2:-0.5, R3:-1.5 } ,
+    bestMatch:10, secondMatch:6 },{ id:6, emoji:"🏃", name:"战术撤退大师", tagline:"靠近→逃跑→循环",
+    desc:"你的恋爱模式有个经典循环：靠近→心动→害怕→逃跑→后悔→又靠近。你不是不想要爱，你是太擅长在爱来之前先跑掉。你的防御机制确实保护了你——但也让你错过了几个原本可以不错的人。不过没关系，逃跑从来不是终点，等你想清楚的时候，门还在那儿。",
+    vector:{ T1:-1, T2:-1, T3:-0.5, D1:1.5, D2:-1, D3:-0.5, E1:-1.5, E2:-2, E3:-1.5, M1:-0.5, M2:0, M3:-1, R1:-1, R2:1, R3:-0.5 } ,
+    bestMatch:10, secondMatch:5 },{ id:7, emoji:"📋", name:"程序猿恋爱", tagline:"流程即靠谱",
+    desc:"你的恋爱有一套 SOP：早安晚安打卡→每周约会执行→纪念日送礼提醒。你觉得感情跟写代码一样，有流程才不会崩。其实不是你的流程有问题——是你忘了爱情这玩意儿有时候需要一点「不讲道理」的惊喜。流程保底，但让人心动的往往是那些计划外的瞬间。下次试试不按剧本来，崩不了的。",
+    vector:{ T1:2, T2:-1, T3:2, D1:-0.5, D2:0, D3:0.5, E1:0, E2:0.5, E3:1, M1:2, M2:2, M3:2, R1:1, R2:-1.5, R3:0.5 } ,
+    bestMatch:16, secondMatch:15 },{ id:8, emoji:"🕳️", name:"情绪共生体", tagline:"没你不完整",
+    desc:"你谈恋爱像装了情绪共享插件——TA 笑你就开心，TA 叹气你天就塌了，TA 三小时没消息你已经开始脑补剧情。你的投入是真的，你的在乎是真的，但你的情绪电池也是会耗尽的。给 TA 空间，也给自己留口气——不是爱少了，是爱得更聪明了。",
+    vector:{ T1:0.5, T2:1.5, T3:1.5, D1:-1.5, D2:2, D3:1.5, E1:2, E2:2, E3:0.5, M1:1, M2:1.5, M3:1, R1:0, R2:2, R3:0.5 } ,
+    bestMatch:4, secondMatch:12 },{ id:9, emoji:"🌊", name:"随波逐流选手", tagline:"来啥接啥",
+    desc:"你对自己的恋爱没有太多预设。来什么人、什么节奏、什么模式——你都随缘。你不强求结果，也不纠结过程。有人找你聊天就聊，有人约你就去，没有就算了。与其说你在谈恋爱，不如说你在被恋爱谈。但这也没什么不好，你过得很轻松。",
+    vector:{ T1:0, T2:0, T3:0, D1:0, D2:0, D3:0, E1:0, E2:-0.5, E3:0, M1:-0.5, M2:0, M3:-0.5, R1:0, R2:0, R3:0 } ,
+    bestMatch:2, secondMatch:13 },{ id:10, emoji:"💔", name:"回避型依恋", tagline:"心动=危险信号",
+    desc:"别人心动是怦然，你心动是警铃大作。对方进一步你退三步——不是欲擒故纵，是真的有点怕。你习惯了独来独往，习惯了心里不装人，习惯了安全。你总说「一个人也挺好的」，其实你心里知道：不是不想，是不太敢。没关系，不用逼自己一下子把门全打开——开条缝透透气就行，想关的时候随时可以关。",
+    vector:{ T1:-1, T2:-1.5, T3:-0.5, D1:2, D2:-1.5, D3:-1, E1:-2, E2:-2, E3:-2, M1:-0.5, M2:0.5, M3:-1, R1:-0.5, R2:-0.5, R3:-1 } ,
+    bestMatch:6, secondMatch:5 },{ id:11, emoji:"🧊", name:"理性派", tagline:"爱情可以计算",
+    desc:"你心里有一本隐形账本，上面记着那些加减分项——聊不聊得来、生活方式合不合、价值观有没有大坑。别人觉得你太冷静，但你知道感觉会消失可是不合适不会消失。其实谨慎没什么错，你的账本也帮你避了不少雷。只是偶尔——当你遇到一个让你想放下本本、先冲了再说的人，那感觉也挺好的。",
+    vector:{ T1:1.5, T2:-0.5, T3:1.5, D1:0.5, D2:-0.5, D3:0, E1:-1.5, E2:0.5, E3:1.5, M1:1.5, M2:1.5, M3:1.5, R1:0.5, R2:-2, R3:-0.5 } ,
+    bestMatch:16, secondMatch:7 },{ id:12, emoji:"🎭", name:"表演型恋爱", tagline:"全场焦点是我",
+    desc:"你的恋爱像在拍连续剧——你是主角、导演兼宣发。你擅长搞场面：惊喜、浪漫、让 TA 的朋友都羡慕。跟你在一起确实不会无聊。只是有时候散场之后你会想：我这么卖力演出，到底是爱这个人，还是爱「正在爱」的感觉？不急着回答，想清楚就好——不管答案是哪个，你的真心是真的。",
+    vector:{ T1:-0.5, T2:1, T3:0.5, D1:-0.5, D2:1, D3:1.5, E1:2, E2:0.5, E3:-0.5, M1:0, M2:0, M3:0.5, R1:0, R2:1.5, R3:2 } ,
+    bestMatch:14, secondMatch:4 },{ id:13, emoji:"🪴", name:"治愈系伴侣", tagline:"做你的避风港",
+    desc:"你是朋友眼中的「人间充电宝」，谁难过了都来找你——好，那谁他妈的来照顾你？在恋爱里你更是这样，TA 累了你会哄，TA 崩了你来接。但你有没有想过，充电宝也是会没电的？你总说「没事的，有我在」——这句话很暖，但也别忘了偶尔对自己说一句「没事的，你也可以脆弱」。",
+    vector:{ T1:0, T2:-0.5, T3:0.5, D1:-0.5, D2:0.5, D3:0, E1:1, E2:1.5, E3:1, M1:0.5, M2:1, M3:0.5, R1:1.5, R2:-0.5, R3:-0.5 } ,
+    bestMatch:15, secondMatch:9 },{ id:14, emoji:"⚡", name:"过山车恋人", tagline:"爱就轰轰烈烈",
+    desc:"跟你谈恋爱像坐过山车——高的时候你在云端撒花，低的时候你在深夜 emo。一条消息能让你的心情来回横跳。你的爱是热烈的、真实的、不掺水的。你身边的人可能会被你搞得心跳加速，但跟你在一起的日子确实不会忘记。如果能学会在开心的时候多享受一会儿、难过的时候不把自己往死里摔——你就无敌了。",
+    vector:{ T1:-0.5, T2:2, T3:0, D1:-1, D2:1.5, D3:0.5, E1:2, E2:1.5, E3:-1.5, M1:-0.5, M2:0.5, M3:-0.5, R1:-0.5, R2:2, R3:1 } ,
+    bestMatch:12, secondMatch:8 },{ id:15, emoji:"🛡️", name:"守护者", tagline:"我的我来护",
+    desc:"你是那种嘴上不说但全做在行动里的人。你记得 TA 爱吃什么、怕什么、最近在烦什么，比 TA 自己还上心。下雨天你会出现在楼下，TA 崩溃的时候你只说「没事，有我」然后默默把事情处理好。你嘴确实有点笨，但你这样的人，谁跟了你谁心里有数。只希望你也记得——你值得被同样对待。",
+    vector:{ T1:0.5, T2:-1, T3:1.5, D1:-0.5, D2:0, D3:0.5, E1:1, E2:1, E3:1.5, M1:1.5, M2:2, M3:1.5, R1:2, R2:-0.5, R3:0.5 } ,
+    bestMatch:7, secondMatch:13 },{ id:16, emoji:"📋", name:"相亲完美适配者", tagline:"条件全达标",
+    desc:"你是相亲市场的好学生——学历、工作、爱好、见人接物全部在线，介绍人提起你都竖大拇指。你相信合适比心动重要，约会从不迟到，聊天从不冷场，一切都恰到好处。只是偶尔在安静的时候你会想：如果去掉这些「应该」，去掉这些标准答案——你这个人本身，有没有人爱？如果有一个让你想打破规则的人出现，你敢不敢试试？没事，慢慢想。",
+    vector:{ T1:2, T2:-1, T3:2, D1:0, D2:-1, D3:0, E1:-1, E2:0, E3:1, M1:2, M2:2, M3:2, R1:1, R2:-1, R3:1 } ,
+    bestMatch:7, secondMatch:1 }];
+const HIDDEN_TYPE = { id:99, emoji:"🥚", name:"空窗期误入者", tagline:"没有风格",
+  desc:"你花了五分钟认真回答了一堆恋爱场景题——然后发现你根本没有在谈恋爱。你的感情状态用一个字概括就是：🈚。你不确定自己是来测什么的，也不确定这个结论对谁有用。但这个结果至少证明了一件事：你是个对自己没有清醒认知但仍然愿意花时间做功德的善良的人。挺好的，下一个。" };
+
+// ================================================================
+// QUESTIONS (20 regular + 3 hidden = 23 total)
+// ================================================================
+const QUESTIONS = [
+  // --- Q1-Q8: Original scenarios (unchanged) ---
+  { id:1, badge:"🔥", scene:"你在某个 app 上和一个陌生人聊得飞起，连续三天从早安聊到晚安。第四天对方说：「周末有空见一面吗？」",
+    options:[
+      { text:"有！时间地点你定", effects:{ T1:1, T2:1, D1:-0.5, R1:0.5 } },
+      { text:"聊得挺好的，但再聊一阵吧，不着急", effects:{ T1:-1, T2:-1 } },
+      { text:"周末暂时不确定，下周再看看", effects:{ T1:0.5 } }
+    ] },
+  { id:2, badge:"🔥", scene:"你跟一个人暧昧了两个月，该聊的都聊了，该约的也约了——但对方始终不说清楚你们是什么关系。今天你刷到 TA 发了一条朋友圈，配文「单身真好」。",
+    options:[
+      { text:"截图发给闺蜜：「TA 是不是有什么大病？」", effects:{ T3:2, M1:1 } },
+      { text:"无所谓，反正我也在跟别人聊", effects:{ T3:-2, M2:-2 } },
+      { text:"心里一沉但不会问，默默减少主动发消息的频率", effects:{ T3:-1, E2:-1 } }
+    ] },
+  { id:3, badge:"🔥", scene:"你本来计划好周六一个人在家瘫一天——点外卖、看电影、谁都别来打扰。对象周五晚上说：「明天天气超好，我们去 xx 玩吧！」",
+    options:[
+      { text:"好啊！跟你一起更开心", effects:{ D1:-1, D2:1 } },
+      { text:"今天想自己待着，明天再找你好不好", effects:{ D1:2 } },
+      { text:"答应了，心里默念「我的独处日又泡汤了」", effects:{ D1:1, R3:1 } }
+    ] },
+  { id:4, badge:"🔥", scene:"你跟对象在一起半年了。有一天 TA 说：「我们换手机用一天吧，看看对方手机里有什么。」",
+    options:[
+      { text:"好啊！你先看我的", effects:{ D3:2 } },
+      { text:"不行，手机是个人隐私，跟爱不爱没关系", effects:{ D3:-2 } },
+      { text:"可以啊，但你先说你想找什么", effects:{ D3:-1, E2:1 } }
+    ] },
+  { id:5, badge:"🔥", scene:"你最近在接触两个人，A 和 B。因为一个乌龙（你记错了时间），A 和 B 出现在了同一个地方，互相看到了对方和你。",
+    options:[
+      { text:"大方打招呼：「好巧，介绍一下，这是我朋友 A 和 B」", effects:{ M2:-1, R3:2 } },
+      { text:"手心冒汗，假装接电话先撤一步", effects:{ E3:-1, R1:-1, D2:-0.5 } },
+      { text:"心态稳住，等后续再分别解释", effects:{ R1:0.5 } }
+    ] },
+  { id:6, badge:"🔥", scene:"你很想一个人。打开对话框，上一条消息是 TA 发的，你回复了但 TA 没再回。现在是晚上 11 点。",
+    options:[
+      { text:"直接发：「我想你了」", effects:{ E1:2 } },
+      { text:"翻了翻 TA 的朋友圈，默默关掉手机睡觉", effects:{ E1:-2 } },
+      { text:"分享一首歌到朋友圈，希望 TA 能懂", effects:{ E1:-1 } },
+      { text:"找个话题重新发一条消息过去开启新的话题", effects:{ E1:0.5 } }
+    ] },
+  { id:7, badge:"🔥", scene:"暧昧对象今天一整天没找你。你发了一条消息过去，过了 3 小时——已读不回。",
+    options:[
+      { text:"开始复盘自己昨天是不是说错了什么", effects:{ E2:1, R2:1 } },
+      { text:"无所谓，TA 肯定在忙，忙完会找我的", effects:{ E2:-2 } },
+      { text:"去翻 TA 的社交动态找线索", effects:{ E2:1 } },
+      { text:"直接发一条消息过去问：「在干嘛呢？」", effects:{ E2:-1, E1:0.5 } }
+    ] },
+  { id:8, badge:"🔥", scene:"你和对象因为一件小事吵起来了。对方越说越激动，声音越来越大。",
+    options:[
+      { text:"「先冷静一下」——转身去阳台", effects:{ E3:-1, D1:0.5, D2:-0.5 } },
+      { text:"大声回去：「你能不能不要每次都这样！」", effects:{ E3:2, R2:1, D2:0.5 } },
+      { text:"不说话，等 TA 说完了再说", effects:{ E3:-2 } }
+    ] },
+
+  // --- Q9: Restored v2 scenario (3个月合适少心动) ---
+  { id:9, badge:"🔥", scene:"你和一个人约会了三个月，各方面条件都很合适——但你总觉得少了点心动的感觉。对方认真地问你：「你觉得我们有未来吗？」",
+    options:[
+      { text:"「对我来说心跳比条件重要，对不起」", effects:{ M1:-1, R2:1 } },
+      { text:"「合适比心动更重要，感情可以培养」", effects:{ M1:2, M3:1 } },
+      { text:"「我还不太确定，能再给点时间吗」", effects:{ M1:0.5, T2:-1 } }
+    ] },
+
+  // --- Q10-old: Restored v2 scenario (看展) ---
+  { id:10, badge:"🔥", scene:"你在朋友聚会上认识了一个很聊得来的人。临走前对方说：「这周末有个展，要不要一起？」",
+    options:[
+      { text:"好！周六还是周日？我都可以——当场定下来", effects:{ M3:1, T1:1, R1:0.5 } },
+      { text:"「看情况吧，到时候再说」——结果真的没再联系", effects:{ M3:-1, T1:-1 } },
+      { text:"加个微信，你定好时间告诉我", effects:{ M3:0.5 } }
+    ] },
+
+  // --- Q11: Original (同梗撩朋友) + new 4th opt (曝光TA) ---
+  { id:11, badge:"🔥", scene:"你发现你的暧昧对象在跟你聊的同时，还用同一个梗（连表情包都一样）在跟你的朋友聊。",
+    options:[
+      { text:"直接问：「你是不是也在跟 xx 聊？」", effects:{ M2:2, T3:1 } },
+      { text:"控场能力很强嘛——那我也不止你一个", effects:{ M2:-2, R3:1 } },
+      { text:"默默下头，但不质问，慢慢冷掉", effects:{ E3:-1, M2:1 } },
+      { text:"截图发到共同群里曝光 TA！让大家看看什么人", effects:{ R2:1, E1:1 } }
+    ] },
+
+  // --- Q12: New attitude (恋爱规划) ---
+  { id:12, badge:"💭", scene:"聊到恋爱规划，你的态度更接近哪一种？",
+    options:[
+      { text:"活在当下，享受现在就好，不想太远", effects:{ M3:-1, T1:-1 } },
+      { text:"我是奔着认真走下去的，不想浪费时间", effects:{ M3:2, M1:1 } },
+      { text:"看人——对的人自然会有未来", effects:{ M3:0.5 } }
+    ] },
+
+  // --- Q13: Restored v2 scenario (朋友被绿) ---
+  { id:13, badge:"🔥", scene:"你好朋友发现对象出轨，跑来跟你哭诉。你听完之后：",
+    options:[
+      { text:"气得比 TA 还激动：「什么垃圾！！分！！」", effects:{ R2:1 } },
+      { text:"冷静分析：「你先别急，我们捋一捋怎么处理」", effects:{ R2:-1, E3:1 } },
+      { text:"先陪TA骂了一整晚，等TA发泄完了再帮TA分析", effects:{ R2:0, E3:0.5 } }
+    ] },
+
+  // --- Q14: New attitude (感性vs理性) ---
+  { id:14, badge:"💭", scene:"评价一下你自己——在感情里，你是感性多一点还是理性多一点？",
+    options:[
+      { text:"感性动物，爱情本来就是不讲道理的事", effects:{ R2:2 } },
+      { text:"理性选手，做决定前会想清楚利弊", effects:{ R2:-2 } },
+      { text:"分阶段：上头时感性，冷静时理性", effects:{ R2:0.5 } }
+    ] },
+
+  // --- Q15: Restored v2 scenario (高档餐厅) ---
+  { id:15, badge:"🔥", scene:"你对象约你去一家人均很贵的高级餐厅。你打开衣柜发现最体面的一件衣服是卫衣。",
+    options:[
+      { text:"就穿卫衣去啊，TA 喜欢的又不是我的衣服", effects:{ R3:-1 } },
+      { text:"赶紧去买件新的，不能丢脸", effects:{ R3:1 } },
+      { text:"纠结了一下还是穿着卫衣去了", effects:{ R3:0.5 } }
+    ] },
+
+  // --- Q16: New attitude (为对方改变) ---
+  { id:16, badge:"💭", scene:"你会为了迎合喜欢的人而改变自己的一些习惯或风格吗？",
+    options:[
+      { text:"不会，装得了一时装不了一辈子", effects:{ R3:-2 } },
+      { text:"会啊，为喜欢的人改变也很幸福", effects:{ R3:2 } },
+      { text:"看情况——无伤大雅的话可以调整", effects:{ R3:0.5 } }
+    ] },
+
+  // --- Q17: Original (你定吧) ---
+  { id:17, badge:"🔥", scene:"两个人约好了的一顿晚餐。对方说：「你定吧，我都可以。」",
+    options:[
+      { text:"你直接选好餐厅、订好位、安排好一切", effects:{ R1:2 } },
+      { text:"「我选怕你不喜欢，还是你定吧」", effects:{ R1:-2 } },
+      { text:"「那我提几个选项，你挑一个」", effects:{ R1:0.5 } }
+    ] },
+
+  // --- Q18: Original (前任撞见) ---
+  { id:18, badge:"🔥", scene:"你跟现任在商场逛街，迎面走来了你的前任。前任看你一眼，又看了现任一眼。",
+    options:[
+      { text:"大方打招呼：「嗨，好巧。这是我对象 xx」", effects:{ E1:1, M2:1, D3:1 } },
+      { text:"假装没看见，低头玩手机绕过去", effects:{ E3:-1, D3:-1 } },
+      { text:"简单点个头，然后拉着现任走开", effects:{ E1:0.5, D3:0.5 } }
+    ] },
+
+  // --- Q19: Original (约会三次确认关系) ---
+  { id:19, badge:"🔥", scene:"你跟一个人约会了三次，感觉都挺好。第三次结束，对方送你回家时说：「我觉得我们挺合适的，要不交往试试？」",
+    options:[
+      { text:"「我也觉得！好！」", effects:{ T2:1, M1:1, D1:-0.5 } },
+      { text:"「让我再想想」——其实是想再观察一阵", effects:{ T2:-1, T1:-1, D1:0.5 } },
+      { text:"「先处着看看吧」——不拒绝也不正式答应", effects:{ T3:-1, M1:-1 } }
+    ] },
+
+  // --- Q20: Original (朋友说对象有问题) + new 4th opt (仔细询问) ---
+  { id:20, badge:"🔥", scene:"你最好的朋友偷偷告诉你，TA 觉得你的对象有问题，劝你慎重。",
+    options:[
+      { text:"相信朋友的眼光，回去和对象好好聊一下", effects:{ D2:-1, E3:1 } },
+      { text:"有点不高兴：「你不了解 TA，别乱说」", effects:{ D2:1, M2:1 } },
+      { text:"把话放在心里，开始更仔细观察对象的行为", effects:{ E2:1 } },
+      { text:"仔细问朋友到底哪里有问题、有什么证据", effects:{ D2:-0.5, E3:0.5, D3:0.5 } }
+    ] },
+
+  // --- HIDDEN QUESTIONS ---
+  { id:21, hidden:true, scene:"（隐藏）🤫 你朋友突然问你——「你现在同时对几个人有好感？」",
+    options:[
+      { text:"说实话，不止一个", effects:{}, hiddenFlag:'continue' },
+      { text:"没有吧，就是随便聊聊", effects:{}, hiddenFlag:'continue' },
+      { text:"就一个，我很专一的", effects:{}, hiddenFlag:'stop' }
+    ] },
+  { id:22, hidden:true, scene:"（隐藏）深夜两点，你刷着手机突然觉得——「我好像也没那么想谈恋爱。」这种感觉多久出现一次？",
+    options:[
+      { text:"经常，间歇性想寡着", effects:{}, hiddenFlag:60 },
+      { text:"偶尔，但见到心动的人又好了", effects:{}, hiddenFlag:-20 },
+      { text:"几乎不，我一直想谈", effects:{}, hiddenFlag:0 }
+    ] },
+  { id:23, hidden:true, scene:"（隐藏）说真的，你是怎么看到这个测试的？",
+    options:[
+      { text:"朋友分享的，说「超准快来测」", effects:{}, hiddenFlag:80 },
+      { text:"自己刷到的，好奇点进来", effects:{}, hiddenFlag:30 },
+      { text:"就……无聊呗", effects:{}, hiddenFlag:50 }
+    ] }
+];
+
+// ================================================================
+// STATE & HELPERS
+// ================================================================
+let state = {};
+function initState() {
+  state = {
+    scores: {}, answers: {}, questionHistory: [],
+    hiddenProb: 0, hiddenActive: false, hiddenAnswered: 0, usedHidden: false,
+    currentQIdx: 0, questionOrder: [],
+    answeredHidden: false // whether user ever got to hidden questions this run
+  };
+  DIM_CODES.forEach(d => state.scores[d] = 0);
+  state.questionOrder = QUESTIONS.filter(q => !q.hidden).map(q => q.id);
+}
+const LABELS = ['A','B','C','D'];
+
+// ================================================================
+// UI
+// ================================================================
+function startTest() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('question-screen').style.display = 'block';
+  document.getElementById('result-screen').style.display = 'none';
+  initState();
+  renderQuestion();
+}
+
+function renderQuestion() {
+  if (state.currentQIdx >= state.questionOrder.length) {
+    if (!state.usedHidden && shouldShowHidden()) {
+      state.usedHidden = true; state.hiddenActive = true;
+      state.hiddenAnswered = 0; state.hiddenProb = 0;
+      state.questionOrder = state.questionOrder.concat([21,22,23]);
+      renderQuestion(); return;
+    }
+    showResult(); return;
+  }
+
+  const qId = state.questionOrder[state.currentQIdx];
+  const q = QUESTIONS.find(x => x.id === qId);
+  if (!q) { state.currentQIdx++; renderQuestion(); return; }
+
+  const total = state.questionOrder.length;
+  const pct = total > 0 ? (state.currentQIdx / total * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = (state.currentQIdx + 1) + ' / ' + total;
+
+  const badge = document.getElementById('q-type-badge');
+  if (q.hidden) {
+    badge.textContent = '🎲 隐藏题'; badge.className = 'q-badge q-hidden-badge';
+  } else if (q.badge === '💭') {
+    badge.textContent = '💭 态度题'; badge.className = 'q-badge';
+  } else {
+    badge.textContent = '🔥 情景题'; badge.className = 'q-badge';
+  }
+
+  document.getElementById('q-scene').textContent = q.scene || '';
+  document.getElementById('q-question').textContent = q.hidden ? '' : (q.id >= 12 && q.id <= 16 ? '你的选择是？' : '你会怎么选？');
+
+  const optContainer = document.getElementById('q-options');
+  optContainer.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    if (state.answers[qId] === i) btn.classList.add('selected');
+    btn.innerHTML = '<div class="option-row"><span class="option-label">'+LABELS[i]+'</span><span class="option-text">'+opt.text+'</span></div>';
+    btn.onclick = () => selectOption(qId, i, opt);
+    optContainer.appendChild(btn);
+  });
+
+  // Back button
+  document.getElementById('btn-back').disabled = (state.currentQIdx === 0);
+}
+
+function selectOption(qId, optIdx, opt) {
+  state.answers[qId] = optIdx;
+  if (opt.effects) Object.keys(opt.effects).forEach(d => {
+    if (state.scores[d] !== undefined) state.scores[d] += opt.effects[d];
+  });
+
+  // Hidden question logic
+  if (qId === 21) {
+    if (opt.hiddenFlag === 'stop') { state.currentQIdx = state.questionOrder.length; showResult(); return; }
+    if (opt.hiddenFlag === 'continue') state.hiddenAnswered++;
+  }
+  if (qId === 22) { state.hiddenProb += (opt.hiddenFlag||0); state.hiddenAnswered++; }
+  if (qId === 23) { state.hiddenProb += (opt.hiddenFlag||0); state.hiddenAnswered++; }
+
+  // Visually select
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  const btns = document.querySelectorAll('.option-btn');
+  if (btns[optIdx]) btns[optIdx].classList.add('selected');
+
+  setTimeout(() => { state.currentQIdx++; renderQuestion(); }, 260);
+}
+
+function goBack() {
+  if (state.currentQIdx <= 0) return;
+  state.currentQIdx--;
+  const qId = state.questionOrder[state.currentQIdx];
+  if (state.answers[qId] === undefined) { renderQuestion(); return; }
+
+  const q = QUESTIONS.find(x => x.id === qId);
+  const optIdx = state.answers[qId];
+  const opt = q.options[optIdx];
+
+  // Undo effects
+  if (opt.effects) Object.keys(opt.effects).forEach(d => {
+    if (state.scores[d] !== undefined) state.scores[d] -= opt.effects[d];
+  });
+  // Undo hidden flags
+  if (qId === 22) state.hiddenProb -= (opt.hiddenFlag||0);
+  if (qId === 23) state.hiddenProb -= (opt.hiddenFlag||0);
+  if (qId === 22 || qId === 23) state.hiddenAnswered--;
+
+  delete state.answers[qId];
+
+  // If going back past hidden trigger, recalc
+  if (qId <= 11 && state.usedHidden) {
+    recalcHiddenAfterBacktrack();
+  }
+
+  renderQuestion();
+}
+
+function recalcHiddenAfterBacktrack() {
+  state.usedHidden = false; state.hiddenActive = false;
+  state.hiddenAnswered = 0; state.hiddenProb = 0;
+  // Remove hidden Qs from order
+  state.questionOrder = state.questionOrder.filter(id => id < 21);
+  [21,22,23].forEach(hid => delete state.answers[hid]);
+}
+
+function shouldShowHidden() {
+  return state.answers[2] === 1 && state.answers[11] === 1;
+}
+
+// ================================================================
+// RESULT
+// ================================================================
+function showResult() {
+  document.getElementById('question-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+
+  const norm = {};
+  DIM_CODES.forEach(d => norm[d] = Math.max(-2, Math.min(2, state.scores[d] || 0)));
+
+  let isHidden = state.hiddenProb >= 70;
+  let mainType, secondType, oppositeType;
+
+  if (isHidden) {
+    mainType = HIDDEN_TYPE;
+    const r = findClosestTypes(norm, TYPES);
+    secondType = r.second; oppositeType = r.opposite;
+  } else {
+    const r = findClosestTypes(norm, TYPES);
+    mainType = r.main; secondType = r.second; oppositeType = r.opposite;
+  }
+
+  document.getElementById('r-emoji').textContent = mainType.emoji;
+  document.getElementById('r-name').textContent = mainType.name;
+  document.getElementById('r-tagline').textContent = '"' + mainType.tagline + '"';
+  document.getElementById('r-desc').textContent = mainType.desc;
+  document.getElementById('r-second').textContent = secondType ? secondType.emoji + ' ' + secondType.name : '—';
+  document.getElementById('r-opposite').textContent = oppositeType ? oppositeType.emoji + ' ' + oppositeType.name : '—';
+
+  // Populate match recommendations
+  const bmType = TYPES.find(t => t.id === mainType.bestMatch);
+  const smType = TYPES.find(t => t.id === mainType.secondMatch);
+  document.getElementById('r-match-best-emoji').textContent = bmType ? bmType.emoji : '';
+  document.getElementById('r-match-best').textContent = bmType ? bmType.name : '—';
+  document.getElementById('r-match-second-emoji').textContent = smType ? smType.emoji : '';
+  document.getElementById('r-match-second').textContent = smType ? smType.name : '—';
+
+  const h = document.getElementById('r-hidden');
+  if (isHidden) { h.style.display = 'block'; h.textContent = '🎲 你触发了隐藏人格！只有特定路径才会出现。'; }
+  else h.style.display = 'none';
+
+  drawRadar(norm, mainType.id === 99 ? null : mainType);
+}
+
+function findClosestTypes(userVec, typeList) {
+  let results = typeList.map(t => {
+    let dist = 0;
+    DIM_CODES.forEach(d => { const diff = (userVec[d]||0) - (t.vector[d]||0); dist += diff*diff; });
+    return { type:t, dist:Math.sqrt(dist) };
+  });
+  results.sort((a,b) => a.dist - b.dist);
+  return { main:results[0].type, second:results[1]?.type||null, opposite:results[results.length-1].type };
+}
+
+// ================================================================
+// RADAR CHART
+// ================================================================
+function drawRadar(userVec, mainType) {
+  const canvas = document.getElementById('radarChart');
+  const container = canvas.parentElement;
+  const maxSize = Math.min(container.clientWidth || 340, 400);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = maxSize * dpr;
+  canvas.height = maxSize * dpr;
+  canvas.style.width = maxSize + 'px';
+  canvas.style.height = maxSize + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const cx = maxSize/2, cy = maxSize/2 + 4;
+  const radius = Math.min(cx, cy) - 36;
+  const n = DIM_CODES.length;
+  const angleStep = (Math.PI*2)/n;
+  const startAngle = -Math.PI/2;
+
+  ctx.clearRect(0, 0, maxSize, maxSize);
+
+  // Grid rings
+  [0.5, 1.0, 1.5, 2.0].forEach(level => {
+    const r = radius * (level/2);
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const a = startAngle + i*angleStep;
+      const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(201, 151, 158, 0.07)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(201, 151, 158, 0.12)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < n; i++) {
+    const a = startAngle + i*angleStep;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + radius*Math.cos(a), cy + radius*Math.sin(a));
+    ctx.stroke();
+  }
+
+  // Type template (dashed gold)
+  if (mainType) {
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const dim = DIM_CODES[i % n];
+      const val = (mainType.vector[dim]||0)/2;
+      const r = radius * ((val+1)/2);
+      const a = startAngle + (i%n)*angleStep;
+      const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.setLineDash([3,3]);
+    ctx.strokeStyle = 'rgba(185, 149, 109, 0.4)';
+    ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // User data polygon
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const dim = DIM_CODES[i % n];
+    const val = (userVec[dim]||0)/2;
+    const r = radius * ((val+1)/2);
+    const a = startAngle + (i%n)*angleStep;
+    const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(201, 151, 158, 0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#c9979e';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots
+  for (let i = 0; i < n; i++) {
+    const dim = DIM_CODES[i];
+    const val = (userVec[dim]||0)/2;
+    const r = radius * ((val+1)/2);
+    const a = startAngle + i*angleStep;
+    const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#c9979e'; ctx.fill();
+  }
+
+  // Labels
+  ctx.fillStyle = '#b0979d';
+  ctx.font = '11px -apple-system, "PingFang SC", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < n; i++) {
+    const labelR = radius + 15;
+    const a = startAngle + i*angleStep;
+    const lx = cx + labelR*Math.cos(a), ly = cy + labelR*Math.sin(a);
+    let ox = 0, oy = 0;
+    if (Math.abs(Math.cos(a)) > 0.9) ox = Math.sign(Math.cos(a)) * 2;
+    if (Math.abs(Math.sin(a)) > 0.9) oy = Math.sign(Math.sin(a)) * 2;
+    ctx.fillText(DIM_SHORT[DIM_CODES[i]], lx+ox, ly+oy);
+  }
+
+  // Legend
+  ctx.textAlign = 'left';
+  ctx.font = '10px -apple-system, "PingFang SC", sans-serif';
+  ctx.fillStyle = '#c9979e';
+  ctx.fillRect(maxSize-108, 8, 8, 8);
+  ctx.fillText('你', maxSize-96, 15);
+  if (mainType) {
+    ctx.fillStyle = 'rgba(185, 149, 109, 0.6)';
+    ctx.fillRect(maxSize-108, 22, 8, 8);
+    ctx.fillText('类型', maxSize-96, 29);
+  }
+}
+
+// ================================================================
+// SHARE / RESTART
+// ================================================================
+function retake() { startTest(); }
+function showShare() {
+  const e = document.getElementById('r-emoji').textContent;
+  const n = document.getElementById('r-name').textContent;
+  const t = document.getElementById('r-tagline').textContent;
+  const text = '我测出了「' + e + ' ' + n + '」' + t + '\n\n来测测你的恋爱风格 → 情人匹配图鉴 🫶';
+  if (navigator.share) { navigator.share({ title:'情人匹配图鉴', text:text }); }
+  else if (navigator.clipboard) { navigator.clipboard.writeText(text).then(()=>{alert('结果已复制到剪贴板！📤');}); }
+  else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('结果已复制到剪贴板！📤');
+  }
+}
+</script>
+</body>
+</html>

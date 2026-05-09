@@ -442,10 +442,10 @@ function renderDashboard() {
         <div class="name">性格测评</div>
         <div class="desc">认识你的性格地图</div>
       </a>
-      <a href="treehole.html" class="qaction">
-        <div class="icon">🌿</div>
-        <div class="name">去树洞聊聊</div>
-        <div class="desc">和 AI 说说心里话</div>
+      <a href="love-radar.html" class="qaction">
+        <div class="icon">💘</div>
+        <div class="name">情人匹配图鉴</div>
+        <div class="desc">发现你的恋爱人格</div>
       </a>
     </div>
   `;
@@ -456,11 +456,11 @@ function renderAssessments() {
     return `<div class="empty-state"><div class="icon">📝</div><p>还没有测评记录<br>完成测评后，结果会自动保存在这里</p><a href="anxiety-assessment.html" class="btn-sage" style="display:inline-block">开始测评 →</a></div>`;
   }
 
-  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩'};
-  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估'};
-  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html'};
+  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩', love_radar:'💘'};
+  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估', love_radar:'情人匹配图鉴'};
+  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html', love_radar:'love-radar.html'};
 
-  function renderDetail(scores, type) {
+  function renderDetail(scores, type, id) {
     if (!scores) return '';
     if (type === 'anxiety') {
       const cs = scores.core_score || 0;
@@ -511,6 +511,25 @@ function renderAssessments() {
       const tag = typeLabel ? `<span style="display:inline-block;background:rgba(139,157,139,0.1);border-radius:50px;padding:3px 12px;font-size:12px;font-weight:500">${typeLabel}</span>` : '';
       return `<div style="margin-bottom:6px">${tag}</div><div style="margin-top:6px">${bars}</div>`;
     }
+    if (type === 'love_radar') {
+      const typeName = scores.typeName || '';
+      const tagline = scores.tagline || '';
+      const emoji = scores.typeEmoji || '💘';
+      const dims = scores.dims || {};
+      const bm = scores.bestMatchName || '';
+      const sm = scores.secondMatchName || '';
+      const canvasId = 'miniRadar-' + (id || Date.now());
+      setTimeout(() => drawMiniRadar(canvasId, dims), 100);
+      return `<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:8px">
+        <canvas id="${canvasId}" style="width:120px;height:120px;flex-shrink:0;border-radius:8px"></canvas>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:16px;font-weight:600;margin-bottom:2px">${emoji} ${typeName}</div>
+          <div style="font-size:13px;color:#8F7A72;font-style:italic">「${tagline}」</div>
+          ${bm ? `<div style="margin-top:8px;font-size:13px;color:#8F7A72">✨ 最佳匹配：${bm}</div>` : ''}
+          ${sm ? `<div style="font-size:13px;color:#8F7A72">💫 次选匹配：${sm}</div>` : ''}
+        </div>
+      </div>`;
+    }
     return `<pre style="font-size:12px;color:#8F7A72;background:rgba(139,157,139,0.04);padding:8px;border-radius:6px;white-space:pre-wrap;font-family:inherit">${JSON.stringify(scores, null, 2)}</pre>`;
   }
 
@@ -531,7 +550,7 @@ function renderAssessments() {
         <span class="assess-date">${dateStr}</span>
       </div>
       <div class="assess-detail" id="ad${a.id}">
-        ${renderDetail(scores, a.type)}
+        ${renderDetail(scores, a.type, a.id)}
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.08)">
           <a href="${links[a.type] || '#'}" style="font-size:12px;color:#8B9D8B;text-decoration:none">📋 重新测评 →</a>
           <a href="treehole.html" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>
@@ -544,6 +563,80 @@ function renderAssessments() {
 function toggleDetail(id) {
   const el = document.getElementById(id);
   el.classList.toggle('open');
+}
+
+// ── Mini Radar Chart (for love_radar assessment detail) ──
+function drawMiniRadar(canvasId, dims) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !dims || !Object.keys(dims).length) return;
+  const size = 120;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const cx = size/2, cy = size/2;
+  const radius = size/2 - 16;
+  const n = 15;
+  const angleStep = (Math.PI*2)/n;
+  const startAngle = -Math.PI/2;
+  const dimCodes = ['T1','T2','T3','D1','D2','D3','E1','E2','E3','M1','M2','M3','R1','R2','R3'];
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Grid rings (2 levels)
+  [0.5, 1.0].forEach(level => {
+    const r = radius * level;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const a = startAngle + i*angleStep;
+      const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+      i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(201, 151, 158, 0.10)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  });
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(201, 151, 158, 0.10)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < n; i++) {
+    const a = startAngle + i*angleStep;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + radius*Math.cos(a), cy + radius*Math.sin(a));
+    ctx.stroke();
+  }
+
+  // User data polygon
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const dim = dimCodes[i % n];
+    const val = (dims[dim]||0)/2;
+    const r = radius * ((val+1)/2);
+    const a = startAngle + (i%n)*angleStep;
+    const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+    i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(201, 151, 158, 0.2)';
+  ctx.fill();
+  ctx.strokeStyle = '#c9979e';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Dots
+  for (let i = 0; i < n; i++) {
+    const dim = dimCodes[i];
+    const val = (dims[dim]||0)/2;
+    const r = radius * ((val+1)/2);
+    const a = startAngle + i*angleStep;
+    const x = cx + r*Math.cos(a), y = cy + r*Math.sin(a);
+    ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2);
+    ctx.fillStyle = '#c9979e'; ctx.fill();
+  }
 }
 
 // ── Session List ──
