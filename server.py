@@ -891,17 +891,11 @@ async def chat_init(req: ChatInitRequest, request: Request):
 
     system_prompt = build_system_prompt(all_assessments, profile, session_count + 1, user_context)
 
-    # 4. 生成欢迎语
-    try:
-        greeting = await call_deepseek([
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": "嗨，我刚做完测评，想和你聊聊。"},
-        ])
-    except Exception:
-        greeting = (
-            "嗨，看到你做完测评啦。不用急着说什么——"
-            "我在这儿呢，你想聊什么就聊什么，不想说也没关系。"
-        )
+    # 4. 生成欢迎语（跳过 DeepSeek 调用——节省 10-30 秒，避免新人引导卡在加载）
+    greeting = (
+        "嗨，看到你做完测评啦。不用急着说什么——"
+        "我在这儿呢，你想聊什么就聊什么，不想说也没关系。"
+    )
 
     # 5. 存入对话记录
     greet_data = {
