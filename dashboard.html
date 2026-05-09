@@ -631,8 +631,22 @@ function openEdit() {
   document.getElementById('editGender').value = p.gender || '';
   // Hobbies
   const hobbies = p.hobbies || [];
+  const presetHobbies = ['阅读','音乐','电影','运动','旅行','摄影','绘画','游戏','烹饪','写作','手工','宠物'];
   document.querySelectorAll('.edit-hobby').forEach(el => {
-    el.classList.toggle('selected', hobbies.includes(el.textContent.trim()));
+    if (!presetHobbies.includes(el.textContent.trim())) {
+      el.remove(); // remove custom-added tags from previous sessions
+    } else {
+      el.classList.toggle('selected', hobbies.includes(el.textContent.trim()));
+    }
+  });
+  // Add custom tags for non-preset hobbies
+  hobbies.forEach(h => {
+    if (!presetHobbies.includes(h)) {
+      const tag = document.createElement('span');
+      tag.className = 'edit-hobby selected';
+      tag.textContent = h;
+      document.getElementById('editHobbies').appendChild(tag);
+    }
   });
   document.getElementById('editOverlay').classList.add('show');
 }
