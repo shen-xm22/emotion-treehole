@@ -152,6 +152,27 @@
     }
     .form-error.show { display: flex; }
 
+    .terms-checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 4px 0 12px;
+      font-size: 13px;
+      color: var(--brown);
+      line-height: 1.5;
+    }
+    .terms-checkbox input[type="checkbox"] {
+      margin-top: 3px;
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--sage);
+      cursor: pointer;
+    }
+    .terms-checkbox a {
+      color: var(--sage);
+      text-decoration: underline;
+    }
     .btn-submit {
       width: 100%;
       padding: 14px;
@@ -300,17 +321,46 @@
           </div>
           <div class="form-error" id="registerError"></div>
         </div>
-        <button type="submit" class="btn-submit" id="registerBtn">注册 <span>→</span></button>
+        <label class="terms-checkbox">
+          <input type="checkbox" id="agreeTerms">
+          <span>我已阅读并同意 <a href="#" onclick="showTerms(); return false;">《服务条款》</a>和<a href="#" onclick="showPrivacyInfo(); return false;">《隐私政策》</a></span>
+        </label>
+        <button type="submit" class="btn-submit" id="registerBtn" disabled>注册 <span>→</span></button>
       </form>
 
       <div class="auth-footer">
-        使用即表示同意 <a href="#">服务条款</a>
+        已有账号？<a href="#" onclick="switchTab('login'); return false;">去登录</a>
       </div>
     </div>
   </div>
 
   <script>
     const API_BASE = '';
+
+    function showTerms() {
+      alert(
+        '📋 服务条款\n\n' +
+        '1. 本产品为个人情绪疏导工具，不构成任何形式的心理咨询或医疗服务。\n' +
+        '2. 如你有严重的心理困扰或危机，请立即拨打心理援助热线（如：北京 010-82951332，上海 021-12320-5）或前往医疗机构。\n' +
+        '3. 你同意不利用本产品进行任何违法活动。\n' +
+        '4. 我们保留修改服务条款的权利，修改后的条款一经发布即生效。\n' +
+        '5. 本产品按「现状」提供，不保证服务不会中断或完全准确。\n\n' +
+        '继续使用即表示你接受本条款。'
+      );
+    }
+
+    function showPrivacyInfo() {
+      alert(
+        '🔒 隐私政策\n\n' +
+        '1. 我们收集的信息：用户名、邮箱（仅用于账号登录）；测评答案及结果；树洞聊天内容。\n' +
+        '2. 信息用途：仅用于生成 AI 回复以及在你的个人主页展示历史记录。\n' +
+        '3. 信息存储：所有数据存储在 Supabase 加密数据库中，传输使用 HTTPS 加密。\n' +
+        '4. 第三方共享：AI 回复由 DeepSeek API 生成，消息内容会发送至 DeepSeek 处理，但我们不会将数据出售或分享给其他第三方。\n' +
+        '5. 数据控制：你可以在个人主页随时清除所有数据或注销账号。\n' +
+        '6. 建议：为了保护隐私，请不要在对话中输入真实姓名、地址、电话等可识别个人信息。\n\n' +
+        '如有问题请联系管理员。'
+      );
+    }
 
     // ── Tab switch ──
     function switchTab(tab) {
@@ -391,6 +441,11 @@
       }
     }
 
+    // 勾选服务条款后才能注册
+    document.getElementById('agreeTerms').addEventListener('change', function() {
+      document.getElementById('registerBtn').disabled = !this.checked;
+    });
+
     // ── Register ──
     async function handleRegister(e) {
       e.preventDefault();
@@ -398,6 +453,11 @@
       const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
       document.getElementById('registerError').classList.remove('show');
+
+      if (!document.getElementById('agreeTerms').checked) {
+        showError('registerError', '请先阅读并同意服务条款和隐私政策');
+        return;
+      }
 
       if (!username || !email || !password) return;
 
