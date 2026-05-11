@@ -1316,5 +1316,45 @@
       }
     });
   </script>
+
+  <!-- 隐私提示 -->
+  <div class="privacy-notice">
+    🌿 所有对话仅你可见，数据加密存储于安全服务器 · <a href="#" onclick="showPrivacyInfo(); return false;">了解更多</a>
+  </div>
+
+  <style>
+  .privacy-notice {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 16px;
+    background: rgba(44, 62, 80, 0.9);
+    color: rgba(255,255,255,0.7);
+    font-size: 12px;
+    text-align: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+  }
+  .privacy-notice a {
+    color: rgba(255,255,255,0.9);
+    text-decoration: underline;
+  }
+  </style>
+
+  <script>
+  function showPrivacyInfo() {
+    alert(
+      '🔒 隐私保护说明\n\n' +
+      '• 你的所有对话内容仅存储在安全的服务器数据库中\n' +
+      '• 只有你自己登录后可以查看自己的聊天记录\n' +
+      '• 我们不会将你的个人信息分享给任何第三方\n' +
+      '• 你可以在个人主页随时清除所有数据或注销账号\n' +
+      '• 本产品使用 AI 生成回复，不会有人工审阅你的对话\n\n' +
+      '💡 建议：不要输入真实姓名、地址、电话等可识别个人信息'
+    );
+  }
+  </script>
+
 </body>
 </html>

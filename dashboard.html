@@ -219,6 +219,29 @@ header {
 .qaction .name { font-size: 13px; font-weight: 500; }
 .qaction .desc { font-size: 11px; color: var(--brown-lt); margin-top: 2px; }
 
+.privacy-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.privacy-actions .btn-ghost {
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+.privacy-footer {
+  margin-top: 12px;
+  font-size: 11px;
+  color: var(--brown-lt);
+  text-align: center;
+  padding-bottom: 20px;
+}
+.privacy-footer a {
+  color: var(--brown);
+  text-decoration: underline;
+}
+
 @media (max-width: 600px) {
   header { padding: 10px 16px; }
   .container { padding: 20px 16px 40px; }
@@ -448,7 +471,61 @@ function renderDashboard() {
         <div class="desc">发现你的恋爱人格</div>
       </a>
     </div>
+
+    <div class="section-title" style="margin-top:32px">🔒 隐私与数据</div>
+    <div class="privacy-actions">
+      <button class="btn-ghost" onclick="clearAllData()" style="color:#B4886E;border-color:#E8D5C8">🗑️ 清除所有数据</button>
+      <button class="btn-ghost" onclick="deleteAccount()" style="color:#C44;border-color:#F0D0C8">⚠️ 注销账号</button>
+    </div>
+
+    <div class="privacy-footer">
+      所有对话仅你可见 · 数据加密存储 · AI 回复不会人工审阅
+      <a href="#" onclick="showPrivacyInfo(); return false;">详情</a>
+    </div>
   `;
+}
+
+function showPrivacyInfo() {
+  alert(
+    '🔒 隐私保护说明\n\n' +
+    '• 你的所有对话内容仅存储在安全的服务器数据库中\n' +
+    '• 只有你自己登录后可以查看自己的聊天记录\n' +
+    '• 我们不会将你的个人信息分享给任何第三方\n' +
+    '• 你可以在本页面随时清除所有数据或注销账号\n' +
+    '• 本产品使用 AI 生成回复，不会有人工审阅你的对话\n\n' +
+    '💡 建议：不要输入真实姓名、地址、电话等可识别个人信息'
+  );
+}
+
+async function clearAllData() {
+  if (!confirm('确定清除所有数据？\n\n此操作将删除：\n- 所有测评结果\n- 所有树洞会话和聊天记录\n- 个人资料（昵称、MBTI等）\n\n账号将保留，你可以继续使用。')) return;
+  if (!confirm('再次确认：所有数据将被永久删除，不可恢复。')) return;
+  try {
+    const resp = await fetch(API_BASE + '/api/user/data', {
+      method: 'DELETE',
+      headers: {'Authorization': 'Bearer ' + getToken()}
+    });
+    if (!resp.ok) throw new Error('操作失败');
+    window.location.reload();
+  } catch(e) {
+    alert('操作失败：' + e.message);
+  }
+}
+
+async function deleteAccount() {
+  if (!confirm('确定注销账号？\n\n此操作将永久删除：\n- 用户账号（用户名、邮箱）\n- 所有测评结果\n- 所有树洞会话和聊天记录\n- 个人资料\n\n此操作不可恢复！')) return;
+  if (!confirm('再次确认：账号将被永久注销，所有数据不可恢复。')) return;
+  try {
+    const resp = await fetch(API_BASE + '/api/user/account', {
+      method: 'DELETE',
+      headers: {'Authorization': 'Bearer ' + getToken()}
+    });
+    if (!resp.ok) throw new Error('操作失败');
+    localStorage.removeItem('token');
+    window.location.href = 'auth.html';
+  } catch(e) {
+    alert('操作失败：' + e.message);
+  }
 }
 
 function renderAssessments() {

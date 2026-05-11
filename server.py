@@ -27,17 +27,49 @@ from pydantic import BaseModel, Field
 
 # ─── 配置 ───────────────────────────────────────────────
 
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-5b8d6781ac7d42fdb070efb980c38bdf")
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 DEEPSEEK_MODEL = "deepseek-v4-flash"  # DeepSeek V4 Flash + 思考模式
 DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 
-# Supabase (PostgreSQL)
+if not DEEPSEEK_API_KEY:
+    raise RuntimeError(
+        "❌ DEEPSEEK_API_KEY 环境变量未设置！\n"
+        "请在 Render Dashboard → Environment 中添加：\n"
+        "  变量名: DEEPSEEK_API_KEY\n"
+        "  值: (你的 DeepSeek API Key)"
+    )
+
+# Supabase (PostgreSQL) — SUPABASE_URL 保持默认（只是公开的数据库地址）
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://nzlnkgoipjhekrgzudgf.supabase.co")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im56bG5rZ29pcGpoZWtyZ3p1ZGdmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODIxMjU2NywiZXhwIjoyMDkzNzg4NTY3fQ.Dll7F7fU09-yK-vBHRRzBlYVFsOC45Lk0d7lJJMmRjw")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_KEY", "")
+
+if not SUPABASE_SERVICE_KEY:
+    raise RuntimeError(
+        "❌ SUPABASE_SERVICE_KEY 环境变量未设置！\n"
+        "请在 Render Dashboard → Environment 中添加：\n"
+        "  变量名: SUPABASE_SERVICE_KEY\n"
+        "  值: (你的 Supabase service_role key)\n"
+        "\n"
+        "⚠️ 重要：这是服务端密钥，不要泄露给任何人！\n"
+        "请到 Supabase Dashboard → Settings → API → service_role key 获取"
+    )
+
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # ─── JWT 配置 ───────────────────────────────────────────
-JWT_SECRET = os.environ.get("JWT_SECRET", "emotion-treehole-jwt-secret-2026")
+JWT_SECRET = os.environ.get("JWT_SECRET", "")
+
+if not JWT_SECRET:
+    raise RuntimeError(
+        "❌ JWT_SECRET 环境变量未设置！\n"
+        "请在 Render Dashboard → Environment 中添加：\n"
+        "  变量名: JWT_SECRET\n"
+        "  值: (一个至少 32 字符的随机字符串)\n"
+        "\n"
+        "建议使用以下命令生成：\n"
+        "  node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"\n"
+        "  或：openssl rand -hex 32"
+    )
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRY_HOURS = 72
 
@@ -1102,6 +1134,49 @@ async def delete_session(session_id: str, request: Request):
     supabase.table("chat_sessions").delete().eq("session_id", session_id).execute()
 
     return {"ok": True}
+
+
+@app.delete("/api/user/data")
+async def delete_all_user_data(request: Request):
+    """清除当前用户的所有数据（保留账号，仅清空内容）。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    # 删除所有测评结果
+    supabase.table("assessment_results").delete().eq("user_id", user_id).execute()
+    # 删除所有会话和聊天记录
+    supabase.table("conversations").delete().eq("user_id", user_id).execute()
+    supabase.table("chat_sessions").delete().eq("user_id", user_id).execute()
+    # 重置用户画像
+    supabase.table("user_profiles").update({
+        "nickname": "",
+        "mbti": "",
+        "zodiac": "",
+        "birth_date": "",
+        "gender": "",
+        "hobbies": [],
+    }).eq("user_id", user_id).execute()
+
+    return {"ok": True, "message": "所有数据已清除"}
+
+
+@app.delete("/api/user/account")
+async def delete_account(request: Request):
+    """注销账号：删除用户及所有关联数据。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    # 删除关联数据（外键 ON DELETE CASCADE 会自动处理，但显式删除更可靠）
+    supabase.table("assessment_results").delete().eq("user_id", user_id).execute()
+    supabase.table("conversations").delete().eq("user_id", user_id).execute()
+    supabase.table("chat_sessions").delete().eq("user_id", user_id).execute()
+    supabase.table("user_profiles").delete().eq("user_id", user_id).execute()
+    # 删除用户
+    supabase.table("users").delete().eq("id", user_id).execute()
+
+    return {"ok": True, "message": "账号已注销"}
 
 
 # ─── 启动 ────────────────────────────────────────────────
