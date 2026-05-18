@@ -162,6 +162,12 @@ async def serve_love_radar():
 async def serve_bazi():
     return FileResponse(os.path.join(BASE_DIR, "bazi.html"))
 
+@app.get("/bazi-match")
+@app.get("/bazi-match.html")
+async def serve_bazi_match():
+    return FileResponse(os.path.join(BASE_DIR, "bazi-match.html"))
+
+
 @app.get("/auth")
 @app.get("/auth.html")
 async def serve_auth():
@@ -216,7 +222,7 @@ class ProfileUpdateRequest(BaseModel):
     hobbies: list = []
 
 class SaveAssessmentRequest(BaseModel):
-    type: str = Field(..., pattern=r'^(anxiety|relationship|personality|love_radar|bazi)$')
+    type: str = Field(..., pattern=r'^(anxiety|relationship|personality|love_radar|bazi|bazi_match)$')
     scores: dict = {}
     answers: Any = {}
     summary: str = ''
@@ -254,6 +260,36 @@ class BaziInterpretRequest(BaseModel):
     hideGanDay: str = ''
     birthPlace: str = ''
     daYunFull: str = ''    # 完整大运列表，如"1-10岁 甲子, 11-20岁 乙丑,..."
+
+
+class PersonBaziData(BaseModel):
+    """一个人的八字数据（用于合婚分析）。"""
+    solarDate: str = ''
+    gender: int = 0
+    birthPlace: str = ''
+    ganZhi: str = ''
+    riZhu: str = ''
+    riZhuWx: str = ''
+    wxCount: dict = {}
+    shengXiao: str = ''
+    curDaYun: str = ''
+    curDaYunStart: float = 0
+    curDaYunEnd: float = 0
+    daYunFull: str = ''
+    naYinDay: str = ''
+    diShiDay: str = ''
+    taiYuan: str = ''
+    mingGong: str = ''
+    shenGong: str = ''
+    shiShenYear: str = ''
+    shiShenMonth: str = ''
+    shiShenTime: str = ''
+
+
+class BaziMatchRequest(BaseModel):
+    """八字合婚请求（两人八字）。"""
+    personA: PersonBaziData
+    personB: PersonBaziData
 
 
 # ─── System Prompt 构造器 ────────────────────────────────
@@ -358,6 +394,17 @@ def build_user_profile_context(user_profile: dict, assessment_records: list) -> 
             tn = scores.get("typeName", "")
             tg = scores.get("tagline", "")
             parts.append(f"恋爱人格评估({created}): {tn}「{tg}」")
+        elif t == "bazi_match":
+            s = rec.get("scores", {}) or {}
+            pa = s.get("personA", {})
+            pb = s.get("personB", {})
+            sm = rec.get("summary", "") or ""
+            aGan = pa.get("ganZhi", "")
+            bGan = pb.get("ganZhi", "")
+            header = f"合婚分析({created}): {aGan} vs {bGan}"
+            parts.append(header)
+            if sm:
+                parts.append(f"解读详情: {sm[:1000]}")
         elif t == "bazi":
             sm = rec.get("summary", "") or ""
             s = rec.get("scores", {}) or {}
@@ -1093,6 +1140,316 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
 
 
 @app.post("/api/chat/init")
+def build_bazi_match_prompt(req) -> tuple[list, str]:
+    """构建八字合婚分析的 messages 列表。"""
+    from datetime import datetime
+    current_year = datetime.now().year
+    a, b = req.personA, req.personB
+
+    def wx_str(wx):
+        return ''.join([f'{k}{v}' for k, v in wx.items()])
+
+    prompt = f'''你是一位温暖、客观的八字合婚分析师。请根据两人的八字数据，从以下维度系统分析他们的婚姻/爱情兼容性：
+
+---
+### 用户数据
+
+**甲方（第一人）：**
+- 出生日期：{a.solarDate}
+- 性别：{'男' if a.gender == 0 else '女'}
+- 四柱：{a.ganZhi}
+- 日主：{a.riZhu}（{a.riZhuWx}）
+- 生肖：{a.shengXiao}
+- 五行分布：{wx_str(a.wxCount)}
+- 日柱纳音：{a.naYinDay}
+- 日柱地势：{a.diShiDay}
+- 十神：年{a.shiShenYear} 月{a.shiShenMonth} 时{a.shiShenTime}
+- 胎元：{a.taiYuan} 命宫：{a.mingGong} 身宫：{a.shenGong}
+- 当前大运：{a.curDaYun}
+- 完整大运：{a.daYunFull}
+
+**乙方（第二人）：**
+- 出生日期：{b.solarDate}
+- 性别：{'男' if b.gender == 0 else '女'}
+- 四柱：{b.ganZhi}
+- 日主：{b.riZhu}（{b.riZhuWx}）
+- 生肖：{b.shengXiao}
+- 五行分布：{wx_str(b.wxCount)}
+- 日柱纳音：{b.naYinDay}
+- 日柱地势：{b.diShiDay}
+- 十神：年{b.shiShenYear} 月{b.shiShenMonth} 时{b.shiShenTime}
+- 胎元：{b.taiYuan} 命宫：{b.mingGong} 身宫：{b.shenGong}
+- 当前大运：{b.curDaYun}
+- 完整大运：{b.daYunFull}
+
+---
+### 分析要求
+
+请按以下结构展开详细分析：
+
+#### 一、💘 五行互补分析
+- 甲方的五行强弱、喜用神是什么
+- 乙方的五行强弱、喜用神是什么
+- 双方五行是否互补：甲方弱的元素乙方是否强？乙方弱的元素甲方是否强？
+- 相生相克关系对这段关系的利弊
+- 整体评价：互补程度（优/良/中/差）
+
+#### 二、🐾 生肖与纳音配对
+- 生肖关系：判断是六合、三合、六冲还是六害，说明这对性格和价值观的影响
+- 年柱纳音是否相生：纳音相生则长辈祝福和家庭氛围更好
+- 整体评价
+
+#### 三、🔥 日柱关系（核心）
+- 日干五行生克：甲方日主{a.riZhuWx}与乙方日主{b.riZhuWx}的相生克关系——这决定了日常相处模式
+- 日支（配偶宫）互动：透露出对方对各自意味着什么
+- 日柱纳音相生/相克
+- 日柱地势关系
+- 整体评价
+
+#### 四、💕 婚姻星与十神互动
+- 各自的婚姻星（男看正财偏财，女看正官七杀）在命盘中的状态
+- 对方出现在自己命盘十神中意味着什么
+- 这段关系对各自人生是增益还是消耗
+- 需要注意的相处雷区
+
+#### 五、🌊 大运走势同步性
+- 起运时间是否接近（人生节奏是否合拍）
+- 当前大运对双方的契合度影响
+- 未来大运走向是否同步：同频共振还是此消彼长
+- 什么阶段关系最稳定，什么阶段需要更多经营
+
+#### 六、📊 综合评估与建议
+- 整体匹配度评价（用1-2句话概括这段关系的核心特质）
+- 这段感情/婚姻的三大优势和三大需要注意的方面
+- 给双方的具体相处建议：如何扬长避短
+- 什么时间节点（年份）是关系的关键期
+
+---
+写法要求：
+- 语气温暖、真诚、客观，像一位懂行的朋友认真分析
+- 专业但不堆砌术语，用容易理解的方式表达
+- 有具体的年龄/年份参考
+- 核心是给出有价值、可操作的相处建议
+- 末尾务必加上：⚠️ 以上内容由AI生成，仅供娱乐参考，命运掌握在自己手中。
+'''
+
+    messages = [
+        {"role": "system", "content": "你是一位温暖、真诚、客观的八字合婚分析师。你的专长是分析两人八字之间的五行互补、生肖配对、日柱关系、十神互动和大运同步性。分析时保持客观中立，既不夸大缘分也不刻意悲观，用专业但易懂的语言给出有价值的相处建议。善于用emoji做段落标题。"},
+        {"role": "user", "content": prompt}
+    ]
+    return messages
+
+
+@app.post("/api/bazi-match/interpret/stream")
+async def bazi_match_interpret_stream(req: BaziMatchRequest):
+    """根据两人八字数据流式生成合婚解读。"""
+    try:
+        messages = build_bazi_match_prompt(req)
+
+        async def event_stream():
+            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            try:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    async with client.stream(
+                        "POST",
+                        f"{DEEPSEEK_BASE_URL}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": DEEPSEEK_MODEL,
+                            "messages": messages,
+                            "max_tokens": 8192,
+                            "reasoning_effort": "high",
+                            "stream": True,
+                        },
+                    ) as resp:
+                        if resp.status_code != 200:
+                            error_body = await resp.aread()
+                            yield f"data: {json.dumps({'type': 'error', 'text': error_body.decode()})}\n\n"
+                            return
+
+                        async for line in resp.aiter_lines():
+                            if not line.startswith("data: "):
+                                continue
+                            data_str = line[6:].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk = json.loads(data_str)
+                                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                                if "content" in delta and delta["content"]:
+                                    yield f"data: {json.dumps({'type': 'content', 'text': delta['content']})}\n\n"
+                            except json.JSONDecodeError:
+                                continue
+
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            except Exception as e:
+                logger.error(f"合婚解读流异常: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'text': str(e)})}\n\n"
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+    except Exception as e:
+        logger.error(f"合婚解读流启动失败: {e}")
+        return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
+
+
+def build_bazi_match_prompt(req) -> tuple[list, str]:
+    """构建八字合婚分析的 messages 列表。"""
+    from datetime import datetime
+    current_year = datetime.now().year
+    a, b = req.personA, req.personB
+
+    def wx_str(wx):
+        return ''.join([f'{k}{v}' for k, v in wx.items()])
+
+    prompt = f'''你是一位温暖、客观的八字合婚分析师。请根据两人的八字数据，从以下维度系统分析他们的婚姻/爱情兼容性：
+
+---
+### 用户数据
+
+**甲方（第一人）：**
+- 出生日期：{a.solarDate}
+- 性别：{'男' if a.gender == 0 else '女'}
+- 四柱：{a.ganZhi}
+- 日主：{a.riZhu}（{a.riZhuWx}）
+- 生肖：{a.shengXiao}
+- 五行分布：{wx_str(a.wxCount)}
+- 日柱纳音：{a.naYinDay}
+- 日柱地势：{a.diShiDay}
+- 十神：年{a.shiShenYear} 月{a.shiShenMonth} 时{a.shiShenTime}
+- 胎元：{a.taiYuan} 命宫：{a.mingGong} 身宫：{a.shenGong}
+- 当前大运：{a.curDaYun}
+- 完整大运：{a.daYunFull}
+
+**乙方（第二人）：**
+- 出生日期：{b.solarDate}
+- 性别：{'男' if b.gender == 0 else '女'}
+- 四柱：{b.ganZhi}
+- 日主：{b.riZhu}（{b.riZhuWx}）
+- 生肖：{b.shengXiao}
+- 五行分布：{wx_str(b.wxCount)}
+- 日柱纳音：{b.naYinDay}
+- 日柱地势：{b.diShiDay}
+- 十神：年{b.shiShenYear} 月{b.shiShenMonth} 时{b.shiShenTime}
+- 胎元：{b.taiYuan} 命宫：{b.mingGong} 身宫：{b.shenGong}
+- 当前大运：{b.curDaYun}
+- 完整大运：{b.daYunFull}
+
+---
+### 分析要求
+
+请按以下结构展开详细分析：
+
+#### 一、💘 五行互补分析
+- 甲方的五行强弱、喜用神是什么
+- 乙方的五行强弱、喜用神是什么
+- 双方五行是否互补：甲方弱的元素乙方是否强？乙方弱的元素甲方是否强？
+- 相生相克关系对这段关系的利弊
+- 整体评价：互补程度（优/良/中/差）
+
+#### 二、🐾 生肖与纳音配对
+- 生肖关系：判断是六合、三合、六冲还是六害，说明这对性格和价值观的影响
+- 年柱纳音是否相生：纳音相生则长辈祝福和家庭氛围更好
+- 整体评价
+
+#### 三、🔥 日柱关系（核心）
+- 日干五行生克：甲方日主{a.riZhuWx}与乙方日主{b.riZhuWx}的相生克关系——这决定了日常相处模式
+- 日支（配偶宫）互动：透露出对方对各自意味着什么
+- 日柱纳音相生/相克
+- 日柱地势关系
+- 整体评价
+
+#### 四、💕 婚姻星与十神互动
+- 各自的婚姻星（男看正财偏财，女看正官七杀）在命盘中的状态
+- 对方出现在自己命盘十神中意味着什么
+- 这段关系对各自人生是增益还是消耗
+- 需要注意的相处雷区
+
+#### 五、🌊 大运走势同步性
+- 起运时间是否接近（人生节奏是否合拍）
+- 当前大运对双方的契合度影响
+- 未来大运走向是否同步：同频共振还是此消彼长
+- 什么阶段关系最稳定，什么阶段需要更多经营
+
+#### 六、📊 综合评估与建议
+- 整体匹配度评价（用1-2句话概括这段关系的核心特质）
+- 这段感情/婚姻的三大优势和三大需要注意的方面
+- 给双方的具体相处建议：如何扬长避短
+- 什么时间节点（年份）是关系的关键期
+
+---
+写法要求：
+- 语气温暖、真诚、客观，像一位懂行的朋友认真分析
+- 专业但不堆砌术语，用容易理解的方式表达
+- 有具体的年龄/年份参考
+- 核心是给出有价值、可操作的相处建议
+- 末尾务必加上：⚠️ 以上内容由AI生成，仅供娱乐参考，命运掌握在自己手中。
+'''
+
+    messages = [
+        {"role": "system", "content": "你是一位温暖、真诚、客观的八字合婚分析师。你的专长是分析两人八字之间的五行互补、生肖配对、日柱关系、十神互动和大运同步性。分析时保持客观中立，既不夸大缘分也不刻意悲观，用专业但易懂的语言给出有价值的相处建议。善于用emoji做段落标题。"},
+        {"role": "user", "content": prompt}
+    ]
+    return messages
+
+
+@app.post("/api/bazi-match/interpret/stream")
+async def bazi_match_interpret_stream(req: BaziMatchRequest):
+    """根据两人八字数据流式生成合婚解读。"""
+    try:
+        messages = build_bazi_match_prompt(req)
+
+        async def event_stream():
+            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            try:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    async with client.stream(
+                        "POST",
+                        f"{DEEPSEEK_BASE_URL}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": DEEPSEEK_MODEL,
+                            "messages": messages,
+                            "max_tokens": 8192,
+                            "reasoning_effort": "high",
+                            "stream": True,
+                        },
+                    ) as resp:
+                        if resp.status_code != 200:
+                            error_body = await resp.aread()
+                            yield f"data: {json.dumps({'type': 'error', 'text': error_body.decode()})}\n\n"
+                            return
+
+                        async for line in resp.aiter_lines():
+                            if not line.startswith("data: "):
+                                continue
+                            data_str = line[6:].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk = json.loads(data_str)
+                                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                                if "content" in delta and delta["content"]:
+                                    yield f"data: {json.dumps({'type': 'content', 'text': delta['content']})}\n\n"
+                            except json.JSONDecodeError:
+                                continue
+
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            except Exception as e:
+                logger.error(f"合婚解读流异常: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'text': str(e)})}\n\n"
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+    except Exception as e:
+        logger.error(f"合婚解读流启动失败: {e}")
+        return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
+
+
 async def chat_init(req: ChatInitRequest, request: Request):
     """初始化树洞会话，存储测评数据，生成问候语。"""
     # 1. 存储测评结果

@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>💘 八字合婚 — 情绪树洞</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --sage:#8B9D8B;--sage-lt:#C4D3C4;--sage-pt:#E8F0E8;
+    --rose:#E8C4C8;--rose-lt:#F5E4E6;
+    --lavender:#C9C0D3;--lavender-lt:#EAE5F1;
+    --warm-bg:#FAF6F1;--cream:#FDFBF9;
+    --brown:#5D4E37;--brown-lt:#8B7D6A;
+    --shadow:0 8px 32px rgba(93,78,55,0.08);
+  }
+  body{font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;background:var(--warm-bg);color:var(--brown);min-height:100vh;line-height:1.6}
+  .bg-nature{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;overflow:hidden}
+  .bg-nature .sun-beam{position:absolute;top:-10%;left:50%;width:60%;height:60%;background:radial-gradient(ellipse, rgba(232,196,200,0.12) 0%, transparent 70%);transform:translateX(-50%)}
+  .bg-nature .forest-blob{position:absolute;border-radius:50%;filter:blur(80px)}
+  .bg-nature .sage-mist{width:500px;height:500px;background:rgba(196,211,196,0.08);top:10%;right:-10%}
+  .bg-nature .rose-mist{width:400px;height:400px;background:rgba(232,196,200,0.06);bottom:5%;left:-8%}
+  .bg-nature .lav-mist{width:350px;height:350px;background:rgba(201,192,211,0.05);bottom:30%;right:15%}
+  .vignette{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;background:radial-gradient(ellipse at center, transparent 50%, rgba(250,246,241,0.6) 100%);z-index:0}
+  nav{position:relative;z-index:1;display:flex;gap:20px;padding:20px 28px;max-width:960px;margin:0 auto}
+  nav a{text-decoration:none;color:var(--brown-lt);font-size:14px;font-weight:500;transition:color .2s}
+  nav a:hover{color:var(--sage)}
+  .container{max-width:960px;margin:0 auto;padding:0 20px 60px;position:relative;z-index:1}
+  h1{font-size:26px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .subtitle{font-size:14px;color:var(--brown-lt);margin-bottom:20px}
+  .card{background:var(--cream);border-radius:20px;padding:28px 24px;box-shadow:var(--shadow);margin-bottom:20px}
+  .card-title{font-size:16px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+  .form-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+  .form-group{flex:1;min-width:70px}
+  .form-group label{display:block;font-size:12px;font-weight:600;color:var(--brown-lt);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.5px}
+  .form-group input,.form-group select{width:100%;padding:8px 10px;border:1px solid rgba(139,157,139,0.25);border-radius:10px;font-size:14px;font-family:inherit;background:white;color:var(--brown);outline:none;transition:border-color .2s}
+  .form-group input:focus,.form-group select:focus{border-color:var(--sage)}
+  .time-hint{font-size:11px;color:var(--brown-lt);opacity:0.7;margin-top:3px}
+
+  .dual-form{display:flex;gap:16px;flex-wrap:wrap}
+  .dual-form .person-card{flex:1;min-width:280px;background:var(--cream);border-radius:20px;padding:24px 20px;box-shadow:var(--shadow)}
+  .person-card.person-a{border-top:3px solid var(--sage)}
+  .person-card.person-b{border-top:3px solid var(--rose)}
+  .person-label{font-size:14px;font-weight:600;margin-bottom:12px}
+  .person-label .person-emoji{font-size:20px;margin-right:6px}
+
+  .btn-primary{display:inline-flex;align-items:center;gap:6px;background:var(--sage);color:white;border:none;border-radius:50px;padding:12px 32px;font-size:16px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit}
+  .btn-primary:hover{background:#7A8E7A;transform:translateY(-1px);box-shadow:0 4px 16px rgba(139,157,139,0.3)}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+  .btn-rose{background:var(--rose);color:var(--brown);border:none;border-radius:50px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit}
+  .btn-rose:hover{background:#D8B4B8;transform:translateY(-1px)}
+  .btn-rose:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+
+  .result-section{display:none;margin-top:16px}
+  .result-card{background:var(--cream);border-radius:20px;padding:28px 24px;box-shadow:var(--shadow);margin-bottom:16px}
+
+  .match-header{text-align:center;padding:20px 0 16px}
+  .match-header .big-emoji{font-size:48px}
+  .match-header h2{font-size:22px;font-weight:700;margin:8px 0 4px}
+  .match-header .sub{font-size:14px;color:var(--brown-lt)}
+
+  .person-summary{display:flex;gap:20px;flex-wrap:wrap;margin:16px 0}
+  .person-summary .ps-card{flex:1;min-width:200px;padding:16px;border-radius:14px;background:var(--sage-pt)}
+  .person-summary .ps-card.pb{background:var(--rose-lt)}
+  .person-summary .ps-label{font-size:12px;font-weight:600;color:var(--brown-lt);margin-bottom:6px}
+  .person-summary .ps-ganzhi{font-size:15px;font-weight:600;margin-bottom:4px}
+  .person-summary .ps-wx{font-size:12px;color:var(--brown-lt)}
+
+  .match-tag{display:inline-block;padding:4px 14px;border-radius:50px;font-size:13px;font-weight:600;margin-bottom:14px}
+  .match-tag.great{background:#D4EDDA;color:#155724}
+  .match-tag.good{background:#FFF3CD;color:#856404}
+  .match-tag.normal{background:#F8D7DA;color:#721C24}
+
+  .interpret-card{background:var(--sage-pt);border-radius:16px;padding:20px 24px;line-height:1.8;font-size:14px;color:var(--brown);margin:16px 0}
+  .interpret-card .loading{text-align:center;padding:40px 0;color:var(--brown-lt)}
+  .interpret-card .loading .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--sage-lt);border-top-color:var(--sage);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .match-bar-wrapper{margin:16px 0}
+  .match-bar-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+  .match-bar{height:8px;background:rgba(139,157,139,0.12);border-radius:10px;overflow:hidden}
+  .match-bar-fill{height:100%;border-radius:10px;transition:width 1s ease}
+  .match-bar-fill.high{background:linear-gradient(90deg,var(--sage),#6B8E6B)}
+  .match-bar-fill.mid{background:linear-gradient(90deg,#E8D48B,#D4B85A)}
+  .match-bar-fill.low{background:linear-gradient(90deg,#E8A08B,#D47A5A)}
+
+  .action-buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .action-buttons button{font-family:inherit}
+
+  .save-note{font-size:12px;color:var(--brown-lt);margin-left:6px}
+
+  @media(max-width:640px){
+    .dual-form{flex-direction:column}
+    .dual-form .person-card{min-width:unset}
+    .person-summary{flex-direction:column}
+    nav{padding:14px 16px;gap:12px}
+    .container{padding:0 12px 40px}
+    .card{padding:20px 16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-nature">
+  <div class="sun-beam"></div>
+  <div class="forest-blob sage-mist"></div>
+  <div class="forest-blob rose-mist"></div>
+  <div class="forest-blob lav-mist"></div>
+  <div class="vignette"></div>
+</div>
+
+<nav>
+  <a href="/">🏠 首页</a>
+  <a href="/dashboard">📊 个人中心</a>
+  <a href="/treehole">🌿 树洞</a>
+</nav>
+
+<div class="container">
+  <div class="card" id="input-card">
+    <h1>💘 八字合婚</h1>
+    <p class="subtitle">输入两个人的出生信息，看看你们的八字合不合</p>
+
+    <div class="dual-form">
+      <!-- Person A -->
+      <div class="person-card person-a">
+        <div class="person-label"><span class="person-emoji">🌲</span>甲方 · 第一人</div>
+        <form id="form-a" onsubmit="return false">
+          <div class="form-row">
+            <div class="form-group"><label>年</label><input type="number" id="year-a" min="1900" max="2099" value="1996" required></div>
+            <div class="form-group"><label>月</label><input type="number" id="month-a" min="1" max="12" value="8" required></div>
+            <div class="form-group"><label>日</label><input type="number" id="day-a" min="1" max="31" value="8" required></div>
+            <div class="form-group"><label>时</label><input type="time" id="time-a" value="07:00" required></div>
+            <div class="form-group" style="min-width:70px"><label>性别</label>
+              <select id="gender-a"><option value="0">男</option><option value="1">女</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="max-width:200px">
+              <label>出生地 <span style="font-weight:400;opacity:0.6">· 可选</span></label>
+              <select id="province-a" style="margin-bottom:4px">
+                <option value="">—</option>
+                <option value="北京">北京</option><option value="天津">天津</option><option value="上海">上海</option><option value="重庆">重庆</option>
+                <option value="安徽">安徽</option><option value="福建">福建</option><option value="甘肃">甘肃</option><option value="广东">广东</option>
+                <option value="广西">广西</option><option value="贵州">贵州</option><option value="海南">海南</option><option value="河北">河北</option>
+                <option value="河南">河南</option><option value="黑龙江">黑龙江</option><option value="湖北">湖北</option><option value="湖南">湖南</option>
+                <option value="吉林">吉林</option><option value="江苏">江苏</option><option value="江西">江西</option><option value="辽宁">辽宁</option>
+                <option value="内蒙古">内蒙古</option><option value="宁夏">宁夏</option><option value="青海">青海</option><option value="山东">山东</option>
+                <option value="山西">山西</option><option value="陕西">陕西</option><option value="四川">四川</option><option value="西藏">西藏</option>
+                <option value="新疆">新疆</option><option value="云南">云南</option><option value="浙江">浙江</option>
+                <option value="香港">香港</option><option value="澳门">澳门</option><option value="台湾">台湾</option>
+              </select>
+              <input type="text" id="city-a" placeholder="市/区（可选）" style="text-overflow:ellipsis">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--brown-lt);opacity:0.6">⏱ 不知道时辰选12:00 · 默认演示示例</div>
+        </form>
+      </div>
+
+      <!-- Person B -->
+      <div class="person-card person-b">
+        <div class="person-label"><span class="person-emoji">🌸</span>乙方 · 第二人</div>
+        <form id="form-b" onsubmit="return false">
+          <div class="form-row">
+            <div class="form-group"><label>年</label><input type="number" id="year-b" min="1900" max="2099" value="1996" required></div>
+            <div class="form-group"><label>月</label><input type="number" id="month-b" min="1" max="12" value="8" required></div>
+            <div class="form-group"><label>日</label><input type="number" id="day-b" min="1" max="31" value="8" required></div>
+            <div class="form-group"><label>时</label><input type="time" id="time-b" value="07:00" required></div>
+            <div class="form-group" style="min-width:70px"><label>性别</label>
+              <select id="gender-b"><option value="0">男</option><option value="1">女</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="max-width:200px">
+              <label>出生地 <span style="font-weight:400;opacity:0.6">· 可选</span></label>
+              <select id="province-b" style="margin-bottom:4px">
+                <option value="">—</option>
+                <option value="北京">北京</option><option value="天津">天津</option><option value="上海">上海</option><option value="重庆">重庆</option>
+                <option value="安徽">安徽</option><option value="福建">福建</option><option value="甘肃">甘肃</option><option value="广东">广东</option>
+                <option value="广西">广西</option><option value="贵州">贵州</option><option value="海南">海南</option><option value="河北">河北</option>
+                <option value="河南">河南</option><option value="黑龙江">黑龙江</option><option value="湖北">湖北</option><option value="湖南">湖南</option>
+                <option value="吉林">吉林</option><option value="江苏">江苏</option><option value="江西">江西</option><option value="辽宁">辽宁</option>
+                <option value="内蒙古">内蒙古</option><option value="宁夏">宁夏</option><option value="青海">青海</option><option value="山东">山东</option>
+                <option value="山西">山西</option><option value="陕西">陕西</option><option value="四川">四川</option><option value="西藏">西藏</option>
+                <option value="新疆">新疆</option><option value="云南">云南</option><option value="浙江">浙江</option>
+                <option value="香港">香港</option><option value="澳门">澳门</option><option value="台湾">台湾</option>
+              </select>
+              <input type="text" id="city-b" placeholder="市/区（可选）" style="text-overflow:ellipsis">
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--brown-lt);opacity:0.6">⏱ 不知道时辰选12:00 · 默认演示示例</div>
+        </form>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:20px">
+      <button class="btn-primary" id="btn-match">💘 测算合婚</button>
+    </div>
+  </div>
+
+  <!-- Result Section -->
+  <div class="result-section" id="result-section">
+    <div class="result-card" id="match-result">
+      <!-- match summary -->
+      <div class="match-header" id="match-header">
+        <div class="big-emoji" id="match-emoji">💘</div>
+        <h2 id="match-title">合婚分析</h2>
+        <div class="sub" id="match-subtitle">正在生成中...</div>
+      </div>
+
+      <!-- Person summaries -->
+      <div class="person-summary" id="person-summaries"></div>
+
+      <!-- Interpretation -->
+      <div class="interpret-card" id="interpret-card">
+        <div class="loading" id="loading-indicator">
+          <div class="spinner"></div>
+          <div style="margin-top:12px;font-size:14px">AI 正在分析你们的八字合婚...</div>
+          <div style="margin-top:6px;font-size:12px;opacity:0.6">结合五行互补、生肖配对、日柱关系、大运走势</div>
+        </div>
+        <div id="interpret-body" style="display:none;white-space:pre-wrap;line-height:1.9"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-buttons">
+        <button class="btn-rose" id="btn-save">💾 保存到个人中心</button>
+        <span class="save-note" id="save-note"></span>
+        <button class="btn-rose" id="btn-treehole">🌿 去树洞聊聊</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.2.10/dist/lunar.min.js"><\/script>
+<script>
+(function(){
+  'use strict';
+
+  var Solar = Lunar.Solar, LunarUtil = Lunar.LunarUtil;
+
+  // ==== UI refs ====
+  var resultSection = document.getElementById('result-section');
+  var matchEmoji = document.getElementById('match-emoji');
+  var matchTitle = document.getElementById('match-title');
+  var matchSubtitle = document.getElementById('match-subtitle');
+  var personSummaries = document.getElementById('person-summaries');
+  var loadingIndicator = document.getElementById('loading-indicator');
+  var interpretBody = document.getElementById('interpret-body');
+  var btnMatch = document.getElementById('btn-match');
+  var btnSave = document.getElementById('btn-save');
+  var saveNote = document.getElementById('save-note');
+  var btnTreehole = document.getElementById('btn-treehole');
+
+  var lastDataA = null, lastDataB = null;
+  var lastFullInterp = '';
+
+  function readInput(prefix) {
+    var y = parseInt(document.getElementById('year-' + prefix).value);
+    var m = parseInt(document.getElementById('month-' + prefix).value);
+    var d = parseInt(document.getElementById('day-' + prefix).value);
+    var timeStr = document.getElementById('time-' + prefix).value;
+    var parts = timeStr.split(':');
+    var hour = parseInt(parts[0]), minute = parseInt(parts[1] || 0);
+    if (isNaN(y)||isNaN(m)||isNaN(d)||isNaN(hour)) throw new Error('请填写完整');
+    var birthPlace = '';
+    var p = document.getElementById('province-' + prefix).value;
+    var c = document.getElementById('city-' + prefix).value;
+    if (p) birthPlace = p + (c ? c : '');
+    return { year:y, month:m, day:d, hour:hour, minute:minute,
+             gender:parseInt(document.getElementById('gender-' + prefix).value),
+             birthPlace:birthPlace };
+  }
+
+  function calcBazi(input) {
+    var solar = Solar.fromYmd(input.year, input.month, input.day);
+    var lunar = solar.getLunar();
+    var eightChar = lunar.getEightChar();
+    var yun = eightChar.getYun(input.gender);
+
+    function safe(val, fallback) { return (val!==null&&val!==undefined?val:fallback); }
+
+    // Four pillars
+    var pillars = {
+      year: safe(eightChar.getYear(), ''),
+      month: safe(eightChar.getMonth(), ''),
+      day: safe(eightChar.getDay(), ''),
+      time: safe(eightChar.getTime(), '')
+    };
+
+    // Gan Zhi for each pillar
+    function ganZhi(p) { return safe(eightChar.getYearGan(),'')+safe(eightChar.getYearZhi(),''); }
+    var ganZhiStr = eightChar.getYear() + ' ' + eightChar.getMonth() + ' ' + eightChar.getDay() + ' ' + eightChar.getTime();
+
+    // RiZhu
+    var riZhuGan = safe(eightChar.getDayGan(),'');
+    var riZhuZhi = safe(eightChar.getDayZhi(),'');
+    var riZhuWx = safe(eightChar.getDayGan().indexOf('甲乙')>=0||eightChar.getDayGan().indexOf('丙丁')>=0, function(){
+      var map={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+      return map[eightChar.getDayGan()]||'';
+    }());
+    if (!riZhuWx) {
+      var wxMap={甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+      riZhuWx = wxMap[riZhuGan] || '';
+    }
+
+    // WuXing count
+    var stemWx = {甲:'木',乙:'木',丙:'火',丁:'火',戊:'土',己:'土',庚:'金',辛:'金',壬:'水',癸:'水'};
+    var branchWx = {子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水'};
+    var wxCount = {};
+    var allChars = (eightChar.getYearGan()+eightChar.getYearZhi()+eightChar.getMonthGan()+eightChar.getMonthZhi()+eightChar.getDayGan()+eightChar.getDayZhi()+eightChar.getTimeGan()+eightChar.getTimeZhi());
+    for (var i=0;i<allChars.length;i++) {
+      var ch = allChars[i];
+      var wx = stemWx[ch] || branchWx[ch] || '';
+      if (wx) wxCount[wx] = (wxCount[wx]||0) + 1;
+    }
+
+    // Da Yun
+    var daYunArr = [];
+    var curDy = null;
+    if (yun) {
+      try {
+        var dyArr = yun.getDaYun();
+        var curAge = Math.floor(((Date.now() - new Date(input.year,input.month-1,input.day).getTime())/31536000000)*100)/100;
+        for (var j=0;j<dyArr.length;j++) {
+          var d = dyArr[j];
+          var startAge = Math.round(d.getStartAge()*10)/10;
+          var endAge = j<dyArr.length-1 ? Math.round(dyArr[j+1].getStartAge()*10)/10 : 120;
+          var ganZhiDY = safe(d.getGanZhi(),'');
+          daYunArr.push({startAge:startAge, endAge:endAge, ganZhi:ganZhiDY});
+          if (curAge >= startAge && curAge < endAge) curDy = {startAge:startAge, endAge:endAge, ganZhi:ganZhiDY};
+        }
+      } catch(e) { /* da yun calc may fail for some */ }
+    }
+
+    // ShengXiao
+    var shengXiao = safe(lunar.getYearShengXiao(), '');
+
+    // NaYin, DiShi
+    // Using safe methods
+    var naYinDay = '';
+    var diShiDay = '';
+    try { naYinDay = safe(eightChar.getDay().getNaYin(), ''); } catch(e) {}
+    try { diShiDay = safe(eightChar.getDay().getDiShi(), ''); } catch(e) {}
+
+    // ShiShen (Ten Gods)
+    // For each pillar
+    function safeShiShen(fn) { try { return safe(fn(), ''); } catch(e) { return ''; } }
+    var shiShenYear = safeShiShen(function(){return eightChar.getYearShiShen();});
+    var shiShenMonth = safeShiShen(function(){return eightChar.getMonthShiShen();});
+    var shiShenTime = safeShiShen(function(){return eightChar.getTimeShiShen();});
+
+    // TaiYuan, MingGong, ShenGong
+    var taiYuan='', mingGong='', shenGong='';
+    try { taiYuan = safe(eightChar.getTaiYuan(), ''); } catch(e) {}
+    try { mingGong = safe(eightChar.getMingGong(), ''); } catch(e) {}
+    try { shenGong = safe(eightChar.getShenGong(), ''); } catch(e) {}
+
+    // Solar date
+    var solarDate = input.year + '-' + String(input.month).padStart(2,'0') + '-' + String(input.day).padStart(2,'0');
+    var lunarDate = safe(lunar.toFullString(), '');
+
+    return {
+      ganZhi: ganZhiStr,
+      riZhuGan: riZhuGan,
+      riZhuZhi: riZhuZhi,
+      riZhuWx: riZhuWx,
+      riZhu: riZhuGan + riZhuWx,
+      wxCount: wxCount,
+      gender: input.gender,
+      shengXiao: shengXiao,
+      daYunArr: daYunArr,
+      curDy: curDy,
+      naYinDay: naYinDay,
+      diShiDay: diShiDay,
+      shiShenYear: shiShenYear,
+      shiShenMonth: shiShenMonth,
+      shiShenTime: shiShenTime,
+      taiYuan: taiYuan,
+      mingGong: mingGong,
+      shenGong: shenGong,
+      solarDate: solarDate,
+      lunarDate: lunarDate,
+      birthPlace: input.birthPlace,
+      pillars: pillars
+    };
+  }
+
+  function renderPersonSummary(label, emoji, data, cls) {
+    var wxStr = Object.keys(data.wxCount).map(function(k){return k+data.wxCount[k];}).join(' ');
+    var dyStr = data.curDy ? data.curDy.ganZhi + '运(' + data.curDy.startAge + '~' + data.curDy.endAge + '岁)' : '未起运';
+    return '<div class="ps-card ' + cls + '">' +
+      '<div class="ps-label">' + emoji + ' ' + label + '</div>' +
+      '<div class="ps-ganzhi">' + data.ganZhi + '</div>' +
+      '<div><span style="font-size:13px;font-weight:600;color:'+(data.riZhuWx==='火'?'#D4764E':data.riZhuWx==='水'?'#4E7BD4':data.riZhuWx==='木'?'#4ED47B':data.riZhuWx==='金'?'#C4A84E':data.riZhuWx==='土'?'#B08050':'#5D4E37')+'">' + data.riZhu + '</span>日主 · 🐾' + data.shengXiao + '</div>' +
+      '<div class="ps-wx">五行: ' + wxStr + '</div>' +
+      '<div class="ps-wx">' + dyStr + '</div>' +
+      '</div>';
+  }
+
+  // Zodiac compatibility helpers
+  var SIX_HARMONY = {鼠:'牛',牛:'鼠',虎:'猪',兔:'狗',龙:'鸡',蛇:'猴',马:'羊',羊:'马',猴:'蛇',鸡:'龙',狗:'兔',猪:'虎'};
+  var SIX_CLASH = {鼠:'马',牛:'羊',虎:'猴',兔:'鸡',龙:'狗',蛇:'猪',马:'鼠',羊:'牛',猴:'虎',鸡:'兔',狗:'龙',猪:'蛇'};
+  var TRI_HARMONY = {鼠:['猴','龙'],牛:['蛇','鸡'],虎:['马','狗'],兔:['猪','羊'],龙:['鼠','猴'],蛇:['牛','鸡'],马:['虎','狗'],羊:['兔','猪'],猴:['鼠','龙'],鸡:['牛','蛇'],狗:['虎','马'],猪:['兔','羊']};
+
+  function zodiacInfo(sx1, sx2) {
+    if (!sx1 || !sx2) return '';
+    if (SIX_HARMONY[sx1] === sx2) return '六合';
+    if (SIX_CLASH[sx1] === sx2) return '六冲';
+    if ((TRI_HARMONY[sx1]||[]).indexOf(sx2) >= 0) return '三合';
+    return '';
+  }
+
+  // Element complement
+  function getOrderedWx(wx) {
+    var order = ['木','火','土','金','水'];
+    return order.map(function(k){return wx[k]||0;});
+  }
+
+  function complementScore(wxA, wxB) {
+    var comp = 0;
+    // Check if B's strongest element fills A's weakest
+    var aMax=0,aMin=Infinity,aMaxEl='',aMinEl='';
+    var bMax=0,bMaxEl='';
+    for (var el in wxA) { if (wxA[el] > aMax) { aMax=wxA[el]; aMaxEl=el; }}
+    for (var el in wxB) { if (wxB[el] > bMax) { bMax=wxB[el]; bMaxEl=el; }}
+    var generate = {木:'火',火:'土',土:'金',金:'水',水:'木'};
+    var overcome = {木:'土',土:'水',水:'火',火:'金',金:'木'};
+    // B's strongest generates A's strongest
+    if (generate[bMaxEl] === aMaxEl) comp += 2;
+    // B's element overcomes A's element? (not good)
+    if (overcome[bMaxEl] === aMaxEl) comp -= 1;
+    return comp;
+  }
+
+  function buildPromptData(dataA, dataB) {
+    return JSON.stringify({
+      personA: {
+        ganZhi: dataA.ganZhi,
+        riZhu: dataA.riZhu,
+        riZhuWx: dataA.riZhuWx,
+        wxCount: dataA.wxCount,
+        gender: dataA.gender === 0 ? '男' : '女',
+        shengXiao: dataA.shengXiao,
+        curDaYun: dataA.curDy ? dataA.curDy.ganZhi + '运(' + dataA.curDy.startAge + '-' + dataA.curDy.endAge + '岁)' : '未起运',
+        daYunFull: dataA.daYunArr.map(function(d){return d.ganZhi + '(' + d.startAge + '-' + d.endAge + '岁)';}).join(', '),
+        naYinDay: dataA.naYinDay,
+        diShiDay: dataA.diShiDay,
+        taiYuan: dataA.taiYuan,
+        mingGong: dataA.mingGong,
+        shenGong: dataA.shenGong,
+        shiShenYear: dataA.shiShenYear,
+        shiShenMonth: dataA.shiShenMonth,
+        shiShenTime: dataA.shiShenTime,
+        birthPlace: dataA.birthPlace,
+        solarDate: dataA.solarDate
+      },
+      personB: {
+        ganZhi: dataB.ganZhi,
+        riZhu: dataB.riZhu,
+        riZhuWx: dataB.riZhuWx,
+        wxCount: dataB.wxCount,
+        gender: dataB.gender === 0 ? '男' : '女',
+        shengXiao: dataB.shengXiao,
+        curDaYun: dataB.curDy ? dataB.curDy.ganZhi + '运(' + dataB.curDy.startAge + '-' + dataB.curDy.endAge + '岁)' : '未起运',
+        daYunFull: dataB.daYunArr.map(function(d){return d.ganZhi + '(' + d.startAge + '-' + d.endAge + '岁)';}).join(', '),
+        naYinDay: dataB.naYinDay,
+        diShiDay: dataB.diShiDay,
+        taiYuan: dataB.taiYuan,
+        mingGong: dataB.mingGong,
+        shenGong: dataB.shenGong,
+        shiShenYear: dataB.shiShenYear,
+        shiShenMonth: dataB.shiShenMonth,
+        shiShenTime: dataB.shiShenTime,
+        birthPlace: dataB.birthPlace,
+        solarDate: dataB.solarDate
+      },
+      zodiacMatch: zodiacInfo(dataA.shengXiao, dataB.shengXiao),
+      elementComplement: complementScore(dataA.wxCount, dataB.wxCount)
+    });
+  }
+
+  function displayResult(dataA, dataB) {
+    personSummaries.innerHTML =
+      renderPersonSummary('甲方', '🌲', dataA, '') +
+      renderPersonSummary('乙方', '🌸', dataB, 'pb');
+    resultSection.style.display = 'block';
+    loadingIndicator.style.display = 'block';
+    interpretBody.style.display = 'none';
+  }
+
+  // ==== Submit ====
+  btnMatch.addEventListener('click', function(){
+    btnMatch.disabled = true;
+    btnMatch.textContent = '⏳ 测算中...';
+    saveNote.textContent = '';
+
+    try {
+      var inputA = readInput('a');
+      var inputB = readInput('b');
+    } catch(e) {
+      alert(e.message);
+      btnMatch.disabled = false;
+      btnMatch.innerHTML = '💘 测算合婚';
+      return;
+    }
+
+    var dataA = calcBazi(inputA);
+    var dataB = calcBazi(inputB);
+    lastDataA = dataA;
+    lastDataB = dataB;
+
+    displayResult(dataA, dataB);
+    matchEmoji.textContent = '💘';
+    matchTitle.textContent = '合婚分析';
+    matchSubtitle.textContent = 'AI 正在分析两人的八字匹配度...';
+
+    // Call stream endpoint
+    var body = { personA: buildPersonReq(inputA, dataA), personB: buildPersonReq(inputB, dataB) };
+
+    lastFullInterp = '';
+    interpretBody.textContent = '';
+    interpretBody.style.display = 'none';
+    loadingIndicator.style.display = 'block';
+
+    fetch('/api/bazi-match/interpret/stream', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    }).then(function(r){
+      if (!r.ok) throw new Error('请求失败 ' + r.status);
+      var reader = r.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+      function read() {
+        reader.read().then(function(result){
+          if (result.done) {
+            loadingIndicator.style.display = 'none';
+            interpretBody.style.display = 'block';
+            btnMatch.disabled = false;
+            btnMatch.innerHTML = '💘 重新测算';
+            lastFullInterp = interpretBody.textContent;
+            // Auto save
+            autoSaveResult();
+            return;
+          }
+          buffer += decoder.decode(result.value, {stream: true});
+          var parts = buffer.split('\\n');
+          buffer = parts.pop();
+          parts.forEach(function(line){
+            if (line.startsWith('data: ')) {
+              try {
+                var ev = JSON.parse(line.slice(6));
+                if (ev.type === 'chunk' && ev.text) {
+                  interpretBody.textContent += ev.text;
+                } else if (ev.type === 'meta') {
+                  if (ev.matchEmoji) matchEmoji.textContent = ev.matchEmoji;
+                  if (ev.matchTitle) matchTitle.textContent = ev.matchTitle;
+                  if (ev.matchSubtitle) matchSubtitle.textContent = ev.matchSubtitle;
+                }
+              } catch(e) {}
+            }
+          });
+          read();
+        }).catch(function(e){
+          loadingIndicator.style.display = 'none';
+          interpretBody.style.display = 'block';
+          interpretBody.textContent = '解读中断，请重试。' + (e.message ? ' (' + e.message + ')' : '');
+          btnMatch.disabled = false;
+          btnMatch.innerHTML = '💘 重新测算';
+        });
+      }
+      read();
+    }).catch(function(e){
+      loadingIndicator.style.display = 'none';
+      interpretBody.style.display = 'block';
+      interpretBody.textContent = '请求失败：' + e.message;
+      btnMatch.disabled = false;
+      btnMatch.innerHTML = '💘 重新测算';
+    });
+  });
+
+  function buildPersonReq(input, data) {
+    return {
+      solarDate: data.solarDate,
+      gender: input.gender,
+      birthPlace: data.birthPlace,
+      ganZhi: data.ganZhi,
+      riZhu: data.riZhu,
+      riZhuWx: data.riZhuWx,
+      wxCount: data.wxCount,
+      shengXiao: data.shengXiao,
+      curDaYun: data.curDy ? data.curDy.ganZhi : '',
+      curDaYunStart: data.curDy ? data.curDy.startAge : 0,
+      curDaYunEnd: data.curDy ? data.curDy.endAge : 0,
+      daYunFull: data.daYunArr.map(function(d){return d.ganZhi + '(' + d.startAge + '-' + d.endAge + '岁)';}).join(', '),
+      naYinDay: data.naYinDay,
+      diShiDay: data.diShiDay,
+      taiYuan: data.taiYuan,
+      mingGong: data.mingGong,
+      shenGong: data.shenGong,
+      shiShenYear: data.shiShenYear,
+      shiShenMonth: data.shiShenMonth,
+      shiShenTime: data.shiShenTime
+    };
+  }
+
+  var autoSaved = false;
+  function autoSaveResult() {
+    if (autoSaved) return;
+    autoSaved = true;
+    var token = localStorage.getItem('treehole_token');
+    if (!token) return;
+    var scores = {
+      personA: {ganZhi: lastDataA.ganZhi, riZhu: lastDataA.riZhu, wxCount: lastDataA.wxCount, gender: lastDataA.gender, shengXiao: lastDataA.shengXiao, curDaYun: lastDataA.curDy ? lastDataA.curDy.ganZhi : ''},
+      personB: {ganZhi: lastDataB.ganZhi, riZhu: lastDataB.riZhu, wxCount: lastDataB.wxCount, gender: lastDataB.gender, shengXiao: lastDataB.shengXiao, curDaYun: lastDataB.curDy ? lastDataB.curDy.ganZhi : ''},
+      zodiacMatch: zodiacInfo(lastDataA.shengXiao, lastDataB.shengXiao)
+    };
+    fetch('/api/assessments', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({type: 'bazi_match', scores: scores, summary: lastFullInterp})
+    }).catch(function(){});
+  }
+
+  btnSave.addEventListener('click', function(){
+    if (!lastDataA || !lastDataB) { saveNote.textContent='请先测算'; return; }
+    btnSave.disabled = true;
+    saveNote.textContent = '⏳ 保存中…';
+    var token = localStorage.getItem('treehole_token');
+    if (!token) { saveNote.textContent='请先登录'; btnSave.disabled=false; return; }
+    var scores = {
+      personA: {ganZhi: lastDataA.ganZhi, riZhu: lastDataA.riZhu, wxCount: lastDataA.wxCount, gender: lastDataA.gender, shengXiao: lastDataA.shengXiao, curDaYun: lastDataA.curDy ? lastDataA.curDy.ganZhi : ''},
+      personB: {ganZhi: lastDataB.ganZhi, riZhu: lastDataB.riZhu, wxCount: lastDataB.wxCount, gender: lastDataB.gender, shengXiao: lastDataB.shengXiao, curDaYun: lastDataB.curDy ? lastDataB.curDy.ganZhi : ''},
+      zodiacMatch: zodiacInfo(lastDataA.shengXiao, lastDataB.shengXiao)
+    };
+    fetch('/api/assessments', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({type: 'bazi_match', scores: scores, summary: lastFullInterp})
+    }).then(function(r){return r.json();}).then(function(){
+      saveNote.textContent='✅ 已保存';
+      btnSave.disabled=false;
+    }).catch(function(){
+      saveNote.textContent='❌ 保存失败';
+      btnSave.disabled=false;
+    });
+  });
+
+  btnTreehole.addEventListener('click', function(){
+    if (!lastDataA || !lastDataB) return;
+    var token = localStorage.getItem('treehole_token');
+    if (!token) { window.location.href = 'auth.html'; return; }
+    var fullInterp = interpretBody.textContent || '';
+    var interpStart = fullInterp.substring(0, 500);
+    fetch('/api/chat/sessions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify({})
+    }).then(function(r){return r.json();}).then(function(data){
+      var sid = data.session_id;
+      fetch('/api/chat/init', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          sessionId: sid,
+          assessments: {
+            bazi_match: {
+              personA: lastDataA.ganZhi + ' ' + lastDataA.riZhu + '日主(' + lastDataA.shengXiao + ')',
+              personB: lastDataB.ganZhi + ' ' + lastDataB.riZhu + '日主(' + lastDataB.shengXiao + ')',
+              zodiacMatch: zodiacInfo(lastDataA.shengXiao, lastDataB.shengXiao),
+              fullInterpretation: fullInterp
+            }
+          },
+          freeWrite: '我刚测了合婚。甲方日主' + lastDataA.riZhu + '(' + lastDataA.shengXiao + '年)，乙方日主' + lastDataB.riZhu + '(' + lastDataB.shengXiao + '年)。' + interpStart
+        })
+      }).catch(function(){}).then(function(){
+        window.location.href = 'treehole.html?session=' + sid;
+      });
+    }).catch(function(){
+      window.location.href = 'treehole.html?session=' + (lastDataA.ganZhi + '_' + lastDataB.ganZhi).replace(/\\s/g, '');
+    });
+  });
+
+  // Enter to submit
+  document.querySelectorAll('#form-a input, #form-b input').forEach(function(el){
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') btnMatch.click();
+    });
+  });
+
+})();
+<\/script>
+</body>
+</html>

@@ -18,3 +18,5 @@ v3_test*.txt
 
 # Task summaries
 task-summary_*.md
+
+node_modules/

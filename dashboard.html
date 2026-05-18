@@ -533,9 +533,9 @@ function renderAssessments() {
     return `<div class="empty-state"><div class="icon">📝</div><p>还没有测评记录<br>完成测评后，结果会自动保存在这里</p><a href="anxiety-assessment.html" class="btn-sage" style="display:inline-block">开始测评 →</a></div>`;
   }
 
-  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩', love_radar:'💘', bazi:'🔮'};
-  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估', love_radar:'情人匹配图鉴', bazi:'生辰八字'};
-  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html', love_radar:'love-radar.html', bazi:'bazi.html'};
+  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩', love_radar:'💘', bazi:'🔮', bazi_match:'💘'};
+  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估', love_radar:'情人匹配图鉴', bazi:'生辰八字', bazi_match:'八字合婚'};
+  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html', love_radar:'love-radar.html', bazi:'bazi.html', bazi_match:'bazi-match.html'};
 
   function renderDetail(scores, type, id, summary) {
     if (!scores) return '';
@@ -600,6 +600,28 @@ function renderAssessments() {
         '<div style="font-size:12px;color:#8F7A72;margin-bottom:4px">五行: ' + wxStr + '</div>' +
         (curDy ? '<div style="font-size:12px;color:#8F7A72">当前大运: ' + curDy + '</div>' : '') + '\n' +
         sumHtml;
+    }
+    if (type === 'bazi_match') {
+      var pa = scores.personA || {};
+      var pb = scores.personB || {};
+      var aGan = pa.ganZhi || '';
+      var bGan = pb.ganZhi || '';
+      var aRi = pa.riZhu || '';
+      var bRi = pb.riZhu || '';
+      var aWx = pa.wxCount || {};
+      var bWx = pb.wxCount || {};
+      var aWxStr = Object.keys(aWx).map(function(k){ return k + aWx[k]; }).join('  ');
+      var bWxStr = Object.keys(bWx).map(function(k){ return k + bWx[k]; }).join('  ');
+      var zm = scores.zodiacMatch || '';
+      var sumHtml = summary ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.12)"><div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\';this.querySelector(\'.toggle-arrow\').textContent=this.nextElementSibling.style.display===\'none\'?\'▶\':\'▼\'" style="cursor:pointer;font-size:12px;color:var(--brown-lt);padding:4px 0;user-select:none"><span class="toggle-arrow">▶</span> 查看AI合婚分析</div><div style="display:none;margin-top:6px;font-size:13px;line-height:1.7;color:#5D4E37;white-space:pre-wrap">' + summary + '</div></div>' : '';
+      return '<div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:8px">' +
+        '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:14px;font-weight:600;margin-bottom:2px">' + aGan + ' vs ' + bGan + '</div>' +
+        '<div style="font-size:12px;color:#6B6E52">' + aRi + '日主 × ' + bRi + '日主</div>' +
+        '<div style="margin-top:4px;font-size:11px;color:#8F7A72;line-height:1.6">甲: ' + aWxStr + '</div>' +
+        '<div style="font-size:11px;color:#8F7A72;line-height:1.6">乙: ' + bWxStr + '</div>' +
+        (zm ? '<div style="margin-top:6px;font-size:13px;color:#C49B7A">🐘 生肖: ' + zm + '</div>' : '') +
+        '</div></div>' + sumHtml;
     }
     if (type === 'love_radar') {
       const typeName = scores.typeName || '';
