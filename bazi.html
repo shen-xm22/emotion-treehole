@@ -237,7 +237,44 @@
       <div class="form-row">
         <div class="form-group" style="max-width:260px">
           <label>出生地（省市）<span style="font-weight:400;opacity:0.6">· 可选</span></label>
-          <input type="text" id="birth-place" placeholder="例：安徽合肥" value="" style="text-overflow:ellipsis">
+          <select id="birth-province" style="margin-bottom:6px">
+            <option value="">— 请选择省份 —</option>
+            <option value="北京">北京</option>
+            <option value="天津">天津</option>
+            <option value="上海">上海</option>
+            <option value="重庆">重庆</option>
+            <option value="安徽">安徽</option>
+            <option value="福建">福建</option>
+            <option value="甘肃">甘肃</option>
+            <option value="广东">广东</option>
+            <option value="广西">广西</option>
+            <option value="贵州">贵州</option>
+            <option value="海南">海南</option>
+            <option value="河北">河北</option>
+            <option value="河南">河南</option>
+            <option value="黑龙江">黑龙江</option>
+            <option value="湖北">湖北</option>
+            <option value="湖南">湖南</option>
+            <option value="吉林">吉林</option>
+            <option value="江苏">江苏</option>
+            <option value="江西">江西</option>
+            <option value="辽宁">辽宁</option>
+            <option value="内蒙古">内蒙古</option>
+            <option value="宁夏">宁夏</option>
+            <option value="青海">青海</option>
+            <option value="山东">山东</option>
+            <option value="山西">山西</option>
+            <option value="陕西">陕西</option>
+            <option value="四川">四川</option>
+            <option value="西藏">西藏</option>
+            <option value="新疆">新疆</option>
+            <option value="云南">云南</option>
+            <option value="浙江">浙江</option>
+            <option value="香港">香港</option>
+            <option value="澳门">澳门</option>
+            <option value="台湾">台湾</option>
+          </select>
+          <input type="text" id="birth-city" placeholder="市/区（可选）" style="text-overflow:ellipsis">
           <div class="time-hint">用于辅助分析，不影响排盘</div>
         </div>
       </div>
@@ -518,7 +555,7 @@
       naYinDay: d.naYin.day || '',
       diShiDay: d.diShi.day || '',
       hideGanDay: Array.isArray(d.hideGan.day) ? d.hideGan.day.join(' ') : (d.hideGan.day || ''),
-      birthPlace: document.getElementById('birth-place').value
+      birthPlace: (function(){ var p = document.getElementById('birth-province').value; var c = document.getElementById('birth-city').value; return p + (c ? c : ''); })()
     };
 
     var fullText = '';
