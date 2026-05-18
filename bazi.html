@@ -504,6 +504,7 @@
       curDaYunStart: d.curDy ? d.curDy.startAge : 0,
       curDaYunEnd: d.curDy ? d.curDy.endAge : 0,
       curAge: d.curAge,
+      daYunFull: d.daYunList ? d.daYunList.map(function(dy){ return dy.startAge + '~' + dy.endAge + '岁 ' + dy.ganZhi; }).join(', ') : '',
       taiYuan: d.taiYuan || '',
       mingGong: d.mingGong || '',
       shenGong: d.shenGong || '',

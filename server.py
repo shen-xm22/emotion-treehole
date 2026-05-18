@@ -252,6 +252,7 @@ class BaziInterpretRequest(BaseModel):
     naYinDay: str = ''
     diShiDay: str = ''
     hideGanDay: str = ''
+    daYunFull: str = ''    # 完整大运列表，如"1-10岁 甲子, 11-20岁 乙丑,..."
 
 
 # ─── System Prompt 构造器 ────────────────────────────────
@@ -727,7 +728,7 @@ def extract_and_update_profile(session_id: str, user_message: str):
 # ─── DeepSeek API 调用 ───────────────────────────────────
 
 
-async def call_deepseek(messages: list) -> str:
+async def call_deepseek(messages: list, max_tokens: int = 2048) -> str:
     """调用 DeepSeek V4 Flash（思考模式），返回回答文本。"""
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
@@ -739,7 +740,7 @@ async def call_deepseek(messages: list) -> str:
             json={
                 "model": DEEPSEEK_MODEL,
                 "messages": messages,
-                "max_tokens": 2048,
+                "max_tokens": max_tokens,
                 "thinking": {"type": "enabled"},
                 "reasoning_effort": "high",
             },
@@ -920,10 +921,10 @@ async def bazi_interpret(req: BaziInterpretRequest):
     try:
         wx_detail = "".join([f"{k}{v}" for k, v in req.wxCount.items()])
         shi_shen = f"年柱{req.shiShenYear}，月柱{req.shiShenMonth}，时柱{req.shiShenTime}"
-        da_yun = f"{req.curDaYun}大运({req.curDaYunStart}~{req.curDaYunEnd}岁)" if req.curDaYun else "未起运"
+        cur_dy = f"{req.curDaYun}大运({req.curDaYunStart}~{req.curDaYunEnd}岁)" if req.curDaYun else "未起运"
 
         prompt_lines = [
-            "你是一个懂命理但不神秘化的树洞，用温暖、贴近生活的语言解读八字命盘。",
+            "你是一个懂命理但不神秘化的树洞，用温暖、贴近生活的语言解读八字命盘。给出有实际参考意义的建议和判断，避免空洞的套话。",
             "",
             "用户八字数据：",
             f"- 出生日期：{req.solarDate}（农历{req.lunarDate}）",
@@ -932,30 +933,54 @@ async def bazi_interpret(req: BaziInterpretRequest):
             f"- 日主：{req.riZhu}{req.riZhuWx}",
             f"- 五行分布：{wx_detail}",
             f"- 十神：{shi_shen}",
-            f"- {da_yun}",
+            f"- 当前大运：{cur_dy}（当前年龄{req.curAge}岁）",
+            f"- 完整大运走势：{req.daYunFull}",
             f"- 胎元：{req.taiYuan}，命宫：{req.mingGong}，身宫：{req.shenGong}",
             f"- 日柱纳音：{req.naYinDay}，日柱地势：{req.diShiDay}",
             "",
-            "请从以下四个维度展开解读：",
-            "1. 性格特质——日主的本质+十神的影响",
-            "2. 感情/人际关系——日支+婚姻星的启示",
-            "3. 事业/财运——五行平衡+大运阶段",
-            "4. 健康提示——最弱五行+相应保养建议",
+            "请详细从以下四个维度展开解读，每个维度都要给出具体的时间节点和细节：",
+            "",
+            "1. 性格特质和为人——日主本质+十神组合决定了什么样的性格，有什么优点和需要注意的地方。",
+            "",
+            "2. 感情与姻缘——这是重点。",
+            "   分析婚姻星（正财/偏财/正官/七杀）的位置和状态，结合当前大运：",
+            "   - 当前大运对感情是有利还是不利？",
+            "   - 大概什么年龄段容易遇到正缘？",
+            "   - 什么阶段感情容易出现波折或变动？",
+            "   - 对方可能是什么样的人（性格、背景）？",
+            "   - 给一些具体的恋爱/相处建议。",
+            "",
+            "3. 事业与财运——结合五行平衡和大运走势。",
+            "   - 适合什么类型的职业方向（稳定型/开拓型/技术型/人际型）？",
+            "   - 当前大运在事业上是上升期、平稳期还是调整期？",
+            "   - 什么时候有晋升、转行、跳槽的好时机？",
+            "   - 哪几年财运比较好？哪几年要谨慎守财？",
+            "   - 是否有适合创业的阶段？",
+            "",
+            "4. 健康提示——看最弱的五行和十神组合。",
+            "   - 哪些方面（器官/系统）需要特别注意？",
+            "   - 什么年龄段容易出现相关问题？",
+            "   - 具体保养建议。",
+            "",
+            "最后单独一段：大运总览",
+            f"   - 分析当前大运（{cur_dy}）对用户意味着什么：整体基调、机遇和挑战。",
+            "   - 下一个大运是什么、什么时候交接、换了之后人生重心会有哪些变化。",
+            "   - 现阶段（交接前后）需要做什么准备。",
             "",
             "写法要求：",
-            "- 语气像朋友聊天，自然流畅",
-            "- 别用太多术语，用人话说明白",
-            "- 能说到心坎里，而不是干巴巴的模板",
+            "- 语气像朋友聊天，自然流畅，不要像算命先生",
+            "- 有具体的时间参考（年龄段、年份），不要只说笼统的好或不好",
+            "- 可以带一点点幽默/调侃，但核心要真诚有用",
             "- 最后给一句温暖的收尾",
-            "请用中文回答，不要超过800字。",
+            "请用中文回答，篇幅不限，尽可能详细。",
         ]
         prompt = "\n".join(prompt_lines)
 
         messages = [
-            {"role": "system", "content": "你是一个温暖、懂命理的树洞，用人话解读八字。你不是神棍，是一个有经历的朋友在和你聊天。"},
+            {"role": "system", "content": "你是一个温暖、懂命理的树洞，用人话解读八字。你不是神棍，是一个有经历、说话实在的朋友在和你聊天。回答要有细节、有具体时间参考，不要套话。"},
             {"role": "user", "content": prompt}
         ]
-        text = await call_deepseek(messages)
+        text = await call_deepseek(messages, max_tokens=4096)
         return {"interpretation": text}
     except Exception as e:
         logger.error(f"八字解读失败: {e}")
