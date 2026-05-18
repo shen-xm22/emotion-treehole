@@ -252,6 +252,7 @@ class BaziInterpretRequest(BaseModel):
     naYinDay: str = ''
     diShiDay: str = ''
     hideGanDay: str = ''
+    birthPlace: str = ''
     daYunFull: str = ''    # 完整大运列表，如"1-10岁 甲子, 11-20岁 乙丑,..."
 
 
@@ -950,6 +951,7 @@ def build_bazi_prompt(req: BaziInterpretRequest) -> tuple[list, str]:
         "",
         "用户八字数据：",
         f"- 出生日期：{req.solarDate}（农历{req.lunarDate}）",
+        f"- 出生地：{req.birthPlace}" if req.birthPlace else "- 出生地：未提供",
         f"- 性别：{req.gender}",
         f"- 四柱：{req.ganZhi}",
         f"- 日主：{req.riZhu}{req.riZhuWx}",
@@ -1040,6 +1042,7 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
                             "model": DEEPSEEK_MODEL,
                             "messages": messages,
                             "max_tokens": 4096,
+                            "reasoning_effort": "high",
                             "stream": True,
                         },
                     ) as resp:

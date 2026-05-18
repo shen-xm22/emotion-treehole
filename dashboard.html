@@ -537,7 +537,7 @@ function renderAssessments() {
   const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估', love_radar:'情人匹配图鉴', bazi:'生辰八字'};
   const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html', love_radar:'love-radar.html', bazi:'bazi.html'};
 
-  function renderDetail(scores, type, id) {
+  function renderDetail(scores, type, id, summary) {
     if (!scores) return '';
     if (type === 'anxiety') {
       const cs = scores.core_score || 0;
@@ -594,10 +594,12 @@ function renderAssessments() {
       const curDy = scores.curDaYun || '';
       const wx = scores.wxCount || {};
       const wxStr = Object.keys(wx).map(function(k){ return k + wx[k]; }).join('  ');
+      const sumHtml = summary ? '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.12)"><div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==\'none\'?\'block\':\'none\';this.querySelector(\'.toggle-arrow\').textContent=this.nextElementSibling.style.display==\'none\'?\'▶\':\'▼\'" style="cursor:pointer;font-size:12px;color:var(--brown-lt);padding:4px 0;user-select:none"><span class="toggle-arrow">▶</span> 查看AI解读</div><div style="display:none;margin-top:6px;font-size:13px;line-height:1.7;color:#5D4E37;white-space:pre-wrap">' + summary + '</div></div>' : '';
       return '<div style="margin-bottom:6px"><span class="badge" style="background:#E8DCC8;color:#7A6A5A;padding:2px 8px;border-radius:4px;font-size:12px">' + riZhu + '日主</span></div>' +
         '<div style="font-size:13px;color:#6B6E52;margin-bottom:4px">' + ganZhi + '</div>' +
         '<div style="font-size:12px;color:#8F7A72;margin-bottom:4px">五行: ' + wxStr + '</div>' +
-        (curDy ? '<div style="font-size:12px;color:#8F7A72">当前大运: ' + curDy + '</div>' : '');
+        (curDy ? '<div style="font-size:12px;color:#8F7A72">当前大运: ' + curDy + '</div>' : '') + '\n' +
+        sumHtml;
     }
     if (type === 'love_radar') {
       const typeName = scores.typeName || '';
@@ -638,7 +640,7 @@ function renderAssessments() {
         <span class="assess-date">${dateStr}</span>
       </div>
       <div class="assess-detail" id="ad${a.id}">
-        ${renderDetail(scores, a.type, a.id)}
+        ${renderDetail(scores, a.type, a.id, a.summary || '')}
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.08)">
           <a href="${links[a.type] || '#'}" style="font-size:12px;color:#8B9D8B;text-decoration:none">📋 重新测评 →</a>
           <a href="#" onclick="event.preventDefault(); goTreeholeFromAssessment('${a.type}', '${a.id}')" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>

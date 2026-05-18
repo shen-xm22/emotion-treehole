@@ -234,6 +234,13 @@
           </select>
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group" style="max-width:260px">
+          <label>出生地（省市）<span style="font-weight:400;opacity:0.6">· 可选</span></label>
+          <input type="text" id="birth-place" placeholder="例：安徽合肥" value="" style="text-overflow:ellipsis">
+          <div class="time-hint">用于辅助分析，不影响排盘</div>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
         <span style="font-size:12px;color:var(--brown-lt)">⏱ 不知道时辰选12:00</span>
         <span style="font-size:12px;color:var(--brown-lt)">· 默认演示示例</span>
@@ -510,7 +517,8 @@
       shenGong: d.shenGong || '',
       naYinDay: d.naYin.day || '',
       diShiDay: d.diShi.day || '',
-      hideGanDay: Array.isArray(d.hideGan.day) ? d.hideGan.day.join(' ') : (d.hideGan.day || '')
+      hideGanDay: Array.isArray(d.hideGan.day) ? d.hideGan.day.join(' ') : (d.hideGan.day || ''),
+      birthPlace: document.getElementById('birth-place').value
     };
 
     var fullText = '';
@@ -537,7 +545,7 @@
         body: JSON.stringify({
           type: 'bazi',
           scores: baziScores,
-          summary: text.substring(0, 2000)
+          summary: text
         })
       }).catch(function(){});
     };
@@ -734,7 +742,7 @@
           gender: lastData.gender,
           curDaYun: lastData.curDy ? lastData.curDy.ganZhi : ''
         },
-        summary: fullInterp.substring(0, 2000)
+        summary: fullInterp
       })
       })
     }).then(function(r){return r.json();}).then(function(data){
