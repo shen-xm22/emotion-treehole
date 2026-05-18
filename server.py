@@ -160,7 +160,7 @@ async def serve_love_radar():
 @app.get("/bazi")
 @app.get("/bazi.html")
 async def serve_bazi():
-    return FileResponse(os.path.join(BASE_DIR, "love-radar.html"))
+    return FileResponse(os.path.join(BASE_DIR, "bazi.html"))
 
 @app.get("/auth")
 @app.get("/auth.html")
