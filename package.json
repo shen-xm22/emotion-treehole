@@ -1,0 +1,26 @@
+{
+  "name": "emotion-treehole",
+  "version": "1.0.0",
+  "description": "> 一个基于 AI 的性格、焦虑评级与亲密关系评测工具。\r > 匿名、私密、免费使用。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shen-xm22/emotion-treehole.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shen-xm22/emotion-treehole/issues"
+  },
+  "homepage": "https://github.com/shen-xm22/emotion-treehole#readme",
+  "dependencies": {
+    "lunar-javascript": "^1.7.7"
+  }
+}

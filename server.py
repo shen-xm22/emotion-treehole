@@ -122,6 +122,11 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(__file__)
 
+# Mount static files (for lunar.js etc.)
+static_dir = os.path.join(BASE_DIR, "static")
+if os.path.isdir(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 @app.get("/")
 @app.get("/index.html")
 async def serve_index():
@@ -150,6 +155,11 @@ async def serve_personality():
 @app.get("/love-radar")
 @app.get("/love-radar.html")
 async def serve_love_radar():
+    return FileResponse(os.path.join(BASE_DIR, "love-radar.html"))
+
+@app.get("/bazi")
+@app.get("/bazi.html")
+async def serve_bazi():
     return FileResponse(os.path.join(BASE_DIR, "love-radar.html"))
 
 @app.get("/auth")
@@ -206,7 +216,7 @@ class ProfileUpdateRequest(BaseModel):
     hobbies: list = []
 
 class SaveAssessmentRequest(BaseModel):
-    type: str = Field(..., pattern=r'^(anxiety|relationship|personality|love_radar)$')
+    type: str = Field(..., pattern=r'^(anxiety|relationship|personality|love_radar|bazi)$')
     scores: dict = {}
     answers: Any = {}
     summary: str = ''
@@ -220,6 +230,28 @@ class ChatInitRequest(BaseModel):
 class ChatMessageRequest(BaseModel):
     sessionId: str
     message: str
+
+class BaziInterpretRequest(BaseModel):
+    solarDate: str = ''
+    lunarDate: str = ''
+    gender: str = ''
+    ganZhi: str = ''           # e.g. "丙子 乙未 丁丑 甲辰"
+    riZhu: str = ''
+    riZhuWx: str = ''
+    wxCount: dict = {}         # {"木":8, "火":6, ...}
+    shiShenYear: str = ''
+    shiShenMonth: str = ''
+    shiShenTime: str = ''
+    curDaYun: str = ''
+    curDaYunStart: int = 0
+    curDaYunEnd: int = 0
+    curAge: int = 0
+    taiYuan: str = ''
+    mingGong: str = ''
+    shenGong: str = ''
+    naYinDay: str = ''
+    diShiDay: str = ''
+    hideGanDay: str = ''
 
 
 # ─── System Prompt 构造器 ────────────────────────────────
@@ -310,6 +342,9 @@ def build_user_profile_context(user_profile: dict, assessment_records: list) -> 
             tn = scores.get("typeName", "")
             tg = scores.get("tagline", "")
             parts.append(f"恋爱人格评估({created}): {tn}「{tg}」")
+        elif t == "bazi":
+            sm = rec.get("summary", "") or ""
+            parts.append(f"八字解读({created}): {sm[:200]}")
     return "\n".join(parts)
 
 
@@ -877,6 +912,71 @@ async def get_assessment(assessment_id: int, request: Request):
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}
+
+
+@app.post("/api/bazi/interpret")
+async def bazi_interpret(req: BaziInterpretRequest):
+    """根据八字数据调用 DeepSeek 生成解读。"""
+    try:
+        # 构建 prompt
+        wx_detail = "".join([f"{k}{v}" for k, v in req.wxCount.items()])
+        shi_shen = f"年柱{req.shiShenYear}，月柱{req.shiShenMonth}，时柱{req.shiShenTime}"
+        da_yun = f"{req.curDaYun}大运({req.curDaYunStart}~{req.curDaYunEnd}岁)" if req.curDaYun else "未起运"
+
+        prompt = f"""你是一个懂命理但不神秘化的树洞，用温暖、贴近生活的语言解读八字命盘。
+
+用户八字数据：
+- 出生日期：{req.solarDate}（农历{req.lunarDate}）
+- 性别：{req.gender}
+- 四柱：{req.ganZhi}
+- 日主：{req.riZhu}{req.riZhuWx}
+- 五行分布：{wx_detail}
+- 十神：{shi_shen}
+- {da_yun}
+- 胎元：{req.taiYuan}，命宫：{req.mingGong}，身宫：{req.shenGong}
+- 日柱纳音：{req.naYinDay}，日柱地势：{req.diShiDay}
+
+请从以下四个维度展开解读：
+1. 性格特质——日主的本质+十神的影响
+2. 感情/人际关系——日支+婚姻星的启示
+3. 事业/财运——五行平衡+大运阶段
+4. 健康提示——最弱五行+相应保养建议
+
+写法要求：
+- 语气像朋友聊天，自然流畅
+- 别用太多术语，用人话说明白
+- 能说到心块里，而不是干巴巴的模板
+- 最后给一句温暖的收尾
+请用中文回答，不要超过800字。"""
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                "https://api.deepseek.com/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "deepseek-chat",
+                    "messages": [
+                        {"role": "system", "content": "你是一个温暖、懂命理的树洞，用人话解读八字。你不是神梭，是一个有经历的朋友在和你聊天。"},
+                        {"role": "user", "content": prompt}
+                    ],
+                    "max_tokens": 1024,
+                    "temperature": 0.8,
+                    "stream": False
+                }
+            )
+            data = resp.json()
+            if "choices" in data and len(data["choices"]) > 0:
+                text = data["choices"][0]["message"]["content"]
+                return {"interpretation": text}
+            else:
+                logger.error(f"DeepSeek API异常: {data}")
+                return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
+    except Exception as e:
+        logger.error(f"八字解读失败: {e}")
+        return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
 
 
 @app.post("/api/chat/init")
