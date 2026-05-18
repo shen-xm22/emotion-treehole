@@ -509,7 +509,7 @@
       shenGong: d.shenGong || '',
       naYinDay: d.naYin.day || '',
       diShiDay: d.diShi.day || '',
-      hideGanDay: d.hideGan.day || ''
+      hideGanDay: Array.isArray(d.hideGan.day) ? d.hideGan.day.join(' ') : (d.hideGan.day || '')
     };
     fetch('/api/bazi/interpret', {
       method: 'POST',
