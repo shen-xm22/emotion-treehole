@@ -555,6 +555,11 @@
                   if (ev.matchEmoji) matchEmoji.textContent = ev.matchEmoji;
                   if (ev.matchTitle) matchTitle.textContent = ev.matchTitle;
                   if (ev.matchSubtitle) matchSubtitle.textContent = ev.matchSubtitle;
+                } else if (ev.type === 'error') {
+                  interpretBody.textContent = '❌ API 错误: ' + (ev.text || '未知错误');
+                  btnMatch.disabled = false;
+                  btnMatch.innerHTML = '💘 重新测算';
+                  console.error('API error:', ev.text);
                 }
               } catch(e) {}
             }

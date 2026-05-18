@@ -1106,6 +1106,7 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
                             "messages": messages,
                             "max_tokens": 8192,
                             "reasoning_effort": "high",
+                            "thinking": {"type": "enabled"},
                             "stream": True,
                         },
                     ) as resp:
@@ -1262,6 +1263,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
                             "messages": messages,
                             "max_tokens": 8192,
                             "reasoning_effort": "high",
+                            "thinking": {"type": "enabled"},
                             "stream": True,
                         },
                     ) as resp:
@@ -1417,6 +1419,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
                             "messages": messages,
                             "max_tokens": 8192,
                             "reasoning_effort": "high",
+                            "thinking": {"type": "enabled"},
                             "stream": True,
                         },
                     ) as resp:
