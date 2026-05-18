@@ -22,7 +22,7 @@ import jwt as pyjwt
 from fastapi import FastAPI, HTTPException, Request, Body, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 # ─── 配置 ───────────────────────────────────────────────
@@ -915,75 +915,137 @@ async def health():
     return {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}
 
 
+def build_bazi_prompt(req: BaziInterpretRequest) -> tuple[list, str]:
+    """构建八字解读的 messages 列表和 prompt 文本。"""
+    wx_detail = "".join([f"{k}{v}" for k, v in req.wxCount.items()])
+    shi_shen = f"年柱{req.shiShenYear}，月柱{req.shiShenMonth}，时柱{req.shiShenTime}"
+    cur_dy = f"{req.curDaYun}大运({req.curDaYunStart}~{req.curDaYunEnd}岁)" if req.curDaYun else "未起运"
+
+    prompt_lines = [
+        "你是一位温暖而专业的八字命理分析师，请根据以下八字数据，用客观、真诚的语言为用户解读命盘。",
+        "",
+        "用户八字数据：",
+        f"- 出生日期：{req.solarDate}（农历{req.lunarDate}）",
+        f"- 性别：{req.gender}",
+        f"- 四柱：{req.ganZhi}",
+        f"- 日主：{req.riZhu}{req.riZhuWx}",
+        f"- 五行分布：{wx_detail}",
+        f"- 十神：{shi_shen}",
+        f"- 当前大运：{cur_dy}（当前年龄{req.curAge}岁）",
+        f"- 完整大运走势：{req.daYunFull}",
+        f"- 胎元：{req.taiYuan}，命宫：{req.mingGong}，身宫：{req.shenGong}",
+        f"- 日柱纳音：{req.naYinDay}，日柱地势：{req.diShiDay}",
+        "",
+        "请详细从以下四个维度展开解读，每个维度都要给出具体的时间节点和细节：",
+        "",
+        "1. 性格特质和为人——日主本质+十神组合决定了什么样的性格，有什么优点和需要注意的地方。",
+        "",
+        "2. 感情与姻缘——这是重点。",
+        "   分析婚姻星（正财/偏财/正官/七杀）的位置和状态，结合当前大运：",
+        "   - 当前大运对感情是有利还是不利？",
+        "   - 大概什么年龄段容易遇到正缘？",
+        "   - 什么阶段感情容易出现波折或变动？",
+        "   - 对方可能是什么样的人（性格、背景）？",
+        "   - 给一些具体的恋爱/相处建议。",
+        "",
+        "3. 事业与财运——结合五行平衡和大运走势。",
+        "   - 适合什么类型的职业方向（稳定型/开拓型/技术型/人际型）？",
+        "   - 当前大运在事业上是上升期、平稳期还是调整期？",
+        "   - 什么时候有晋升、转行、跳槽的好时机？",
+        "   - 哪几年财运比较好？哪几年要谨慎守财？",
+        "   - 是否有适合创业的阶段？",
+        "",
+        "4. 健康提示——看最弱的五行和十神组合。",
+        "   - 哪些方面（器官/系统）需要特别注意？",
+        "   - 什么年龄段容易出现相关问题？",
+        "   - 具体保养建议。",
+        "",
+        "最后单独一段：大运总览",
+        f"   - 分析当前大运（{cur_dy}）对用户意味着什么：整体基调、机遇和挑战。",
+        "   - 下一个大运是什么、什么时候交接、换了之后人生重心会有哪些变化。",
+        "   - 现阶段（交接前后）需要做什么准备。",
+        "",
+        "写法要求：",
+        "- 语气温暖、真诚、客观，像一位懂行的朋友认真分析",
+        "- 专业但不堆砌术语，用容易理解的方式表达",
+        "- 有具体的时间参考（年龄段、年份），不要只说笼统的好或不好",
+        "- 核心是真诚有用，不带算命先生的腔调",
+        "- 最后给一句温暖的收尾",
+        "- 末尾务必加上：⚠️ 以上内容由AI生成，仅供娱乐参考，命运掌握在自己手中。",
+        "请用中文回答，篇幅不限，尽可能详细。",
+    ]
+    prompt = "\n".join(prompt_lines)
+
+    messages = [
+        {"role": "system", "content": "你是一位温暖、真诚、客观的八字命理分析师，用专业但易懂的语言解读命盘。核心原则：温暖而不煽情，客观而不冰冷，真诚而不说教。"},
+        {"role": "user", "content": prompt}
+    ]
+    return messages, cur_dy
+
+
 @app.post("/api/bazi/interpret")
 async def bazi_interpret(req: BaziInterpretRequest):
-    """根据八字数据调用 DeepSeek 生成解读。"""
+    """根据八字数据调用 DeepSeek 生成解读（非流式，兼容旧版）。"""
     try:
-        wx_detail = "".join([f"{k}{v}" for k, v in req.wxCount.items()])
-        shi_shen = f"年柱{req.shiShenYear}，月柱{req.shiShenMonth}，时柱{req.shiShenTime}"
-        cur_dy = f"{req.curDaYun}大运({req.curDaYunStart}~{req.curDaYunEnd}岁)" if req.curDaYun else "未起运"
-
-        prompt_lines = [
-            "你是一个懂命理但不神秘化的树洞，用温暖、贴近生活的语言解读八字命盘。给出有实际参考意义的建议和判断，避免空洞的套话。",
-            "",
-            "用户八字数据：",
-            f"- 出生日期：{req.solarDate}（农历{req.lunarDate}）",
-            f"- 性别：{req.gender}",
-            f"- 四柱：{req.ganZhi}",
-            f"- 日主：{req.riZhu}{req.riZhuWx}",
-            f"- 五行分布：{wx_detail}",
-            f"- 十神：{shi_shen}",
-            f"- 当前大运：{cur_dy}（当前年龄{req.curAge}岁）",
-            f"- 完整大运走势：{req.daYunFull}",
-            f"- 胎元：{req.taiYuan}，命宫：{req.mingGong}，身宫：{req.shenGong}",
-            f"- 日柱纳音：{req.naYinDay}，日柱地势：{req.diShiDay}",
-            "",
-            "请详细从以下四个维度展开解读，每个维度都要给出具体的时间节点和细节：",
-            "",
-            "1. 性格特质和为人——日主本质+十神组合决定了什么样的性格，有什么优点和需要注意的地方。",
-            "",
-            "2. 感情与姻缘——这是重点。",
-            "   分析婚姻星（正财/偏财/正官/七杀）的位置和状态，结合当前大运：",
-            "   - 当前大运对感情是有利还是不利？",
-            "   - 大概什么年龄段容易遇到正缘？",
-            "   - 什么阶段感情容易出现波折或变动？",
-            "   - 对方可能是什么样的人（性格、背景）？",
-            "   - 给一些具体的恋爱/相处建议。",
-            "",
-            "3. 事业与财运——结合五行平衡和大运走势。",
-            "   - 适合什么类型的职业方向（稳定型/开拓型/技术型/人际型）？",
-            "   - 当前大运在事业上是上升期、平稳期还是调整期？",
-            "   - 什么时候有晋升、转行、跳槽的好时机？",
-            "   - 哪几年财运比较好？哪几年要谨慎守财？",
-            "   - 是否有适合创业的阶段？",
-            "",
-            "4. 健康提示——看最弱的五行和十神组合。",
-            "   - 哪些方面（器官/系统）需要特别注意？",
-            "   - 什么年龄段容易出现相关问题？",
-            "   - 具体保养建议。",
-            "",
-            "最后单独一段：大运总览",
-            f"   - 分析当前大运（{cur_dy}）对用户意味着什么：整体基调、机遇和挑战。",
-            "   - 下一个大运是什么、什么时候交接、换了之后人生重心会有哪些变化。",
-            "   - 现阶段（交接前后）需要做什么准备。",
-            "",
-            "写法要求：",
-            "- 语气像朋友聊天，自然流畅，不要像算命先生",
-            "- 有具体的时间参考（年龄段、年份），不要只说笼统的好或不好",
-            "- 可以带一点点幽默/调侃，但核心要真诚有用",
-            "- 最后给一句温暖的收尾",
-            "请用中文回答，篇幅不限，尽可能详细。",
-        ]
-        prompt = "\n".join(prompt_lines)
-
-        messages = [
-            {"role": "system", "content": "你是一个温暖、懂命理的树洞，用人话解读八字。你不是神棍，是一个有经历、说话实在的朋友在和你聊天。回答要有细节、有具体时间参考，不要套话。"},
-            {"role": "user", "content": prompt}
-        ]
+        messages, _ = build_bazi_prompt(req)
         text = await call_deepseek(messages, max_tokens=4096)
         return {"interpretation": text}
     except Exception as e:
         logger.error(f"八字解读失败: {e}")
+        return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
+
+
+@app.post("/api/bazi/interpret/stream")
+async def bazi_interpret_stream(req: BaziInterpretRequest):
+    """根据八字数据调用 DeepSeek 流式生成解读。"""
+    try:
+        messages, cur_dy = build_bazi_prompt(req)
+
+        async def event_stream():
+            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            try:
+                async with httpx.AsyncClient(timeout=120) as client:
+                    async with client.stream(
+                        "POST",
+                        f"{DEEPSEEK_BASE_URL}/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": DEEPSEEK_MODEL,
+                            "messages": messages,
+                            "max_tokens": 4096,
+                            "stream": True,
+                        },
+                    ) as resp:
+                        if resp.status_code != 200:
+                            error_body = await resp.aread()
+                            yield f"data: {json.dumps({'type': 'error', 'text': error_body.decode()})}\n\n"
+                            return
+
+                        async for line in resp.aiter_lines():
+                            if not line.startswith("data: "):
+                                continue
+                            data_str = line[6:].strip()
+                            if data_str == "[DONE]":
+                                break
+                            try:
+                                chunk = json.loads(data_str)
+                                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                                if "content" in delta and delta["content"]:
+                                    yield f"data: {json.dumps({'type': 'content', 'text': delta['content']})}\n\n"
+                            except json.JSONDecodeError:
+                                continue
+
+                yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            except Exception as e:
+                logger.error(f"八字解读流异常: {e}")
+                yield f"data: {json.dumps({'type': 'error', 'text': str(e)})}\n\n"
+
+        return StreamingResponse(event_stream(), media_type="text/event-stream")
+    except Exception as e:
+        logger.error(f"八字解读流启动失败: {e}")
         return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
 
 
