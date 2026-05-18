@@ -577,7 +577,7 @@
       };
       fetch('/api/assessments', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
         credentials: 'include',
         body: JSON.stringify({
           type: 'bazi',
@@ -732,31 +732,39 @@
 
   btnTreehole.addEventListener('click', function(){
     if(!lastData) return;
-    var ts = Date.now();
-    var sid = 'bazi_' + ts;
     var fullInterp = interpretBody.textContent || '';
+    var token = localStorage.getItem('treehole_token');
+    if (!token) { window.location.href = 'auth.html'; return; }
     var interpStart = fullInterp.substring(0, 500);
-    fetch('/api/chat/init', {
+    fetch('/api/chat/sessions', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
       credentials: 'include',
-      body: JSON.stringify({
-        sessionId: sid,
-        assessments: {
-          bazi: {
-            ganZhi: lastData.pillars.year + ' ' + lastData.pillars.month + ' ' + lastData.pillars.day + ' ' + lastData.pillars.time,
-            riZhu: lastData.riZhuGan + lastData.riZhuWx,
-            wxCount: lastData.wxCount,
-            gender: lastData.gender,
-            curDaYun: lastData.curDy ? lastData.curDy.ganZhi + '运(' + lastData.curDy.startAge + '~' + lastData.curDy.endAge + '岁)' : '',
-            fullInterpretation: fullInterp
-          }
-        },
-        freeWrite: '我刚刚测了八字，日主' + lastData.riZhuGan + lastData.riZhuWx + '。' + interpStart
-      })
-    }).then(function(){
-      window.location.href = 'treehole.html?session=' + sid;
+      body: JSON.stringify({})
+    }).then(function(r){return r.json();}).then(function(data){
+      var sid = data.session_id;
+      fetch('/api/chat/init', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          sessionId: sid,
+          assessments: {
+            bazi: {
+              ganZhi: lastData.pillars.year + ' ' + lastData.pillars.month + ' ' + lastData.pillars.day + ' ' + lastData.pillars.time,
+              riZhu: lastData.riZhuGan + lastData.riZhuWx,
+              wxCount: lastData.wxCount,
+              gender: lastData.gender,
+              curDaYun: lastData.curDy ? lastData.curDy.ganZhi + '运(' + lastData.curDy.startAge + '~' + lastData.curDy.endAge + '岁)' : '',
+              fullInterpretation: fullInterp
+            }
+          },
+          freeWrite: '我刚刚测了八字，日主' + lastData.riZhuGan + lastData.riZhuWx + '。' + interpStart
+        })
+      }).catch(function(){}).then(function(){
+        window.location.href = 'treehole.html?session=' + sid;
+      });
     }).catch(function(){
+      var sid = 'bazi_' + Date.now();
       window.location.href = 'treehole.html?session=' + sid;
     });
   });
@@ -768,7 +776,7 @@
     var fullInterp = interpretBody.textContent || '';
     fetch('/api/assessments', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('treehole_token') || '')},
       credentials: 'include',
       body: JSON.stringify({
         type: 'bazi',
