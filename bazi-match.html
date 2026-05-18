@@ -543,7 +543,7 @@
             return;
           }
           buffer += decoder.decode(result.value, {stream: true});
-          var parts = buffer.split('\\n');
+          var parts = buffer.split('\n');
           buffer = parts.pop();
           parts.forEach(function(line){
             if (line.startsWith('data: ')) {
