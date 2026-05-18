@@ -1091,7 +1091,7 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
         messages, cur_dy = build_bazi_prompt(req)
 
         async def event_stream():
-            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            yield f"data: {json.dumps({'type': 'meta', 'matchEmoji': '💘', 'matchTitle': '合婚分析', 'matchSubtitle': 'AI正在解读...'})}\n\n"
             try:
                 async with httpx.AsyncClient(timeout=120) as client:
                     async with client.stream(
@@ -1124,7 +1124,7 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
                                 chunk = json.loads(data_str)
                                 delta = chunk.get("choices", [{}])[0].get("delta", {})
                                 if "content" in delta and delta["content"]:
-                                    yield f"data: {json.dumps({'type': 'content', 'text': delta['content']})}\n\n"
+                                    yield f"data: {json.dumps({'type': 'chunk', 'text': delta['content']})}\n\n"
                             except json.JSONDecodeError:
                                 continue
 
@@ -1247,7 +1247,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
         messages = build_bazi_match_prompt(req)
 
         async def event_stream():
-            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            yield f"data: {json.dumps({'type': 'meta', 'matchEmoji': '💘', 'matchTitle': '合婚分析', 'matchSubtitle': 'AI正在解读...'})}\n\n"
             try:
                 async with httpx.AsyncClient(timeout=120) as client:
                     async with client.stream(
@@ -1280,7 +1280,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
                                 chunk = json.loads(data_str)
                                 delta = chunk.get("choices", [{}])[0].get("delta", {})
                                 if "content" in delta and delta["content"]:
-                                    yield f"data: {json.dumps({'type': 'content', 'text': delta['content']})}\n\n"
+                                    yield f"data: {json.dumps({'type': 'chunk', 'text': delta['content']})}\n\n"
                             except json.JSONDecodeError:
                                 continue
 
@@ -1402,7 +1402,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
         messages = build_bazi_match_prompt(req)
 
         async def event_stream():
-            yield f"data: {json.dumps({'type': 'start'})}\n\n"
+            yield f"data: {json.dumps({'type': 'meta', 'matchEmoji': '💘', 'matchTitle': '合婚分析', 'matchSubtitle': 'AI正在解读...'})}\n\n"
             try:
                 async with httpx.AsyncClient(timeout=120) as client:
                     async with client.stream(
@@ -1435,7 +1435,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
                                 chunk = json.loads(data_str)
                                 delta = chunk.get("choices", [{}])[0].get("delta", {})
                                 if "content" in delta and delta["content"]:
-                                    yield f"data: {json.dumps({'type': 'content', 'text': delta['content']})}\n\n"
+                                    yield f"data: {json.dumps({'type': 'chunk', 'text': delta['content']})}\n\n"
                             except json.JSONDecodeError:
                                 continue
 
