@@ -296,6 +296,20 @@ def build_assessment_context(assessments: dict) -> str:
         if label:
             parts.append(f"亲密关系：{label}")
 
+    b = assessments.get("bazi", {})
+    if b:
+        gan = b.get("ganZhi", "")
+        ri = b.get("riZhu", "")
+        dy = b.get("curDaYun", "")
+        fi = b.get("fullInterpretation", "")
+        line = f"八字推算结果：日主{ri}，四柱{gan}"
+        if dy:
+            line += f"，当前大运{dy}"
+        parts.append(line)
+        if fi:
+            # Include full AI interpretation for treehole to reference
+            parts.append(f"八字AI解读全文如下（用户可能询问解读中的任何细节，请以此为准进行讨论）：\n{fi}")
+
     fw = assessments.get("freeWrite", "")
     if fw:
         parts.append(f"用户自己说：{fw}")
@@ -345,7 +359,17 @@ def build_user_profile_context(user_profile: dict, assessment_records: list) -> 
             parts.append(f"恋爱人格评估({created}): {tn}「{tg}」")
         elif t == "bazi":
             sm = rec.get("summary", "") or ""
-            parts.append(f"八字解读({created}): {sm[:200]}")
+            s = rec.get("scores", {}) or {}
+            gan = s.get("ganZhi", "")
+            ri = s.get("riZhu", "")
+            dy = s.get("curDaYun", "")
+            header = f"八字解读({created}): {ri}日主 {' '.join(gan.split())}"
+            if dy:
+                header += f" | 大运:{dy}"
+            parts.append(header)
+            if sm:
+                # Use first 1000 chars of interpretation text
+                parts.append(f"解读详情: {sm[:1000]}")
     return "\n".join(parts)
 
 

@@ -533,9 +533,9 @@ function renderAssessments() {
     return `<div class="empty-state"><div class="icon">📝</div><p>还没有测评记录<br>完成测评后，结果会自动保存在这里</p><a href="anxiety-assessment.html" class="btn-sage" style="display:inline-block">开始测评 →</a></div>`;
   }
 
-  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩', love_radar:'💘'};
-  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估', love_radar:'情人匹配图鉴'};
-  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html', love_radar:'love-radar.html'};
+  const icons = {anxiety:'😰', relationship:'💕', personality:'🧩', love_radar:'💘', bazi:'🔮'};
+  const names = {anxiety:'焦虑评估', relationship:'亲密关系评估', personality:'性格评估', love_radar:'情人匹配图鉴', bazi:'生辰八字'};
+  const links = {anxiety:'anxiety-assessment.html', relationship:'relationship-assessment.html', personality:'personality-assessment.html', love_radar:'love-radar.html', bazi:'bazi.html'};
 
   function renderDetail(scores, type, id) {
     if (!scores) return '';
@@ -587,6 +587,17 @@ function renderAssessments() {
       }).join('');
       const tag = typeLabel ? `<span style="display:inline-block;background:rgba(139,157,139,0.1);border-radius:50px;padding:3px 12px;font-size:12px;font-weight:500">${typeLabel}</span>` : '';
       return `<div style="margin-bottom:6px">${tag}</div><div style="margin-top:6px">${bars}</div>`;
+    }
+    if (type === 'bazi') {
+      const ganZhi = scores.ganZhi || '';
+      const riZhu = scores.riZhu || '';
+      const curDy = scores.curDaYun || '';
+      const wx = scores.wxCount || {};
+      const wxStr = Object.keys(wx).map(function(k){ return k + wx[k]; }).join('  ');
+      return '<div style="margin-bottom:6px"><span class="badge" style="background:#E8DCC8;color:#7A6A5A;padding:2px 8px;border-radius:4px;font-size:12px">' + riZhu + '日主</span></div>' +
+        '<div style="font-size:13px;color:#6B6E52;margin-bottom:4px">' + ganZhi + '</div>' +
+        '<div style="font-size:12px;color:#8F7A72;margin-bottom:4px">五行: ' + wxStr + '</div>' +
+        (curDy ? '<div style="font-size:12px;color:#8F7A72">当前大运: ' + curDy + '</div>' : '');
     }
     if (type === 'love_radar') {
       const typeName = scores.typeName || '';
@@ -778,7 +789,7 @@ async function createSession() {
 
 async function goTreeholeFromAssessment(type, id) {
   try {
-    const data = await apiPost('/api/chat/sessions', {});
+    var data = await apiPost('/api/chat/sessions', {});
     window.location.href = 'treehole.html?session=' + encodeURIComponent(data.session_id);
   } catch(e) {
     alert('创建会话失败，请重试');

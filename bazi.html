@@ -514,8 +514,33 @@
     };
 
     var fullText = '';
+    var autoSaved = false;
     var formatHtml = function(t){ return t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>'); };
     var disclaimer = '<div class="disclaimer" style="margin-top:20px;padding:12px 16px;border-radius:10px;background:#fff3cd;color:#856404;font-size:13px;line-height:1.6;border:1px solid #ffeeba;">⚠️ 以上内容由 AI 生成，仅供娱乐参考。命运掌握在自己手中 ❤️</div>';
+
+    var autoSaveResult = function(text) {
+      if (autoSaved) return;
+      autoSaved = true;
+      var token = localStorage.getItem('treehole_token');
+      if (!token) return;
+      var baziScores = {
+        ganZhi: ganZhi,
+        riZhu: d.riZhuGan + d.riZhuWx,
+        wxCount: d.wxCount,
+        gender: d.gender,
+        curDaYun: d.curDy ? d.curDy.ganZhi : ''
+      };
+      fetch('/api/assessments', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({
+          type: 'bazi',
+          scores: baziScores,
+          summary: text.substring(0, 2000)
+        })
+      }).catch(function(){});
+    };
 
     fetch('/api/bazi/interpret/stream', {
       method: 'POST',
@@ -544,6 +569,7 @@
               fullText += data.text;
               interpretBody.innerHTML = formatHtml(fullText);
             } else if (data.type === 'done') {
+              autoSaveResult(fullText);
               interpretBody.innerHTML = formatHtml(fullText) + disclaimer;
             } else if (data.type === 'error') {
               console.error('Stream error:', data.text);
@@ -663,7 +689,8 @@
     if(!lastData) return;
     var ts = Date.now();
     var sid = 'bazi_' + ts;
-    var baziSummary = (interpretBody.textContent || '').substring(0, 300);
+    var fullInterp = interpretBody.textContent || '';
+    var interpStart = fullInterp.substring(0, 500);
     fetch('/api/chat/init', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -676,10 +703,11 @@
             riZhu: lastData.riZhuGan + lastData.riZhuWx,
             wxCount: lastData.wxCount,
             gender: lastData.gender,
-            curDaYun: lastData.curDy ? lastData.curDy.ganZhi + '运(' + lastData.curDy.startAge + '~' + lastData.curDy.endAge + '岁)' : ''
+            curDaYun: lastData.curDy ? lastData.curDy.ganZhi + '运(' + lastData.curDy.startAge + '~' + lastData.curDy.endAge + '岁)' : '',
+            fullInterpretation: fullInterp
           }
         },
-        freeWrite: '我刚刚测了八字，日主' + lastData.riZhuGan + lastData.riZhuWx + '。' + baziSummary
+        freeWrite: '我刚刚测了八字，日主' + lastData.riZhuGan + lastData.riZhuWx + '。' + interpStart
       })
     }).then(function(){
       window.location.href = 'treehole.html?session=' + sid;
@@ -692,7 +720,7 @@
     if(!lastData){saveNote.textContent='请先排盘';return;}
     btnSave.disabled=true;
     saveNote.textContent='⏳ 保存中…';
-    var baziSummary = (interpretBody.textContent || '').substring(0, 500);
+    var fullInterp = interpretBody.textContent || '';
     fetch('/api/assessments', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -706,7 +734,8 @@
           gender: lastData.gender,
           curDaYun: lastData.curDy ? lastData.curDy.ganZhi : ''
         },
-        summary: baziSummary
+        summary: fullInterp.substring(0, 2000)
+      })
       })
     }).then(function(r){return r.json();}).then(function(data){
       saveNote.textContent='✅ 已保存到个人中心';
