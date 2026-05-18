@@ -515,12 +515,16 @@
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify(body)
-    }).then(function(r){return r.json();}).then(function(data){
+    }).then(function(r){
+      if(!r.ok) return r.json().then(function(e){ throw new Error('API: ' + JSON.stringify(e)); });
+      return r.json();
+    }).then(function(data){
       if(data.interpretation){
         var html = data.interpretation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
         interpretBody.innerHTML = html;
       }
-    }).catch(function(){
+    }).catch(function(e){
+      console.error('Bazi interpret error:', e);
       interpretBody.innerHTML = mockInterpret(d).replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
     });
   }

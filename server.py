@@ -243,9 +243,9 @@ class BaziInterpretRequest(BaseModel):
     shiShenMonth: str = ''
     shiShenTime: str = ''
     curDaYun: str = ''
-    curDaYunStart: int = 0
-    curDaYunEnd: int = 0
-    curAge: int = 0
+    curDaYunStart: int | str = 0
+    curDaYunEnd: int | str = 0
+    curAge: int | str = 0
     taiYuan: str = ''
     mingGong: str = ''
     shenGong: str = ''
