@@ -1030,7 +1030,7 @@ async def bazi_interpret(req: BaziInterpretRequest):
     """根据八字数据调用 DeepSeek 生成解读（非流式，兼容旧版）。"""
     try:
         messages, _ = build_bazi_prompt(req)
-        text = await call_deepseek(messages, max_tokens=4096)
+        text = await call_deepseek(messages, max_tokens=8192)
         return {"interpretation": text}
     except Exception as e:
         logger.error(f"八字解读失败: {e}")
@@ -1057,7 +1057,7 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
                         json={
                             "model": DEEPSEEK_MODEL,
                             "messages": messages,
-                            "max_tokens": 4096,
+                            "max_tokens": 8192,
                             "reasoning_effort": "high",
                             "stream": True,
                         },
