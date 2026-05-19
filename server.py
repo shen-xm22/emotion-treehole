@@ -1674,7 +1674,7 @@ RELATIONSHIP_REPORT_PROMPT = """你是一个温暖有洞察力的关系分析师
 
 总结：一句收尾 + 免责声明
 
-要求：温暖自然，写具体洞察，不要空话套话。"""
+要求：温暖自然，写具体洞察，不要空话套话。语言精炼，每个板块写核心即可，别啰嗦。"""
 
 
 def build_relationship_report_context(profile: dict, assessments: list) -> str:
