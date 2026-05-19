@@ -988,9 +988,11 @@ async def delete_assessment(assessment_id: int, request: Request):
     user_id = get_user_id_from_request(request)
     if not user_id:
         raise HTTPException(401, "请先登录")
-    result = supabase.table("assessment_results").delete().eq("id", assessment_id).eq("user_id", user_id).execute()
-    if not result.data:
+    # 先查所有权，再删（和 session 删除模式一致，避免 .delete() 返回空 data 的兼容问题）
+    check = supabase.table("assessment_results").select("id").eq("id", assessment_id).eq("user_id", user_id).execute()
+    if not check.data:
         raise HTTPException(404, "测评记录不存在")
+    supabase.table("assessment_results").delete().eq("id", assessment_id).execute()
     return {"status": "ok"}
 
 
