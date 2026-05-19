@@ -156,6 +156,65 @@ header {
 /* Section Title */
 .section-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 
+/* Section 折叠组件 */
+.section {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid rgba(139,157,139,0.08);
+  margin-bottom: 14px;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+.section-header:hover { background: rgba(139,157,139,0.04); }
+.section-header .icon { font-size: 18px; }
+.section-header .title {
+  font-size: 15px;
+  font-weight: 600;
+  flex: 1;
+}
+.section-header .count {
+  font-size: 12px;
+  color: var(--brown-lt);
+  background: rgba(139,157,139,0.08);
+  padding: 2px 10px;
+  border-radius: 50px;
+  font-weight: 500;
+}
+.section-header .arrow {
+  font-size: 12px;
+  color: var(--brown-lt);
+  transition: transform 0.3s ease;
+  opacity: 0.5;
+}
+.section.collapsed .section-header .arrow {
+  transform: rotate(-90deg);
+}
+.section-body {
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+  max-height: 2000px;
+  opacity: 1;
+}
+.section.collapsed .section-body {
+  max-height: 0 !important;
+  opacity: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.section-body-inner {
+  padding: 0 20px 16px;
+}
+
 /* Assessment History */
 .assess-list { display: flex; flex-direction: column; gap: 10px; }
 .assess-item {
@@ -441,12 +500,40 @@ function renderDashboard() {
       </div>
     </div>
 
-    <div class="section-title">📋 测评记录</div>
-    <div class="assess-list" id="assessList">${renderAssessments()}</div>
+    <!-- 📋 测评记录 -->
+    <div class="section" id="assessSection">
+      <div class="section-header" tabindex="0" role="button" aria-expanded="true"
+        onclick="toggleSection('assessSection')"
+        onkeydown="if(event.key==='Enter')toggleSection('assessSection')">
+        <span class="icon">📋</span>
+        <span class="title">测评记录</span>
+        <span class="count" id="assessCount">${assessments.length} 项</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="assess-list" id="assessList">${renderAssessments()}</div>
+        </div>
+      </div>
+    </div>
 
-    <div class="section-title" style="margin-top:24px">💬 树洞会话</div>
-    <div class="sessions-list" id="sessionsList">
-      <div class="empty-state"><div class="loader" style="width:24px;height:24px;margin:0 auto 8px"></div><p>加载会话中…</p></div>
+    <!-- 💬 树洞会话 -->
+    <div class="section" id="sessionsSection">
+      <div class="section-header" tabindex="0" role="button" aria-expanded="true"
+        onclick="toggleSection('sessionsSection')"
+        onkeydown="if(event.key==='Enter')toggleSection('sessionsSection')">
+        <span class="icon">💬</span>
+        <span class="title">树洞会话</span>
+        <span class="count" id="sessionCount">${sessions.length} 项</span>
+        <span class="arrow">▼</span>
+      </div>
+      <div class="section-body">
+        <div class="section-body-inner">
+          <div class="sessions-list" id="sessionsList">
+            <div class="empty-state"><div class="loader" style="width:24px;height:24px;margin:0 auto 8px"></div><p>加载会话中…</p></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="quick-actions">
@@ -686,6 +773,14 @@ function renderAssessments() {
   }).join('');
 }
 
+function toggleSection(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('collapsed');
+  var header = el.querySelector('.section-header');
+  if (header) header.setAttribute('aria-expanded', !el.classList.contains('collapsed'));
+}
+
 function toggleDetail(id) {
   const el = document.getElementById(id);
   el.classList.toggle('open');
@@ -834,12 +929,22 @@ async function goTreeholeFromAssessment(type, id) {
   }
 }
 
+function updateAssessCount() {
+  var el = document.getElementById('assessCount');
+  if (el) el.textContent = assessments.length + ' 项';
+}
+
+function updateSessionCount() {
+  var el = document.getElementById('sessionCount');
+  if (el) el.textContent = sessions.length + ' 项';
+}
+
 async function deleteAssessment(id) {
   if (!confirm('确定删除这条测评记录？')) return;
-  // 乐观删除：立即从列表移除，请求成功后不再重复操作
   const item = assessments.find(a => a.id === id);
   assessments = assessments.filter(a => a.id !== id);
   renderAssessments();
+  updateAssessCount();
   try {
     const resp = await fetch(API_BASE + '/api/assessments/' + id, {
       method: 'DELETE',
@@ -847,19 +952,19 @@ async function deleteAssessment(id) {
     });
     if (!resp.ok) throw new Error('删除失败');
   } catch(e) {
-    // 失败回滚
     if (item) assessments.push(item);
     renderAssessments();
+    updateAssessCount();
     alert('删除失败，请重试');
   }
 }
 
 async function deleteSession(sessionId) {
   if (!confirm('确定删除这个树洞会话？所有对话记录将永久丢失。')) return;
-  // 乐观删除
   const item = sessions.find(s => s.session_id === sessionId);
   sessions = sessions.filter(s => s.session_id !== sessionId);
   renderSessions();
+  updateSessionCount();
   try {
     const resp = await fetch(API_BASE + '/api/chat/sessions/' + sessionId, {
       method: 'DELETE',
@@ -869,6 +974,7 @@ async function deleteSession(sessionId) {
   } catch(e) {
     if (item) sessions.push(item);
     renderSessions();
+    updateSessionCount();
     alert('删除失败，请重试');
   }
 }
