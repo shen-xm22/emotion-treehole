@@ -1363,6 +1363,7 @@ async def bazi_match_interpret_stream(req: BaziMatchRequest):
         return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
 
 
+@app.post("/api/chat/init")
 async def chat_init(req: ChatInitRequest, request: Request):
     """初始化树洞会话，存储测评数据，生成问候语。"""
     # 1. 存储测评结果
