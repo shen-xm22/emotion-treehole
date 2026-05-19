@@ -836,30 +836,39 @@ async function goTreeholeFromAssessment(type, id) {
 
 async function deleteAssessment(id) {
   if (!confirm('确定删除这条测评记录？')) return;
+  // 乐观删除：立即从列表移除，请求成功后不再重复操作
+  const item = assessments.find(a => a.id === id);
+  assessments = assessments.filter(a => a.id !== id);
+  renderAssessments();
   try {
     const resp = await fetch(API_BASE + '/api/assessments/' + id, {
       method: 'DELETE',
       headers: {'Authorization': 'Bearer ' + getToken()}
     });
     if (!resp.ok) throw new Error('删除失败');
-    assessments = assessments.filter(a => a.id !== id);
-    renderAssessments();
   } catch(e) {
+    // 失败回滚
+    if (item) assessments.push(item);
+    renderAssessments();
     alert('删除失败，请重试');
   }
 }
 
 async function deleteSession(sessionId) {
   if (!confirm('确定删除这个树洞会话？所有对话记录将永久丢失。')) return;
+  // 乐观删除
+  const item = sessions.find(s => s.session_id === sessionId);
+  sessions = sessions.filter(s => s.session_id !== sessionId);
+  renderSessions();
   try {
     const resp = await fetch(API_BASE + '/api/chat/sessions/' + sessionId, {
       method: 'DELETE',
       headers: {'Authorization': 'Bearer ' + getToken()}
     });
     if (!resp.ok) throw new Error('删除失败');
-    sessions = sessions.filter(s => s.session_id !== sessionId);
-    renderSessions();
   } catch(e) {
+    if (item) sessions.push(item);
+    renderSessions();
     alert('删除失败，请重试');
   }
 }
