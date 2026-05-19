@@ -470,6 +470,16 @@ function renderDashboard() {
         <div class="name">情人匹配图鉴</div>
         <div class="desc">发现你的恋爱人格</div>
       </a>
+      <a href="bazi.html" class="qaction">
+        <div class="icon">🔮</div>
+        <div class="name">生辰八字</div>
+        <div class="desc">排盘解读你的命理</div>
+      </a>
+      <a href="bazi-match.html" class="qaction">
+        <div class="icon">💞</div>
+        <div class="name">八字合婚</div>
+        <div class="desc">双人八字合婚分析</div>
+      </a>
     </div>
 
     <div class="section-title" style="margin-top:32px">🔒 隐私与数据</div>
@@ -660,6 +670,7 @@ function renderAssessments() {
           <div class="assess-summary">${summaryLine}</div>
         </div>
         <span class="assess-date">${dateStr}</span>
+        <a href="#" onclick="event.stopPropagation();deleteAssessment(${a.id})" title="删除" style="font-size:14px;color:#C49B8A;text-decoration:none;margin-left:8px">✕</a>
       </div>
       <div class="assess-detail" id="ad${a.id}">
         ${renderDetail(scores, a.type, a.id, a.summary || '')}
