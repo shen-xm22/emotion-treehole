@@ -836,8 +836,15 @@ def extract_and_update_profile(session_id: str, user_message: str):
 # ─── DeepSeek API 调用 ───────────────────────────────────
 
 
-async def call_deepseek(messages: list, max_tokens: int = 2048) -> str:
-    """调用 DeepSeek V4 Flash（思考模式），返回回答文本。"""
+async def call_deepseek(messages: list, max_tokens: int = 2048, thinking: bool = True) -> str:
+    """调用 DeepSeek V4 Flash，返回回答文本。"""
+    body = {
+        "model": DEEPSEEK_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+    }
+    if thinking:
+        body.update({"thinking": {"type": "enabled"}, "reasoning_effort": "high"})
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
             f"{DEEPSEEK_BASE_URL}/chat/completions",
@@ -845,13 +852,7 @@ async def call_deepseek(messages: list, max_tokens: int = 2048) -> str:
                 "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
                 "Content-Type": "application/json",
             },
-            json={
-                "model": DEEPSEEK_MODEL,
-                "messages": messages,
-                "max_tokens": max_tokens,
-                "thinking": {"type": "enabled"},
-                "reasoning_effort": "high",
-            },
+            json=body,
         )
         if resp.status_code == 401:
             raise HTTPException(401, "API Key 无效，请检查")
@@ -1802,17 +1803,25 @@ async def generate_relationship_profile(request: Request):
         {"role": "user", "content": prompt},
     ]
 
-    report = await call_deepseek(messages, max_tokens=4096)
+    try:
+        report = await call_deepseek(messages, max_tokens=2048, thinking=False)
+    except Exception as e:
+        logger.error(f"关系画像 AI 调用失败: {e}")
+        raise HTTPException(502, f"AI 生成超时或出错，请稍后重试")
 
     # 缓存到 assessment_results
-    supabase.table("assessment_results").insert({
-        "user_id": user_id,
-        "type": "relationship_profile",
-        "scores": {},
-        "answers": {},
-        "summary": report,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }).execute()
+    try:
+        supabase.table("assessment_results").insert({
+            "user_id": user_id,
+            "type": "relationship_profile",
+            "scores": {},
+            "answers": {},
+            "summary": report,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }).execute()
+    except Exception as e:
+        logger.error(f"关系画像缓存失败: {e}")
+        # 不阻断返回，缓存失败不影响结果
 
     return {"report": report}
 
