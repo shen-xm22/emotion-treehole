@@ -898,6 +898,7 @@ function renderSessions() {
 
   html += `<div class="session-new" onclick="createSession()">＋ 新建树洞</div>`;
   el.innerHTML = html;
+  updateSessionCount();
 }
 
 function escapeHtml(text) {
