@@ -836,7 +836,7 @@ def extract_and_update_profile(session_id: str, user_message: str):
 # ─── DeepSeek API 调用 ───────────────────────────────────
 
 
-async def call_deepseek(messages: list, max_tokens: int = 2048, thinking: bool = True) -> str:
+async def call_deepseek(messages: list, max_tokens: int = 2048, thinking: bool = True, timeout_secs: int = 60) -> str:
     """调用 DeepSeek V4 Flash，返回回答文本。"""
     body = {
         "model": DEEPSEEK_MODEL,
@@ -845,7 +845,7 @@ async def call_deepseek(messages: list, max_tokens: int = 2048, thinking: bool =
     }
     if thinking:
         body.update({"thinking": {"type": "enabled"}, "reasoning_effort": "high"})
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=timeout_secs) as client:
         resp = await client.post(
             f"{DEEPSEEK_BASE_URL}/chat/completions",
             headers={
@@ -1804,7 +1804,7 @@ async def generate_relationship_profile(request: Request):
     ]
 
     try:
-        report = await call_deepseek(messages, max_tokens=2048, thinking=False)
+        report = await call_deepseek(messages, max_tokens=4096, thinking=False, timeout_secs=90)
     except Exception as e:
         logger.error(f"关系画像 AI 调用失败: {e}")
         raise HTTPException(502, f"AI 生成超时或出错，请稍后重试")
