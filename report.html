@@ -392,7 +392,7 @@
 const API = 'https://emotion-treehole.onrender.com';
 
 function getToken() {
-  try { return localStorage.getItem('token'); } catch(e) { return null; }
+  try { return localStorage.getItem('treehole_token'); } catch(e) { return null; }
 }
 
 async function api(method, path, data) {
