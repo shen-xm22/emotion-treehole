@@ -1645,6 +1645,186 @@ async def delete_all_user_data(request: Request):
     return {"ok": True, "message": "所有数据已清除"}
 
 
+# ===== 关系画像报告 =====
+
+RELATIONSHIP_REPORT_PROMPT = """你是一个温暖又专业的关系分析师。根据用户的测评数据，生成一份「关系画像报告」。
+
+报告结构要求（按以下顺序输出，用标题#标记）：
+
+# 一句话画像
+一句话总结用户的关系特质，包含 星座·MBTI·八字日主·依恋类型 四个标签，以及一句概括（如「敏感而清醒的理想主义者，深水下的火焰」）
+
+# 01 关系底色
+- 用2-3段描述用户的关系气质：MBTI+星座+八字日主的综合解读
+- 包含3个指标：情感深度、表达倾向、关系主动性（每个给一个描述和一个简短说明）
+
+# 02 与他人连接的方式
+- 用户的社交风格（基于大五人格）
+- 朋友&圈子的模式
+- 工作&同事的模式
+- 一条重要提示（风险/盲区）
+
+# 03 亲密关系（这是最长的部分，约占全文40%）
+分析以下维度：
+1. 恋爱人格（love-radar）的类型描述，+ 5个维度的条形图数据（情感投入/理性判断/信任倾向/独立需求/浪漫倾向，每个给出百分比0-100）
+2. 安全感画像：依恋类型解读，焦虑/回避分数，触发焦虑的场景，能安抚的方式
+3. 关系循环模型：越在乎→越敏感→想确认→怕打扰→更焦虑，给出破解方向
+4. 爱的语言：核心语言/第二语言/加分项（每个给出一个词+一句话解释）
+5. 你容易反复出现的关系剧本（一个具体的模式描述）
+6. 适配类型：温暖守护型/深度共鸣型/能量互补型/需谨慎型（每种一个词+一句话）
+7. 八字视角下的关系：五行相性+大运指引
+
+# 04 职场与事业
+- 工作风格描述（基于大五+八字）
+- 优势与盲区（两项对比）
+- 八字事业趋势（当前大运+流年指引）
+
+# 05 情绪模式
+- 焦虑水平+神经质指数
+- 最容易触发情绪下沉的场景
+- 八字情绪特质解读
+
+# 06 成长指南
+3条具体可执行的建议，分别覆盖：亲密关系、社交、职业
+
+# 总结
+一句有温度的收尾
+
+输出要求：
+- 用温暖自然的语言，不要套路模板
+- 写具体的洞察，不要泛泛而谈「你需要自信」这种空话
+- 每个#标题下的内容长度要扎实，第03节要特别丰富
+- 结尾加上免责声明（一行）
+
+以下是用户的完整数据："""
+
+
+def build_relationship_report_context(profile: dict, assessments: list) -> str:
+    """构建关系画像报告用的上下文数据。"""
+    ctx_parts = []
+
+    # 个人档案
+    p = profile or {}
+    ctx_parts.append("=== 个人档案 ===")
+    if p.get("nickname"): ctx_parts.append(f"昵称: {p['nickname']}")
+    if p.get("mbti"): ctx_parts.append(f"MBTI: {p['mbti']}")
+    if p.get("zodiac"): ctx_parts.append(f"星座: {p['zodiac']}")
+    if p.get("birth_date"): ctx_parts.append(f"生日: {p['birth_date']}")
+    if p.get("gender"): ctx_parts.append(f"性别: {p['gender']}")
+    if p.get("hobbies"):
+        hobbies = p["hobbies"]
+        if isinstance(hobbies, str):
+            hobbies = json.loads(hobbies)
+        ctx_parts.append(f"爱好: {'、'.join(hobbies[:6])}")
+
+    ctx_parts.append("")
+    ctx_parts.append("=== 测评数据 ===")
+
+    seen_types = set()
+    for rec in assessments or []:
+        t = rec["type"]
+        if t in seen_types:
+            continue
+        seen_types.add(t)
+        scores = rec.get("scores")
+        if isinstance(scores, str):
+            scores = json.loads(scores)
+        summary = rec.get("summary", "") or ""
+
+        if t == "anxiety":
+            cs = scores.get("core_score", 0)
+            ctx_parts.append(f"[焦虑评估] 总分: {cs}/21, 详细维度: {json.dumps(scores, ensure_ascii=False)}")
+        elif t == "relationship":
+            an = scores.get("anxiety", 0)
+            av = scores.get("avoidance", 0)
+            tp = scores.get("type", "")
+            ctx_parts.append(f"[依恋评估] 焦虑: {an}/5, 回避: {av}/5, 类型: {tp}")
+        elif t == "personality":
+            ds = scores.get("dimension_scores", {})
+            tp = scores.get("type", "")
+            ctx_parts.append(f"[大五人格] 类型: {tp}, 维度: {json.dumps(ds, ensure_ascii=False)}")
+        elif t == "love_radar":
+            tn = scores.get("typeName", "")
+            tg = scores.get("tagline", "")
+            dims = {k: v for k, v in scores.items() if k not in ("typeName", "tagline", "type", "bestMatch", "secondMatch")}
+            ctx_parts.append(f"[恋爱人格] 类型: {tn}, 口号: {tg}")
+            ctx_parts.append(f"  维度详情: {json.dumps(dims, ensure_ascii=False)}")
+            bm = scores.get("bestMatch", "")
+            sm = scores.get("secondMatch", "")
+            if bm: ctx_parts.append(f"  最佳匹配: {bm}")
+            if sm: ctx_parts.append(f"  次佳匹配: {sm}")
+        elif t == "bazi":
+            gan = scores.get("ganZhi", "")
+            dy = scores.get("curDaYun", "")
+            ctx_parts.append(f"[八字] 日柱: {gan}, 大运: {dy}")
+            if summary:
+                ctx_parts.append(f"  原文解读(前600字): {summary[:600]}")
+        elif t == "bazi_match":
+            pa = scores.get("personA", {})
+            pb = scores.get("personB", {})
+            a_gan = pa.get("ganZhi", "")
+            b_gan = pb.get("ganZhi", "")
+            ctx_parts.append(f"[合婚] {a_gan} vs {b_gan}")
+            if summary:
+                ctx_parts.append(f"  详情: {summary[:400]}")
+
+    return "\n".join(ctx_parts)
+
+
+@app.post("/api/report/relationship-profile")
+async def generate_relationship_profile(request: Request):
+    """生成或重新生成关系画像报告。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    # 收集数据
+    uprof = supabase.table("user_profiles").select("*").eq("user_id", user_id).execute()
+    profile = uprof.data[0] if uprof.data else {}
+
+    res = supabase.table("assessment_results").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+    assessments = res.data or []
+
+    if not assessments:
+        raise HTTPException(400, "还没有测评数据，请先完成至少一项测评")
+
+    context = build_relationship_report_context(profile, assessments)
+    prompt = RELATIONSHIP_REPORT_PROMPT + "\n\n" + context
+
+    messages = [
+        {"role": "system", "content": "你是一个温暖、专业、有洞察力的关系分析师。输出内容完整、有深度，不要偷懒缩短。"},
+        {"role": "user", "content": prompt},
+    ]
+
+    report = await call_deepseek(messages, max_tokens=4096)
+
+    # 缓存到 assessment_results
+    supabase.table("assessment_results").insert({
+        "user_id": user_id,
+        "type": "relationship_profile",
+        "scores": {},
+        "answers": {},
+        "summary": report,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }).execute()
+
+    return {"report": report}
+
+
+@app.get("/api/report/relationship-profile")
+async def get_relationship_profile(request: Request):
+    """获取已有的关系画像报告（缓存）。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+
+    result = supabase.table("assessment_results").select("*").eq("user_id", user_id).eq("type", "relationship_profile").order("created_at", desc=True).limit(1).execute()
+    if not result.data:
+        raise HTTPException(404, "尚未生成关系画像报告")
+
+    return {"report": result.data[0]["summary"], "created_at": result.data[0]["created_at"]}
+
+
 @app.delete("/api/user/account")
 async def delete_account(request: Request):
     """注销账号：删除用户及所有关联数据。"""
