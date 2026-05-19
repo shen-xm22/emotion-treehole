@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
+from cryptography.fernet import Fernet
 
 # ─── 配置 ───────────────────────────────────────────────
 
@@ -55,6 +56,33 @@ if not SUPABASE_SERVICE_KEY:
     )
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+# ─── 对话加密 ──────────────────────────────────────────
+
+CHAT_ENCRYPT_KEY = os.environ.get("CHAT_ENCRYPT_KEY")
+
+if not CHAT_ENCRYPT_KEY:
+    raise RuntimeError(
+        "❌ CHAT_ENCRYPT_KEY 环境变量未设置！\n"
+        "请在 Render Dashboard → Environment 中添加：\n"
+        "  变量名: CHAT_ENCRYPT_KEY\n"
+        "  值: (Fernet 对称加密密钥，用 python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\" 生成)"
+    )
+
+
+def encrypt_chat(text: str) -> str:
+    """加密对话内容（写库前调用）。"""
+    f = Fernet(CHAT_ENCRYPT_KEY.encode())
+    return f.encrypt(text.encode()).decode()
+
+
+def decrypt_chat(token: str) -> str:
+    """解密对话内容（读库后调用）。加密失败的旧数据原样返回。"""
+    try:
+        f = Fernet(CHAT_ENCRYPT_KEY.encode())
+        return f.decrypt(token.encode()).decode()
+    except Exception:
+        return token
 
 # ─── JWT 配置 ───────────────────────────────────────────
 JWT_SECRET = os.environ.get("JWT_SECRET", "")
@@ -1393,11 +1421,11 @@ async def chat_init(req: ChatInitRequest, request: Request):
         "我在这儿呢，你想聊什么就聊什么，不想说也没关系。"
     )
 
-    # 5. 存入对话记录
+    # 5. 存入对话记录（加密）
     greet_data = {
         "session_id": req.sessionId,
         "role": "assistant",
-        "content": greeting,
+        "content": encrypt_chat(greeting),
     }
     if user_id:
         greet_data["user_id"] = user_id
@@ -1421,11 +1449,11 @@ async def chat_message(req: ChatMessageRequest, request: Request):
     # 0. 获取登录状态
     user_id = get_user_id_from_request(request)
 
-    # 1. 存入用户消息
+    # 1. 存入用户消息（加密）
     user_msg = {
         "session_id": req.sessionId,
         "role": "user",
-        "content": req.message,
+        "content": encrypt_chat(req.message),
     }
     if user_id:
         user_msg["user_id"] = user_id
@@ -1462,13 +1490,13 @@ async def chat_message(req: ChatMessageRequest, request: Request):
 
     system_prompt = build_system_prompt(assessments_data, profile, session_count, user_context)
 
-    # 6. 获取最近对话历史
+    # 6. 获取最近对话历史（解密后注入）
     hresult = supabase.table("conversations").select("role,content").eq(
         "session_id", req.sessionId
     ).order("id", desc=True).limit(20).execute()
     messages = [{"role": "system", "content": system_prompt}]
     for row in reversed(hresult.data):
-        messages.append({"role": row["role"], "content": row["content"]})
+        messages.append({"role": row["role"], "content": decrypt_chat(row["content"])})
 
     # 7. 调用 DeepSeek
     try:
@@ -1479,11 +1507,11 @@ async def chat_message(req: ChatMessageRequest, request: Request):
         logger.error(f"ai调用失败: {traceback.format_exc()}")
         raise HTTPException(502, f"AI 响应失败: {str(e)}")
 
-    # 8. 存入 AI 回复
+    # 8. 存入 AI 回复（加密）
     ai_msg = {
         "session_id": req.sessionId,
         "role": "assistant",
-        "content": reply,
+        "content": encrypt_chat(reply),
     }
     if user_id:
         ai_msg["user_id"] = user_id
@@ -1506,7 +1534,7 @@ async def chat_history(sessionId: str = Body(..., embed=True)):
 
     return {
         "messages": [
-            {"role": r["role"], "content": r["content"], "time": fmt_time(r["created_at"])}
+            {"role": r["role"], "content": decrypt_chat(r["content"]), "time": fmt_time(r["created_at"])}
             for r in result.data
         ]
     }
