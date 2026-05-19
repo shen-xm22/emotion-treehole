@@ -607,7 +607,7 @@
           if (!line.startsWith('data: ')) continue;
           try {
             var data = JSON.parse(line.slice(6));
-            if (data.type === 'content' && data.text) {
+            if (data.type === 'chunk' && data.text) {
               fullText += data.text;
               interpretBody.innerHTML = formatHtml(fullText);
             } else if (data.type === 'done') {
