@@ -201,6 +201,12 @@ async def serve_bazi_match():
 async def serve_auth():
     return FileResponse(os.path.join(BASE_DIR, "auth.html"))
 
+@app.get("/report")
+@app.get("/report.html")
+async def serve_report():
+    return FileResponse(os.path.join(BASE_DIR, "report.html"))
+
+
 @app.get("/dashboard")
 @app.get("/dashboard.html")
 async def serve_dashboard():

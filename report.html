@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关系画像报告 · 情绪树洞</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0ebe5;
+    font-family: -apple-system, 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: #2c2416;
+    padding: 20px 16px 60px;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+
+  /* Nav */
+  .top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .top-nav a {
+    color: #8a7a6a;
+    text-decoration: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .top-nav a:hover { color: #2c2416; }
+  .top-nav .actions { display: flex; gap: 12px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .header .badge {
+    display: inline-block;
+    background: #dcb48c;
+    color: #fff;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header .meta { color: #8a7a6a; font-size: 13px; margin-top: 4px; }
+
+  /* Card */
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card-number {
+    font-size: 12px;
+    color: #c4a88a;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 2px;
+  }
+  .card-title {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .card p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #3d3226;
+    margin-bottom: 12px;
+  }
+  .card p:last-child { margin-bottom: 0; }
+  .card strong { color: #2c2416; }
+
+  /* Tags */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .tag {
+    background: #f4ede6;
+    color: #6a5d4e;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+  }
+
+  /* Sub-heading */
+  .card h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 18px 0 8px;
+    color: #4a3d2e;
+  }
+  .card h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 16px 0 8px;
+    color: #5a4e3e;
+  }
+
+  /* List */
+  .card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+  }
+  .card ul li {
+    padding: 6px 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #3d3226;
+    padding-left: 20px;
+    position: relative;
+  }
+  .card ul li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 14px;
+    width: 5px;
+    height: 5px;
+    background: #d4b8a0;
+    border-radius: 50%;
+  }
+
+  /* HR */
+  .card hr {
+    border: none;
+    border-top: 1px solid #ede7e0;
+    margin: 16px 0;
+  }
+
+  /* Metric row */
+  .metric-row {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .metric-box {
+    flex: 1;
+    background: #f8f4ef;
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .metric-box .lbl { font-size: 11px; color: #8a7a6a; margin-bottom: 4px; }
+  .metric-box .val { font-size: 16px; font-weight: 700; }
+  .metric-box .sub { font-size: 11px; color: #b0a090; margin-top: 2px; }
+
+  /* Table */
+  .card table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 14px;
+  }
+  .card table th {
+    background: #f4ede6;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #5a4e3e;
+  }
+  .card table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0ebe5;
+    vertical-align: top;
+    color: #3d3226;
+  }
+  .card table tr:last-child td { border: none; }
+
+  /* Bar chart */
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .bar-lbl {
+    width: 90px;
+    font-size: 13px;
+    color: #5a4e3e;
+    flex-shrink: 0;
+  }
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: #ede7e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 10px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s ease;
+    background: linear-gradient(90deg, #d4a88a, #c4906a);
+  }
+  .bar-val {
+    width: 36px;
+    text-align: right;
+    font-size: 13px;
+    color: #8a7a6a;
+    flex-shrink: 0;
+  }
+
+  /* Flow diagram */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    background: #f8f4ef;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 12px 0;
+    font-size: 14px;
+    line-height: 2;
+  }
+  .flow-item { padding: 2px 6px; white-space: nowrap; }
+  .flow-arrow { color: #8a7a6a; }
+
+  /* Highlight box */
+  .highlight-box {
+    background: #fdf8f3;
+    border: 1px solid #ede7e0;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .highlight-box p { margin: 0; font-size: 14px; }
+  .highlight-box p + p { margin-top: 8px; }
+
+  /* One-liner */
+  .oneliner {
+    background: linear-gradient(135deg, #2c2416, #4a3d2e);
+    color: #ede7e0;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .oneliner .lbl { font-size: 11px; color: #c4a88a; letter-spacing: 2px; margin-bottom: 6px; }
+  .oneliner .txt { font-size: 16px; line-height: 1.6; font-weight: 500; }
+
+  /* Summary box */
+  .summary-box {
+    background: #2c2416;
+    color: #ede7e0;
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .summary-box .quote { font-size: 24px; color: #c4a88a; line-height: 1; }
+  .summary-box p {
+    font-size: 15px;
+    line-height: 1.8;
+    margin: 10px 0 0;
+    color: #d4c8b8;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+  }
+  .empty-state .icon { font-size: 60px; margin-bottom: 16px; }
+  .empty-state h2 { font-size: 20px; margin-bottom: 8px; }
+  .empty-state p { color: #8a7a6a; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+  .btn {
+    display: inline-block;
+    background: #2c2416;
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 30px;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .btn:hover { background: #4a3d2e; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    color: #2c2416;
+    border: 1px solid #d4c8b8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-outline:hover { border-color: #2c2416; }
+
+  .loading { text-align: center; padding: 60px 0; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #ede7e0;
+    border-top-color: #c4a88a;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error */
+  .error-msg {
+    background: #fdf0ed;
+    color: #c0392b;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  /* Disclaim */
+  .footer-note {
+    text-align: center;
+    padding: 16px 0 0;
+    font-size: 12px;
+    color: #b0a090;
+  }
+
+  /* Pill row */
+  .pill-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .pill {
+    border: 1px solid #e0d6cc;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #5a4e3e;
+  }
+  .pill.active { background: #2c2416; color: #fff; border-color: #2c2416; }
+
+  /* Two-col */
+  .two-col {
+    display: flex;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .two-col > div {
+    flex: 1;
+    background: #f8f4ef;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .two-col h4 { font-size: 13px; margin: 0 0 6px; color: #8a7a6a; }
+  .two-col p { font-size: 13px; margin: 0; line-height: 1.6; }
+
+  @media (max-width: 500px) {
+    .metric-row { flex-direction: column; gap: 8px; }
+    .two-col { flex-direction: column; gap: 8px; }
+    .bar-lbl { width: 70px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+
+  <!-- Nav -->
+  <div class="top-nav">
+    <a href="javascript:history.back()" onclick="if(history.length>1){history.back()}else{location='dashboard.html'}">
+      ← 返回
+    </a>
+    <div class="actions">
+      <button class="btn-outline" id="btnRegen" style="display:none" onclick="generateReport()">重新生成</button>
+    </div>
+  </div>
+
+  <div id="content"></div>
+
+</div>
+
+<script>
+// ─── API ───
+const API = 'https://emotion-treehole.onrender.com';
+
+function getToken() {
+  try { return localStorage.getItem('token'); } catch(e) { return null; }
+}
+
+async function api(method, path, data) {
+  const token = getToken();
+  if (!token) { location.href = 'auth.html'; return; }
+  const opts = {
+    method, headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    }
+  };
+  if (data !== undefined) opts.body = JSON.stringify(data);
+  const r = await fetch(API + path, opts);
+  if (r.status === 401) { localStorage.removeItem('token'); location.href = 'auth.html'; }
+  if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.detail || '请求失败'); }
+  return r.json();
+}
+
+// ─── Markdown → HTML (simple) ───
+function mdToHtml(text) {
+  let html = text;
+  // Split by ### headings first, but don't strip them - handle them
+  // H3
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Table: | a | b |
+  html = html.replace(/^\|(.+)\|$/gm, function(m) {
+    const cells = m.slice(1,-1).split('|').map(c => c.trim());
+    if (cells.every(c => /^[-]+$/.test(c))) return '<tr class="table-hr"></tr>';
+    return '<tr><td>' + cells.join('</td><td>') + '</td></tr>';
+  });
+  // Wrap tables with table tag (detect consecutive tr)
+  html = html.replace(/((?:<tr[^>]*>.*?<\/tr>\n?)+)/g, '<table>$1</table>');
+  // Remove empty rows from table separator
+  html = html.replace(/<tr class="table-hr"><\/tr>\n?/g, '');
+  // HR
+  html = html.replace(/^---$/gm, '<hr>');
+  // Lists: - item
+  html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
+  // Paragraphs (lines that aren't already wrapped)
+  const lines = html.split('\n');
+  let out = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim();
+    if (!l) { out += '\n'; continue; }
+    if (l.startsWith('<h') || l.startsWith('<ul') || l.startsWith('<li') ||
+        l.startsWith('<table') || l.startsWith('<tr') || l.startsWith('<td') ||
+        l.startsWith('<hr') || l.startsWith('</')) {
+      out += l + '\n';
+    } else {
+      out += '<p>' + l + '</p>\n';
+    }
+  }
+  return out.trim();
+}
+
+// ─── Parse bar chart data ───
+function parseBars(text) {
+  // Match: **name：80%** description or - **name：80%** desc
+  const bars = [];
+  const re = /\*\*(.+?)[:：]\s*(\d+)%\*\*[—–-]?\s*(.+?)(?=\n|$)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    bars.push({ name: m[1].trim(), pct: parseInt(m[2]), desc: m[3].trim() });
+  }
+  return bars;
+}
+
+// ─── Parse metrics (section 01) ───
+function parseMetrics(text) {
+  // Match: **情感深度：85%——深水区的守门人**
+  const metrics = [];
+  const re = /\*\*(.+?)[:：]\s*(\d+)%[—–-]{2}\s*(.+?)(?=\n|$)/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    metrics.push({ name: m[1].trim(), pct: parseInt(m[2]), desc: m[3].trim() });
+  }
+  return metrics;
+}
+
+// ─── Parse one-liner ───
+function parseOneLiner(text) {
+  // Format: **星座·MBTI·八字·依恋**——概括
+  const m = /^\*\*(.+?)\*\*[—–-]{1,2}\s*(.+)$/m.exec(text);
+  if (m) return { tags: m[1], summary: m[2] };
+  return null;
+}
+
+// ─── Parse flow (section 03 cycle) ───
+function parseFlow(text) {
+  const m = /越在乎\s*→\s*越敏感\s*→\s*想确认\s*→\s*怕打扰\s*→\s*更焦虑/.exec(text);
+  if (m) return true;
+  return false;
+}
+
+// ─── Render a section ───
+function renderSection(title, body, index) {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  // Card number
+  const numMatch = title.match(/^(\d+)\s/);
+  if (numMatch) {
+    const num = document.createElement('div');
+    num.className = 'card-number';
+    num.textContent = numMatch[1].padStart(2, '0');
+    card.appendChild(num);
+  }
+
+  // Card title (strip number)
+  const titleText = title.replace(/^\d+\s+/, '').trim();
+  const ht = document.createElement('div');
+  ht.className = 'card-title';
+  ht.textContent = titleText;
+  card.appendChild(ht);
+
+  // Body content
+  const bodyDiv = document.createElement('div');
+  bodyDiv.innerHTML = body;
+
+  // ── Section-specific rendering ──
+
+  // Section 01: metrics
+  if (titleText.includes('底色')) {
+    const metrics = parseMetrics(body);
+    if (metrics.length >= 2) {
+      const row = document.createElement('div');
+      row.className = 'metric-row';
+      metrics.forEach(m => {
+        const box = document.createElement('div');
+        box.className = 'metric-box';
+        box.innerHTML = `<div class="lbl">${m.name}</div>
+          <div class="val">${m.desc}</div>
+          <div class="sub">${Math.round(m.pct * 2)}% 感知力</div>`;
+        row.appendChild(box);
+      });
+      bodyDiv.appendChild(row);
+    }
+  }
+
+  // Section 01/03: tags
+  const tagMatch = body.match(/星座[：:]\s*[^\n]+\s*INFJ|INFJ.*星座|天蝎|甲木|焦虑型|依恋/);
+  if (tagMatch || titleText.includes('底色') || titleText.includes('亲密')) {
+    const tags = [];
+    const tagPatterns = [
+      /INFJ|INTJ|ENFP|INTP|ENFJ|ISTJ|ESTJ|ISFP|ESFP/g,
+      /天蝎|水瓶|双鱼|白羊|金牛|双子|巨蟹|狮子|处女|天秤|射手|摩羯/g,
+      /甲木|乙木|丙火|丁火|戊土|己土|庚金|辛金|壬水|癸水/g,
+      /焦虑型|安全型|回避型|恐惧型/g,
+      /偏印|正印|食神|伤官|正官|七杀|正财|偏财|比肩|劫财/g,
+    ];
+    // Get existing tags from body text
+    const text = body;
+    tagPatterns.forEach(pat => {
+      let m;
+      while ((m = pat.exec(text)) !== null) {
+        if (!tags.includes(m[0])) tags.push(m[0]);
+      }
+    });
+    if (tags.length > 0) {
+      const tagDiv = document.createElement('div');
+      tagDiv.className = 'tags';
+      tags.slice(0, 6).forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = t;
+        tagDiv.appendChild(span);
+      });
+      bodyDiv.prepend(tagDiv);
+    }
+  }
+
+  // Section 03: bar charts (love_radar)
+  if (titleText.includes('亲密')) {
+    const bars = parseBars(body);
+    if (bars.length >= 3) {
+      const chart = document.createElement('div');
+      chart.style.margin = '12px 0';
+      bars.forEach(b => {
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        row.innerHTML = `<span class="bar-lbl">${b.name}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:0%"></div></div>
+          <span class="bar-val">${b.pct}%</span>`;
+        chart.appendChild(row);
+        // Animate after render
+        setTimeout(() => row.querySelector('.bar-fill').style.width = b.pct + '%', 100);
+      });
+      bodyDiv.appendChild(chart);
+    }
+  }
+
+  // Section 03: flow cycle
+  if (titleText.includes('亲密')) {
+    const hasFlow = parseFlow(body);
+    if (hasFlow) {
+      const flow = document.createElement('div');
+      flow.className = 'flow-row';
+      flow.innerHTML = `
+        <span class="flow-item" style="color:#c0392b;">在乎</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-item" style="color:#d4a058;">更敏感</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-item" style="color:#c0392b;">想确认</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-item" style="color:#5d9b6a;">怕打扰</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-item" style="color:#c0392b;">更焦虑</span>`;
+      // Insert before last element
+      bodyDiv.appendChild(flow);
+    }
+  }
+
+  // Extract & remove the first quote (one-liner) from section 03
+  // Actually let's just append bodyDiv content to card
+  card.appendChild(bodyDiv);
+  return card;
+}
+
+// ─── Main render ───
+function renderReport(report, createdAt) {
+  const content = document.getElementById('content');
+  content.innerHTML = '';
+
+  // Show regenerate button
+  document.getElementById('btnRegen').style.display = 'inline-block';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'header';
+  header.innerHTML = `<div class="badge">🌿 情绪树洞</div>
+    <h1>我的关系画像</h1>
+    <div class="meta">${createdAt ? new Date(createdAt).toLocaleString('zh-CN') : ''}</div>`;
+  content.appendChild(header);
+
+  // Split by # headings
+  const lines = report.split('\n');
+  const sections = [];
+  let currentHeading = null;
+  let currentBody = [];
+
+  for (const line of lines) {
+    const hMatch = line.match(/^#\s+(.+)/);
+    if (hMatch) {
+      if (currentHeading !== null) {
+        sections.push({ heading: currentHeading, body: currentBody.join('\n') });
+      }
+      currentHeading = hMatch[1].trim();
+      currentBody = [];
+    } else {
+      currentBody.push(line);
+    }
+  }
+  if (currentHeading !== null) {
+    sections.push({ heading: currentHeading, body: currentBody.join('\n') });
+  }
+
+  // Special: extract one-liner
+  let onelinerSect = null;
+  sections.forEach((s, i) => {
+    if (s.heading.includes('一句话')) {
+      onelinerSect = s;
+      sections.splice(i, 1);
+    }
+  });
+
+  // Render one-liner
+  if (onelinerSect) {
+    const olData = parseOneLiner(onelinerSect.body);
+    const olDiv = document.createElement('div');
+    olDiv.className = 'oneliner';
+    if (olData) {
+      olDiv.innerHTML = `<div class="lbl">一句话画像</div>
+        <div class="txt">${olData.tags.replace(/\u00b7/g, ' · ')}<br>「${olData.summary}」</div>`;
+    } else {
+      olDiv.innerHTML = `<div class="lbl">一句话画像</div>
+        <div class="txt">${mdToHtml(onelinerSect.body).replace(/<\/?p>/g,'')}</div>`;
+    }
+    content.appendChild(olDiv);
+  }
+
+  // Render each section as card
+  sections.forEach((s, i) => {
+    const bodyHtml = mdToHtml(s.body);
+    // Check if summary section
+    if (s.heading.includes('总结') || s.heading.includes('Summary')) {
+      const box = document.createElement('div');
+      box.className = 'summary-box';
+      box.innerHTML = `<div class="quote">"</div>${bodyHtml.replace(/<\/?p>/g,'<p>').replace('<p>','<p>')}`;
+      content.appendChild(box);
+      return;
+    }
+    const card = renderSection(s.heading, bodyHtml, i);
+    content.appendChild(card);
+  });
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.className = 'footer-note';
+  footer.textContent = '🌿 情绪树洞 · 数据来源于你的心理测评和八字分析 · AI 生成仅供参考';
+  content.appendChild(footer);
+}
+
+// ─── Generate report ───
+async function generateReport() {
+  const content = document.getElementById('content');
+  const btn = document.getElementById('btnRegen');
+  btn.style.display = 'none';
+  content.innerHTML = `<div class="loading">
+    <div class="spinner"></div>
+    <p style="color:#8a7a6a;">正在分析你的画像数据…<br><span style="font-size:12px;">可能需要30-60秒</span></p>
+  </div>`;
+  try {
+    const r = await api('POST', '/api/report/relationship-profile');
+    renderReport(r.report, new Date().toISOString());
+  } catch (e) {
+    content.innerHTML = `<div class="empty-state">
+      <div class="icon">😔</div>
+      <h2>生成失败</h2>
+      <p>${e.message}</p>
+      <button class="btn" onclick="generateReport()">再试一次</button>
+    </div>`;
+  }
+}
+
+// ─── Load ───
+async function loadReport() {
+  const content = document.getElementById('content');
+  content.innerHTML = `<div class="loading">
+    <div class="spinner"></div>
+    <p style="color:#8a7a6a;">加载中…</p>
+  </div>`;
+
+  try {
+    const r = await api('GET', '/api/report/relationship-profile');
+    renderReport(r.report, r.created_at);
+  } catch (e) {
+    // No report yet - show empty state
+    content.innerHTML = `<div class="empty-state">
+      <div class="icon">📋</div>
+      <h2>你的关系画像</h2>
+      <p>基于你的测评数据、八字信息和人格分析，<br>AI 将为你生成一份专属的「关系画像报告」。</p>
+      <p style="font-size:13px;color:#b0a090;margin-bottom:20px;">
+        需要先完成：焦虑测评 · 亲密关系测评 · 大五人格 · 恋爱人格 · 八字排盘
+      </p>
+      <button class="btn" onclick="generateReport()">生成我的关系画像</button>
+    </div>`;
+  }
+}
+
+// Check token first
+if (!getToken()) { location.href = 'auth.html'; }
+else { loadReport(); }
+</script>
+</body>
+</html>
