@@ -66,6 +66,22 @@
   .person-summary .ps-ganzhi{font-size:15px;font-weight:600;margin-bottom:4px}
   .person-summary .ps-wx{font-size:12px;color:var(--brown-lt)}
 
+  /* Stage config */
+  .stage-config{padding:20px 0;border-top:1px solid rgba(139,157,139,0.12);margin-top:16px}
+  .stage-config .stage-title{font-size:16px;font-weight:600;margin-bottom:16px;color:var(--brown)}
+  .stage-field{margin-bottom:16px}
+  .stage-field .field-label{font-size:13px;font-weight:600;color:var(--brown-lt);margin-bottom:8px}
+  .stage-options{display:flex;flex-wrap:wrap;gap:8px}
+  .stage-option{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:50px;background:var(--sage-pt);font-size:13px;cursor:pointer;transition:all .2s;border:1.5px solid transparent}
+  .stage-option:has(input:checked){background:#E8DCC8;border-color:var(--sage)}
+  .stage-option input{accent-color:var(--sage)}
+  .dir-options{display:flex;flex-wrap:wrap;gap:8px}
+  .dir-option{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;background:var(--rose-lt);font-size:12px;cursor:pointer;transition:all .2s}
+  .dir-option:has(input:checked){background:#D8B4B8;color:#5A4040}
+  .dir-option input{accent-color:var(--sage)}
+  .btn-start-analysis{display:block;width:100%;padding:12px;margin-top:8px;border:none;border-radius:12px;background:var(--sage);color:white;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+  .btn-start-analysis:hover{background:#7A8F6A;transform:translateY(-1px)}
+
   .match-tag{display:inline-block;padding:4px 14px;border-radius:50px;font-size:13px;font-weight:600;margin-bottom:14px}
   .match-tag.great{background:#D4EDDA;color:#155724}
   .match-tag.good{background:#FFF3CD;color:#856404}
@@ -209,6 +225,34 @@
 
       <!-- Person summaries -->
       <div class="person-summary" id="person-summaries"></div>
+
+      <!-- Stage config -->
+      <div class="stage-config" id="stage-config" style="display:none">
+        <div class="stage-title">📋 定制你的合婚分析</div>
+        
+        <div class="stage-field">
+          <div class="field-label">你们目前处于什么阶段？</div>
+          <div class="stage-options">
+            <label class="stage-option"><input type="radio" name="stage" value="crush"> 暗恋</label>
+            <label class="stage-option"><input type="radio" name="stage" value="together" checked> 已在一起</label>
+            <label class="stage-option"><input type="radio" name="stage" value="broken"> 已分手</label>
+            <label class="stage-option"><input type="radio" name="stage" value="married"> 结婚后</label>
+            <label class="stage-option"><input type="radio" name="stage" value="blind_date"> 相亲匹配</label>
+          </div>
+        </div>
+        
+        <div class="stage-field">
+          <div class="field-label">最想了解哪些方面？（可多选）</div>
+          <div class="dir-options">
+            <label class="dir-option"><input type="checkbox" value="long_term" checked> 长期兼容性</label>
+            <label class="dir-option"><input type="checkbox" value="current_issues"> 当前问题分析</label>
+            <label class="dir-option"><input type="checkbox" value="future_timing" checked> 未来时间点</label>
+            <label class="dir-option"><input type="checkbox" value="advice" checked> 相处建议</label>
+          </div>
+        </div>
+        
+        <button class="btn-start-analysis" id="btn-start-analysis">💘 开始AI合婚分析</button>
+      </div>
 
       <!-- Interpretation -->
       <div class="interpret-card" id="interpret-card">
@@ -483,7 +527,8 @@
       renderPersonSummary('甲方', '🌲', dataA, '') +
       renderPersonSummary('乙方', '🌸', dataB, 'pb');
     resultSection.style.display = 'block';
-    loadingIndicator.style.display = 'block';
+    stageConfig.style.display = 'block';
+    loadingIndicator.style.display = 'none';
     interpretBody.style.display = 'none';
   }
 
@@ -513,13 +558,26 @@
     matchTitle.textContent = '合婚分析';
     matchSubtitle.textContent = 'AI 正在分析两人的八字匹配度...';
 
-    // Call stream endpoint
-    var body = { personA: buildPersonReq(inputA, dataA), personB: buildPersonReq(inputB, dataB) };
+    // 保存数据，供「开始AI分析」使用
+    lastBodyBase = { personA: buildPersonReq(inputA, dataA), personB: buildPersonReq(inputB, dataB) };
 
     lastFullInterp = '';
     interpretBody.textContent = '';
     interpretBody.style.display = 'none';
+    loadingIndicator.style.display = 'none';
+    stageConfig.style.display = 'block';
+    matchSubtitle.textContent = '选择分析方向后开始AI分析...';
+  });
+
+  // ==== Start AI Analysis (with stage + directions) ====
+  document.getElementById('btn-start-analysis').addEventListener('click', function(){
+    var body = JSON.parse(JSON.stringify(lastBodyBase));
+    body.stage = document.querySelector('input[name="stage"]:checked').value;
+    body.directions = Array.from(document.querySelectorAll('.dir-options input:checked')).map(function(el){ return el.value; });
+
+    stageConfig.style.display = 'none';
     loadingIndicator.style.display = 'block';
+    matchSubtitle.textContent = 'AI 正在分析两人的八字匹配度...';
 
     fetch('/api/bazi-match/interpret/stream', {
       method: 'POST',
@@ -538,7 +596,6 @@
             btnMatch.disabled = false;
             btnMatch.innerHTML = '💘 重新测算';
             lastFullInterp = interpretBody.textContent;
-            // Auto save
             autoSaveResult();
             return;
           }

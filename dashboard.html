@@ -663,9 +663,12 @@ function renderAssessments() {
       </div>
       <div class="assess-detail" id="ad${a.id}">
         ${renderDetail(scores, a.type, a.id, a.summary || '')}
-        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.08)">
-          <a href="${links[a.type] || '#'}" style="font-size:12px;color:#8B9D8B;text-decoration:none">📋 重新测评 →</a>
-          <a href="#" onclick="event.preventDefault(); goTreeholeFromAssessment('${a.type}', '${a.id}')" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(139,157,139,0.08);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <a href="${links[a.type] || '#'}" style="font-size:12px;color:#8B9D8B;text-decoration:none">📋 重新测评 →</a>
+            <a href="#" onclick="event.preventDefault(); goTreeholeFromAssessment('${a.type}', '${a.id}')" style="font-size:12px;color:#8B9D8B;text-decoration:none;margin-left:14px">💬 去树洞聊聊 →</a>
+          </div>
+          <a href="#" onclick="event.stopPropagation();deleteAssessment(${a.id})" style="font-size:12px;color:#C49B8A;text-decoration:none">🗑️ 删除</a>
         </div>
       </div>
     </div>`;
@@ -817,6 +820,21 @@ async function goTreeholeFromAssessment(type, id) {
     window.location.href = 'treehole.html?session=' + encodeURIComponent(data.session_id);
   } catch(e) {
     alert('创建会话失败，请重试');
+  }
+}
+
+async function deleteAssessment(id) {
+  if (!confirm('确定删除这条测评记录？')) return;
+  try {
+    const resp = await fetch(API_BASE + '/api/assessments/' + id, {
+      method: 'DELETE',
+      headers: {'Authorization': 'Bearer ' + getToken()}
+    });
+    if (!resp.ok) throw new Error('删除失败');
+    assessments = assessments.filter(a => a.id !== id);
+    renderAssessments();
+  } catch(e) {
+    alert('删除失败，请重试');
   }
 }
 

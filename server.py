@@ -290,6 +290,8 @@ class BaziMatchRequest(BaseModel):
     """八字合婚请求（两人八字）。"""
     personA: PersonBaziData
     personB: PersonBaziData
+    stage: str = ''           # crush/together/broken/married/blind_date
+    directions: list[str] = []  # long_term/current_issues/future_timing/advice
 
 
 # ─── System Prompt 构造器 ────────────────────────────────
@@ -980,6 +982,18 @@ async def get_assessment(assessment_id: int, request: Request):
     return result.data[0]
 
 
+@app.delete("/api/assessments/{assessment_id}")
+async def delete_assessment(assessment_id: int, request: Request):
+    """删除一条测评记录。"""
+    user_id = get_user_id_from_request(request)
+    if not user_id:
+        raise HTTPException(401, "请先登录")
+    result = supabase.table("assessment_results").delete().eq("id", assessment_id).eq("user_id", user_id).execute()
+    if not result.data:
+        raise HTTPException(404, "测评记录不存在")
+    return {"status": "ok"}
+
+
 # ===== 系统 =====
 
 @app.get("/api/health")
@@ -1140,20 +1154,54 @@ async def bazi_interpret_stream(req: BaziInterpretRequest):
         return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
 
 
-@app.post("/api/chat/init")
 def build_bazi_match_prompt(req) -> tuple[list, str]:
     """构建八字合婚分析的 messages 列表。"""
     from datetime import datetime
     current_year = datetime.now().year
     a, b = req.personA, req.personB
+    stage = getattr(req, 'stage', '')
+    directions = getattr(req, 'directions', [])
 
     def wx_str(wx):
         return ''.join([f'{k}{v}' for k, v in wx.items()])
 
-    prompt = f'''你是一位温暖、客观的八字合婚分析师。请根据两人的八字数据，从以下维度系统分析他们的婚姻/爱情兼容性：
+    # 关系阶段上下文
+    stage_map = {
+        'crush': '目前处于**暗恋/单相思**阶段。请侧重分析：双方是否合适、对方会如何看待这段关系、建议是否应该主动。尊重用户的情感，不说泼冷水的话，但也不要盲目鼓励。',
+        'together': '目前**已经在一起**。请侧重分析：这段关系的长期发展潜力、相处中需要注意的磨合点、是否有潜在的危机需要提前预警。',
+        'broken': '目前**已经分手**。请侧重分析：两个人八字层面的根本问题是什么、分手的命理原因、是否有可能复合或各自更适合什么样的伴侣。语气要温柔，避免二次伤害。',
+        'married': '目前**已经结婚**。请侧重分析：婚姻质量的长期走势、未来几年需要注意的经营重点、大运转换期可能带来的挑战。',
+        'blind_date': '目前处于**相亲/初识匹配**阶段。请侧重分析：基础兼容性如何、有哪些明显的红牌或绿牌信号、进一步发展的建议。',
+    }
+    stage_context = stage_map.get(stage, '')
+
+    # 用户关注方向
+    dir_labels = {
+        'long_term': '长期兼容性',
+        'current_issues': '当前问题分析',
+        'future_timing': '未来时间点',
+        'advice': '相处建议',
+    }
+    dir_str = ''
+    if directions:
+        selected = [dir_labels.get(d, d) for d in directions if d in dir_labels]
+        if selected:
+            dir_str = '\n用户希望重点了解：' + '、'.join(selected) + '。请在这些方面着墨更多。'
+
+    # 未来3-5年的干支
+    tg = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸']
+    dz = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥']
+    def year_ganzhi(y): return tg[(y-4)%10] + dz[(y-4)%12]
+    future_years = [year_ganzhi(current_year + i) for i in range(5)]
+
+    prompt = f'''你是一位温暖、真诚的八字合婚分析师。请根据两人的八字数据，从五行互补、日柱关系、生肖纳音、十神互动和大运同步性等角度，进行系统但自然的合婚分析。
 
 ---
-### 用户数据
+### 关系背景
+{stage_context}{dir_str}
+
+---
+### 用户八字数据
 
 **甲方（第一人）：**
 - 出生日期：{a.solarDate}
@@ -1186,44 +1234,32 @@ def build_bazi_match_prompt(req) -> tuple[list, str]:
 ---
 ### 分析要求
 
-请按以下结构展开详细分析：
+请用自然流畅的方式分析。以下是分析方向，但不要求严格按顺序，可以自由组织：
 
-#### 一、💘 五行互补分析
-- 甲方的五行强弱、喜用神是什么
-- 乙方的五行强弱、喜用神是什么
+#### 五行互补
+- 甲方的五行强弱、喜用神
+- 乙方的五行强弱、喜用神
 - 双方五行是否互补：甲方弱的元素乙方是否强？乙方弱的元素甲方是否强？
-- 相生相克关系对这段关系的利弊
-- 整体评价：互补程度（优/良/中/差）
+- 这种互补/相克在相处中会以什么方式体现
 
-#### 二、🐾 生肖与纳音配对
-- 生肖关系：判断是六合、三合、六冲还是六害，说明这对性格和价值观的影响
-- 年柱纳音是否相生：纳音相生则长辈祝福和家庭氛围更好
-- 整体评价
+#### 日柱关系（核心）
+- 甲方日主{a.riZhuWx}与乙方日主{b.riZhuWx}的相生克关系——这决定了日常相处模式
+- 日支（配偶宫）互动：对方在各自的配偶宫扮演什么角色
+- 月柱是否天克地冲（这代表价值观层面的根本分歧程度）
+- 时柱关系：代表晚年和长期相处的基调
 
-#### 三、🔥 日柱关系（核心）
-- 日干五行生克：甲方日主{a.riZhuWx}与乙方日主{b.riZhuWx}的相生克关系——这决定了日常相处模式
-- 日支（配偶宫）互动：透露出对方对各自意味着什么
-- 日柱纳音相生/相克
-- 日柱地势关系
-- 整体评价
-
-#### 四、💕 婚姻星与十神互动
-- 各自的婚姻星（男看正财偏财，女看正官七杀）在命盘中的状态
-- 对方出现在自己命盘十神中意味着什么
-- 这段关系对各自人生是增益还是消耗
-- 需要注意的相处雷区
-
-#### 五、🌊 大运走势同步性
+#### 大运走势与未来年份
 - 起运时间是否接近（人生节奏是否合拍）
-- 当前大运对双方的契合度影响
-- 未来大运走向是否同步：同频共振还是此消彼长
-- 什么阶段关系最稳定，什么阶段需要更多经营
+- 当前双方各自的大运阶段，对关系的影响
+- 未来大运走向是否同步
+- **具体年份分析**：特别关注以下年份的关系运势和有重要干支合的年份：{'、'.join(future_years)}
+- 哪些年是关系的关键期，什么年份需要多加经营
 
-#### 六、📊 综合评估与建议
-- 整体匹配度评价（用1-2句话概括这段关系的核心特质）
-- 这段感情/婚姻的三大优势和三大需要注意的方面
-- 给双方的具体相处建议：如何扬长避短
-- 什么时间节点（年份）是关系的关键期
+#### 📊 综合评估
+- 整体匹配度的综合评级（天作之合 / 上等良配 / 中等匹配 / 需要慎重）
+- 这段关系的**三大优势**和**三大需要注意的方面**
+- 走到最后的概率分析：从五行层面、大运同步度、日柱关系三个维度分别评估，说明各自的权重和影响
+- 给双方的具体相处建议
 
 ---
 写法要求：
@@ -1240,161 +1276,6 @@ def build_bazi_match_prompt(req) -> tuple[list, str]:
     ]
     return messages
 
-
-@app.post("/api/bazi-match/interpret/stream")
-async def bazi_match_interpret_stream(req: BaziMatchRequest):
-    """根据两人八字数据流式生成合婚解读。"""
-    try:
-        messages = build_bazi_match_prompt(req)
-
-        async def event_stream():
-            yield f"data: {json.dumps({'type': 'meta', 'matchEmoji': '💘', 'matchTitle': '合婚分析', 'matchSubtitle': 'AI正在解读...'})}\n\n"
-            try:
-                async with httpx.AsyncClient(timeout=120) as client:
-                    async with client.stream(
-                        "POST",
-                        f"{DEEPSEEK_BASE_URL}/chat/completions",
-                        headers={
-                            "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-                            "Content-Type": "application/json",
-                        },
-                        json={
-                            "model": DEEPSEEK_MODEL,
-                            "messages": messages,
-                            "max_tokens": 8192,
-                            "reasoning_effort": "high",
-                            "thinking": {"type": "enabled"},
-                            "stream": True,
-                        },
-                    ) as resp:
-                        if resp.status_code != 200:
-                            error_body = await resp.aread()
-                            yield f"data: {json.dumps({'type': 'error', 'text': error_body.decode()})}\n\n"
-                            return
-
-                        async for line in resp.aiter_lines():
-                            if not line.startswith("data: "):
-                                continue
-                            data_str = line[6:].strip()
-                            if data_str == "[DONE]":
-                                break
-                            try:
-                                chunk = json.loads(data_str)
-                                delta = chunk.get("choices", [{}])[0].get("delta", {})
-                                if "content" in delta and delta["content"]:
-                                    yield f"data: {json.dumps({'type': 'chunk', 'text': delta['content']})}\n\n"
-                            except json.JSONDecodeError:
-                                continue
-
-                yield f"data: {json.dumps({'type': 'done'})}\n\n"
-            except Exception as e:
-                logger.error(f"合婚解读流异常: {e}")
-                yield f"data: {json.dumps({'type': 'error', 'text': str(e)})}\n\n"
-
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
-    except Exception as e:
-        logger.error(f"合婚解读流启动失败: {e}")
-        return {"interpretation": "解读服务暂时无法访问，请稍后再试。"}
-
-
-def build_bazi_match_prompt(req) -> tuple[list, str]:
-    """构建八字合婚分析的 messages 列表。"""
-    from datetime import datetime
-    current_year = datetime.now().year
-    a, b = req.personA, req.personB
-
-    def wx_str(wx):
-        return ''.join([f'{k}{v}' for k, v in wx.items()])
-
-    prompt = f'''你是一位温暖、客观的八字合婚分析师。请根据两人的八字数据，从以下维度系统分析他们的婚姻/爱情兼容性：
-
----
-### 用户数据
-
-**甲方（第一人）：**
-- 出生日期：{a.solarDate}
-- 性别：{'男' if a.gender == 0 else '女'}
-- 四柱：{a.ganZhi}
-- 日主：{a.riZhu}（{a.riZhuWx}）
-- 生肖：{a.shengXiao}
-- 五行分布：{wx_str(a.wxCount)}
-- 日柱纳音：{a.naYinDay}
-- 日柱地势：{a.diShiDay}
-- 十神：年{a.shiShenYear} 月{a.shiShenMonth} 时{a.shiShenTime}
-- 胎元：{a.taiYuan} 命宫：{a.mingGong} 身宫：{a.shenGong}
-- 当前大运：{a.curDaYun}
-- 完整大运：{a.daYunFull}
-
-**乙方（第二人）：**
-- 出生日期：{b.solarDate}
-- 性别：{'男' if b.gender == 0 else '女'}
-- 四柱：{b.ganZhi}
-- 日主：{b.riZhu}（{b.riZhuWx}）
-- 生肖：{b.shengXiao}
-- 五行分布：{wx_str(b.wxCount)}
-- 日柱纳音：{b.naYinDay}
-- 日柱地势：{b.diShiDay}
-- 十神：年{b.shiShenYear} 月{b.shiShenMonth} 时{b.shiShenTime}
-- 胎元：{b.taiYuan} 命宫：{b.mingGong} 身宫：{b.shenGong}
-- 当前大运：{b.curDaYun}
-- 完整大运：{b.daYunFull}
-
----
-### 分析要求
-
-请按以下结构展开详细分析：
-
-#### 一、💘 五行互补分析
-- 甲方的五行强弱、喜用神是什么
-- 乙方的五行强弱、喜用神是什么
-- 双方五行是否互补：甲方弱的元素乙方是否强？乙方弱的元素甲方是否强？
-- 相生相克关系对这段关系的利弊
-- 整体评价：互补程度（优/良/中/差）
-
-#### 二、🐾 生肖与纳音配对
-- 生肖关系：判断是六合、三合、六冲还是六害，说明这对性格和价值观的影响
-- 年柱纳音是否相生：纳音相生则长辈祝福和家庭氛围更好
-- 整体评价
-
-#### 三、🔥 日柱关系（核心）
-- 日干五行生克：甲方日主{a.riZhuWx}与乙方日主{b.riZhuWx}的相生克关系——这决定了日常相处模式
-- 日支（配偶宫）互动：透露出对方对各自意味着什么
-- 日柱纳音相生/相克
-- 日柱地势关系
-- 整体评价
-
-#### 四、💕 婚姻星与十神互动
-- 各自的婚姻星（男看正财偏财，女看正官七杀）在命盘中的状态
-- 对方出现在自己命盘十神中意味着什么
-- 这段关系对各自人生是增益还是消耗
-- 需要注意的相处雷区
-
-#### 五、🌊 大运走势同步性
-- 起运时间是否接近（人生节奏是否合拍）
-- 当前大运对双方的契合度影响
-- 未来大运走向是否同步：同频共振还是此消彼长
-- 什么阶段关系最稳定，什么阶段需要更多经营
-
-#### 六、📊 综合评估与建议
-- 整体匹配度评价（用1-2句话概括这段关系的核心特质）
-- 这段感情/婚姻的三大优势和三大需要注意的方面
-- 给双方的具体相处建议：如何扬长避短
-- 什么时间节点（年份）是关系的关键期
-
----
-写法要求：
-- 语气温暖、真诚、客观，像一位懂行的朋友认真分析
-- 专业但不堆砌术语，用容易理解的方式表达
-- 有具体的年龄/年份参考
-- 核心是给出有价值、可操作的相处建议
-- 末尾务必加上：⚠️ 以上内容由AI生成，仅供娱乐参考，命运掌握在自己手中。
-'''
-
-    messages = [
-        {"role": "system", "content": "你是一位温暖、真诚、客观的八字合婚分析师。你的专长是分析两人八字之间的五行互补、生肖配对、日柱关系、十神互动和大运同步性。分析时保持客观中立，既不夸大缘分也不刻意悲观，用专业但易懂的语言给出有价值的相处建议。善于用emoji做段落标题。"},
-        {"role": "user", "content": prompt}
-    ]
-    return messages
 
 
 @app.post("/api/bazi-match/interpret/stream")
