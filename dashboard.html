@@ -225,10 +225,11 @@ header {
 .assess-item:hover { border-color: rgba(139,157,139,0.2); }
 .assess-item-header { display: flex; align-items: center; gap: 12px; }
 .assess-icon { font-size: 20px; }
-.assess-info { flex: 1; }
+.assess-info { flex: 1; min-width: 0; }
 .assess-name { font-weight: 600; font-size: 14px; }
 .assess-summary { font-size: 12px; color: var(--brown-lt); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .assess-date { font-size: 11px; color: var(--brown-lt); white-space: nowrap; }
+.assess-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .assess-detail { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(139,157,139,0.08); }
 .assess-detail.open { display: block; }
 .assess-detail-inner {
@@ -761,8 +762,10 @@ function renderAssessments() {
           <div class="assess-name">${names[a.type] || a.type}</div>
           <div class="assess-summary">${summaryLine}</div>
         </div>
-        <span class="assess-date">${dateStr}</span>
-        <a href="#" onclick="event.stopPropagation();deleteAssessment(${a.id})" title="删除" style="font-size:14px;color:#C49B8A;text-decoration:none;margin-left:8px">✕</a>
+        <span class="assess-actions">
+          <span class="assess-date">${dateStr}</span>
+          <a href="#" onclick="event.stopPropagation();deleteAssessment(${a.id})" title="删除" style="font-size:14px;color:#C49B8A;text-decoration:none">✕</a>
+        </span>
       </div>
       <div class="assess-detail" id="ad${a.id}">
         ${renderDetail(scores, a.type, a.id, a.summary || '')}
