@@ -949,10 +949,21 @@ function renderRadar(scores) {
 // ═══════════════════════════════════════════════
 
 function talkToTreehole() {
-  // Scroll to top smoothly
-  document.querySelector('.container').scrollIntoView({ behavior: 'smooth' });
-  // Could trigger a modal or navigate to treehole chat
-  alert('✨ 树洞功能即将上线！\n\n未来你可以带着测评结果来找树洞聊聊，\n树洞会记住你的性格档案，给你更懂你的回应。');
+  const token = localStorage.getItem('treehole_token');
+  if (!token) {
+    if (confirm('💬 树洞是和你一对一聊天的 AI 陪聊伙伴\n\n登录后可以：\n· 带着测评结果来找树洞聊聊\n· 树洞会记住你，越聊越懂你\n· 历史对话永久保存\n\n要现在去登录吗？')) {
+      window.location.href = 'auth.html?redirect=treehole.html';
+    }
+    return;
+  }
+  // Logged in: create session and redirect
+  fetch('/api/chat/sessions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ window.location.href = 'treehole.html?session=' + encodeURIComponent(d.session_id); })
+  .catch(function(){ alert('创建会话失败，请重试'); });
 }
 
 function restartQuiz() {

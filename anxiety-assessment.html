@@ -753,9 +753,21 @@ function showResults() {
 }
 
 function talkToTreehole() {
-  const core = getCoreScore();
-  const arr = getDimScore('emotion');
-  alert('💬 树洞对话即将上线！\n\n你目前的评估概览：\n核心焦虑指数：' + core + '/21\n综合评分：' + getFullScore() + '/48\n\n很快你就能在这里和专属树洞聊聊你的感受 🌱\n（功能开发中，敬请期待）');
+  const token = localStorage.getItem('treehole_token');
+  if (!token) {
+    if (confirm('💬 树洞是和你一对一聊天的 AI 陪聊伙伴\n\n登录后可以：\n· 带着测评结果来找树洞聊聊\n· 树洞会记住你，越聊越懂你\n· 历史对话永久保存\n\n要现在去登录吗？')) {
+      window.location.href = 'auth.html?redirect=treehole.html';
+    }
+    return;
+  }
+  // Logged in: create session and redirect
+  fetch('/api/chat/sessions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ window.location.href = 'treehole.html?session=' + encodeURIComponent(d.session_id); })
+  .catch(function(){ alert('创建会话失败，请重试'); });
 }
 
 function restart() {
