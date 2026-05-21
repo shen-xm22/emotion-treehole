@@ -568,8 +568,11 @@
 
     var tk = localStorage.getItem('treehole_token');
     if (!tk) {
-      interpretBody.textContent = '';
+      loadingIndicator.style.display = 'none';
+      interpretBody.style.display = 'block';
       interpretBody.innerHTML = '<div style="text-align:center;padding:30px 0"><p style="color:var(--brown-lt);margin-bottom:12px">💘 八字合婚需要登录后才可使用</p><a href="auth.html?redirect=' + encodeURIComponent(window.location.pathname) + '" class="btn btn-primary" style="display:inline-block;padding:10px 24px">登录 / 注册</a></div>';
+      btnMatch.disabled = false;
+      btnMatch.innerHTML = '💘 测算合婚';
       return;
     }
     fetch('/api/bazi-match/interpret/stream', {
