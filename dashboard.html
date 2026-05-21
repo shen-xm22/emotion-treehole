@@ -642,8 +642,11 @@ async function deleteAccount() {
 }
 
 function renderAssessments() {
+  var el = document.getElementById('assessList');
+  if (!el) return '';
   if (!assessments.length) {
-    return `<div class="empty-state"><div class="icon">📝</div><p>还没有测评记录<br>完成测评后，结果会自动保存在这里</p><a href="anxiety-assessment.html" class="btn-sage" style="display:inline-block">开始测评 →</a></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="icon">📝</div><p>还没有测评记录<br>完成测评后，结果会自动保存在这里</p><a href="anxiety-assessment.html" class="btn-sage" style="display:inline-block">开始测评 →</a></div>`;
+    return;
   }
 
   const icons = {anxiety:'😰', relationship:'💕', personality:'🧩', love_radar:'💘', bazi:'🔮', bazi_match:'💘'};
@@ -758,7 +761,7 @@ function renderAssessments() {
     return `<pre style="font-size:12px;color:#8F7A72;background:rgba(139,157,139,0.04);padding:8px;border-radius:6px;white-space:pre-wrap;font-family:inherit">${JSON.stringify(scores, null, 2)}</pre>`;
   }
 
-  return assessments.map(a => {
+  var html = assessments.map(a => {
     const d = new Date(a.created_at);
     const dateStr = d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
     const scores = a.scores || {};
@@ -789,6 +792,7 @@ function renderAssessments() {
       </div>
     </div>`;
   }).join('');
+  el.innerHTML = html;
 }
 
 function toggleSection(id) {
