@@ -317,6 +317,7 @@ header {
   <div class="header-right">
     <a href="index.html" class="btn-ghost">首页</a>
     <a href="treehole.html" class="btn-sage">树洞</a>
+    <button class="btn-ghost" onclick="logout()" style="color:#b0a090">退出登录</button>
   </div>
 </header>
 
@@ -415,6 +416,15 @@ function isLoggedIn() { return !!getToken(); }
 
 if (!isLoggedIn()) {
   window.location.href = 'auth.html?redirect=dashboard.html';
+}
+
+// ── Logout ──
+function logout() {
+  if (!confirm('确定退出登录？')) return;
+  localStorage.removeItem('treehole_token');
+  localStorage.removeItem('treehole_user');
+  localStorage.removeItem('treehole_session');
+  window.location.href = 'index.html';
 }
 
 // ── State ──

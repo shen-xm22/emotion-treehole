@@ -411,24 +411,25 @@
       localStorage.setItem('treehole_token', data.token);
       localStorage.setItem('treehole_user', JSON.stringify(data.user));
 
-      // 同步暂存的测评结果
+      // 询问是否导入暂存的测评结果
       var pending = JSON.parse(localStorage.getItem('pending_assessments') || '[]');
       if (pending.length) {
-        var synced = 0;
-        pending.forEach(function(item) {
-          fetch('/api/assessments', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json','Authorization':'Bearer '+data.token},
-            body: JSON.stringify(item)
-          }).then(function(r) {
-            if (r.ok) synced++;
-          }).catch(function(){});
-        });
+        var importCount = 0;
+        if (confirm('📋 你本机还有 ' + pending.length + ' 条未保存的测评结果。\n\n是否要导入到你的账户？\n\n（选择「取消」将清除本地缓存，不导入）')) {
+          pending.forEach(function(item) {
+            fetch('/api/assessments', {
+              method: 'POST',
+              headers: {'Content-Type':'application/json','Authorization':'Bearer '+data.token},
+              body: JSON.stringify(item)
+            }).then(function(r) {
+              if (r.ok) importCount++;
+            }).catch(function(){});
+          });
+        }
         localStorage.removeItem('pending_assessments');
-        // 延迟 toast 让页面跳转后再显示
-        setTimeout(function() {
-          if (synced > 0) alert('🎉 已自动导入 ' + synced + ' 条之前的测评结果');
-        }, 1000);
+        if (importCount > 0) {
+          setTimeout(function() { alert('🎉 已导入 ' + importCount + ' 条测评结果'); }, 1000);
+        }
       }
 
       // Check if we need to redirect
