@@ -430,12 +430,14 @@ async function saveRelationshipAssessment() {
   const token = localStorage.getItem('treehole_token');
   if (!token) {
         // 未登录，存到 localStorage 暂存队列
+        var _an = getDimScore('anxiety'), _av = getDimScore('avoidance');
+        var _t = getAttachmentType(_an, _av), _info = typeInfo[_t];
         var pending = JSON.parse(localStorage.getItem('pending_assessments') || '[]');
         pending.push({
             type: 'relationship',
-            scores: { anxiety: Math.round(an*10)/10, avoidance: Math.round(av*10)/10, type: info.name },
+            scores: { anxiety: Math.round(_an*10)/10, avoidance: Math.round(_av*10)/10, type: _info.name },
             answers: answers,
-            summary: info.desc
+            summary: _info.desc || _info.name
         });
         localStorage.setItem('pending_assessments', JSON.stringify(pending));
         var el = document.getElementById('relSaveIndicator');

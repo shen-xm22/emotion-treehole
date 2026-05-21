@@ -650,12 +650,20 @@ async function saveAnxietyAssessment() {
   const token = localStorage.getItem('treehole_token');
   if (!token) {
         // 未登录，存到 localStorage 暂存队列
+        var _c = getCoreScore();
+        var _f = getFullScore();
+        var _cs = getCoreSeverity(_c);
+        var _fs = getSeverity(_f, 48);
+        var _ds = pageDims.map(function(d){
+            var s = getDimScore(d);
+            return { name: dimLabels[d].name, score: s.sum, max: s.max, pct: s.pct };
+        });
         var pending = JSON.parse(localStorage.getItem('pending_assessments') || '[]');
         pending.push({
             type: 'anxiety',
-            scores: { core_score: core, core_severity: coreSev.label, full_score: full, full_severity: fullSev.label, dimensions: dims },
+            scores: { core_score: _c, core_severity: _cs.label, full_score: _f, full_severity: _fs.label, dimensions: _ds },
             answers: answers,
-            summary: coreSev.desc
+            summary: _cs.desc
         });
         localStorage.setItem('pending_assessments', JSON.stringify(pending));
         var el = document.getElementById('anxietySaveIndicator');
