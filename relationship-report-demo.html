@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关系画像报告 · 完整版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #f0ebe5;
+    font-family: -apple-system, 'Noto Sans SC', 'PingFang SC', sans-serif;
+    padding: 40px 20px;
+    color: #2c2416;
+  }
+  .container { max-width: 720px; margin: 0 auto; }
+
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .header .badge {
+    display: inline-block;
+    background: #dcb48c;
+    color: #fff;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .header p {
+    color: #8a7a6a;
+    font-size: 14px;
+  }
+
+  /* One-liner strip */
+  .oneliner {
+    background: linear-gradient(135deg, #2c2416, #4a3d2e);
+    color: #ede7e0;
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .oneliner .label {
+    font-size: 12px;
+    color: #c4a88a;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .oneliner .text {
+    font-size: 18px;
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card-number {
+    font-size: 12px;
+    color: #c4a88a;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .card-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-sub {
+    font-size: 13px;
+    color: #b0a090;
+    margin-bottom: 16px;
+  }
+  .card-title .emoji { font-size: 24px; }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .tag {
+    background: #f4ede6;
+    color: #6a5d4e;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+
+  .card p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #3d3226;
+    margin-bottom: 12px;
+  }
+
+  /* Metric cards */
+  .metric-row {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .metric {
+    flex: 1;
+    background: #f8f4ef;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .metric-label {
+    font-size: 12px;
+    color: #8a7a6a;
+    margin-bottom: 6px;
+  }
+  .metric-value { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .metric-value.high { color: #c0392b; }
+  .metric-value.med { color: #d4a058; }
+  .metric-value.low { color: #5d9b6a; }
+  .metric-sub { font-size: 12px; color: #8a7a6a; }
+
+  /* Bar chart */
+  .bar-chart { margin: 16px 0; }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .bar-label {
+    width: 90px;
+    font-size: 13px;
+    color: #5a4e3e;
+  }
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: #ede7e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 10px;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #d4a88a, #c4906a);
+  }
+  .bar-fill.green { background: linear-gradient(90deg, #8ab88a, #6a9d6a); }
+  .bar-fill.blue { background: linear-gradient(90deg, #7aadc4, #5a8da4); }
+  .bar-value {
+    width: 32px;
+    text-align: right;
+    font-size: 13px;
+    color: #8a7a6a;
+  }
+
+  /* Compat box */
+  .compat-box {
+    background: #f8f4ef;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+  }
+  .compat-box h4 { font-size: 14px; margin-bottom: 8px; color: #5a4e3e; }
+  .compat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #ede7e0;
+    font-size: 14px;
+  }
+  .compat-item:last-child { border: none; }
+  .compat-name { color: #3d3226; }
+  .compat-desc { color: #8a7a6a; font-size: 13px; }
+
+  .pill-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+  }
+  .pill {
+    background: #fff;
+    border: 1px solid #e0d6cc;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #5a4e3e;
+  }
+  .pill.active {
+    background: #2c2416;
+    color: #fff;
+    border-color: #2c2416;
+  }
+
+  hr { border: none; border-top: 1px solid #ede7e0; margin: 16px 0; }
+
+  .summary-box {
+    background: #2c2416;
+    color: #ede7e0;
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .summary-box .quote-mark {
+    font-size: 28px;
+    color: #c4a88a;
+    line-height: 1;
+  }
+  .summary-box p {
+    font-size: 15px;
+    line-height: 1.8;
+    margin: 12px 0 0;
+    color: #d4c8b8;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 24px 20px 12px;
+    font-size: 12px;
+    color: #b0a090;
+  }
+
+  .annotation {
+    font-size: 12px;
+    color: #b0a090;
+    text-align: center;
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  /* Two-col */
+  .two-col {
+    display: flex;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .two-col > div {
+    flex: 1;
+    background: #f8f4ef;
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .two-col h5 {
+    font-size: 13px;
+    color: #8a7a6a;
+    margin-bottom: 8px;
+  }
+  .two-col p {
+    font-size: 13px;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">🌿 情绪树洞</div>
+    <h1>我的关系画像</h1>
+    <p>2026-05-19 · 基于测评 + 八字 + AI 分析</p>
+  </div>
+
+  <!-- One-liner -->
+  <div class="oneliner">
+    <div class="label">一句话画像</div>
+    <div class="text">
+      INFJ · 天蝎座 · 甲木日主 · 焦虑型依恋<br>
+      「敏感而清醒的理想主义者，深水下的火焰」
+    </div>
+  </div>
+
+  <!-- ===== 01 底色 ===== -->
+  <div class="card">
+    <div class="card-number">01</div>
+    <div class="card-title"><span class="emoji">🎨</span> 关系底色</div>
+    <div class="card-sub">你是谁 · 你的关系气质</div>
+    <div class="tags">
+      <span class="tag">INFJ 提倡者</span>
+      <span class="tag">♏ 天蝎座</span>
+      <span class="tag">甲木日主</span>
+      <span class="tag">水命 · 偏印格</span>
+      <span class="tag">爱好：写作/摄影/徒步</span>
+    </div>
+    <p>
+      你是典型的 <strong>INFJ（提倡者）</strong>——在人群中你并不喧哗，但你对人的理解常常超出对方自己的认知。天蝎座的深度让你天生渴望有质感的连接，甲木日主又给你一种不断向上生长的力量。
+    </p>
+    <p>
+      水命偏印格的特征是：你的情感世界像一片深湖——表面平静、底下暗流涌动。你不会轻易敞开心扉，但一旦信任了，投入得比谁都深。你在所有关系中都带着一份「试探」——确认安全之后才会放下防备。
+    </p>
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">情感深度</div>
+        <div class="metric-value high">很深</div>
+        <div class="metric-sub">敏感度 + 共情力</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">表达倾向</div>
+        <div class="metric-value med">选择性开放</div>
+        <div class="metric-sub">熟人 vs 生人差异大</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">关系主动性</div>
+        <div class="metric-value low">偏被动</div>
+        <div class="metric-sub">观察多于行动</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 02 与人连接 ===== -->
+  <div class="card">
+    <div class="card-number">02</div>
+    <div class="card-title"><span class="emoji">🤝</span> 与他人连接的方式</div>
+    <div class="card-sub">朋友 · 家人 · 同事 · 泛人际关系</div>
+    <div class="tags">
+      <span class="tag">大五人格：RLOAN</span>
+      <span class="tag">宜人性高</span>
+      <span class="tag">开放性高</span>
+      <span class="tag">尽责性中等</span>
+    </div>
+    <p>
+      你的大五人格呈现 <strong>RLOAN</strong> 类型（高开放性+宜人性，中等尽责性，神经质偏高）——这让你的社交风格是：温和但不随意，愿意理解别人但也会因此消耗自己。
+    </p>
+    <div class="two-col" style="margin-top:12px;">
+      <div>
+        <h5>👥 朋友 & 圈子</h5>
+        <p>你朋友不多、但都很深。你天生不适合浅层社交，那些需要持续「表演」的场合会让你快速耗电。你在关系中最看重的是「你可以在对方面前不说话，却很自在」的感觉。</p>
+      </div>
+      <div>
+        <h5>🏢 工作 & 同事</h5>
+        <p>你在工作中是「靠谱但不强势」的存在。宜人性高让你容易合作，但有时候会不好意思拒绝。你适合需要深度思考而非大量社交的角色——你更擅长解决复杂问题，而不是搞定复杂关系。</p>
+      </div>
+    </div>
+    <p>
+      <strong>一个重要提示：</strong> INFJ + 水命的人容易在人际关系中「过度承担」。对方的一个微表情你可以想三天；同事的负面情绪你会不自觉地吸收。这是你的超能力也是你的风险——需要有意识地设置边界。
+    </p>
+  </div>
+
+  <!-- ===== 03 亲密关系（重点）= ~50% 篇幅 ===== -->
+  <div class="card">
+    <div class="card-number">03</div>
+    <div class="card-title"><span class="emoji">💕</span> 亲密关系</div>
+    <div class="card-sub">这是最丰富的一章——基于你的恋爱人格、依恋模式、八字信息和性格数据，绘制你的亲密关系全貌</div>
+
+    <!-- ── 恋爱人格 ── -->
+    <h4 style="font-size:15px; font-weight:600; margin:0 0 8px;">💘 你的恋爱人格</h4>
+    <div class="tags">
+      <span class="tag">清醒理想主义者</span>
+      <span class="tag">感性投入 高</span>
+      <span class="tag">信任倾向 慢热</span>
+      <span class="tag">独立性 中等</span>
+      <span class="tag">浪漫倾向 较高</span>
+    </div>
+    <p>
+      你的 love-radar 类型是 <strong>「清醒理想主义者」</strong>——对爱情有很高的心理预期，但不会轻易被表面的热情打动。你不会因为一个人「对你好」就动心，你更在意那种说不清道不明的「气场对了」的感觉。
+    </p>
+    <p>
+      这种组合让两个特质同时存在：你不会轻易恋爱，但一旦认定，你的投入程度会超出对方的预期。你不是那种「到处撒网」的类型，每一段关系你都是认真的。
+    </p>
+
+    <div class="bar-chart">
+      <div class="bar-row">
+        <span class="bar-label">情感投入</span>
+        <div class="bar-track"><div class="bar-fill" style="width:85%"></div></div>
+        <span class="bar-value">高</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">理性判断</span>
+        <div class="bar-track"><div class="bar-fill" style="width:40%"></div></div>
+        <span class="bar-value">中低</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">信任倾向</span>
+        <div class="bar-track"><div class="bar-fill" style="width:30%"></div></div>
+        <span class="bar-value">慢热</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">独立需求</span>
+        <div class="bar-track"><div class="bar-fill" style="width:60%"></div></div>
+        <span class="bar-value">中等</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-label">浪漫倾向</span>
+        <div class="bar-track"><div class="bar-fill" style="width:75%"></div></div>
+        <span class="bar-value">较高</span>
+      </div>
+    </div>
+
+    <!-- ── 安全感画像（扩展版）── -->
+    <h4 style="font-size:15px; font-weight:600; margin:24px 0 8px;">🛡️ 安全感画像</h4>
+    <div class="tags">
+      <span class="tag">依恋类型：焦虑型</span>
+      <span class="tag">焦虑 3.8/5</span>
+      <span class="tag">回避 2.1/5</span>
+    </div>
+    <p>
+      你在亲密关系中的依恋模式偏向 <strong>焦虑型</strong>。这不是「作」或者「不成熟」——而是你的情感神经系统天生比较敏感。你对关系中的信号特别敏锐：对方晚回的消息、稍微冷淡的语气、一次取消的约会，你都会在意。
+    </p>
+    <p>
+      好消息是你的回避分数很低（2.1/5），说明你并不害怕亲密。你不抵触依赖，反而渴望深度的情感连接。问题在于这个组合容易形成一种循环：
+    </p>
+
+    <div style="background:#f8f4ef; border-radius:12px; padding:16px; margin:12px 0; text-align:center; font-size:14px; line-height:2;">
+      <span style="color:#c0392b;">在乎</span> 
+      <span style="color:#8a7a6a;">→</span>
+      <span style="color:#d4a058;">更敏感</span>
+      <span style="color:#8a7a6a;"> → </span>
+      <span style="color:#c0392b;">想确认</span>
+      <span style="color:#8a7a6a;"> → </span>
+      <span style="color:#5d9b6a;">怕打扰对方</span>
+      <span style="color:#8a7a6a;"> → </span>
+      <span style="color:#c0392b;">更焦虑</span>
+      <span style="color:#8a7a6a;"> → </span>
+      <span style="color:#d4a058;">怀疑自己</span>
+    </div>
+
+    <p>
+      这个循环的关键出口不是「不要在乎」，而是学会在这个循环里加一个暂停键——比如在「想确认」这一步停下，问问自己：我现在需要的是他的回应，还是我只是需要一个自我确认？
+    </p>
+
+    <div class="two-col" style="margin-top:12px;">
+      <div>
+        <h5>🔥 容易触发你焦虑的场景</h5>
+        <p>对方回复间隔明显变长<br>语气从热情变客气<br>取消约定或不解释原因<br>感觉到关系「变轻」</p>
+      </div>
+      <div>
+        <h5>☀️ 最能安抚你的方式</h5>
+        <p>稳定可预期的回应节奏<br>主动报备（不需要你问）<br>一句「我在呢」<br>深度的、走心的对话</p>
+      </div>
+    </div>
+
+    <!-- ── 你在关系中的剧本 ── -->
+    <h4 style="font-size:15px; font-weight:600; margin:24px 0 8px;">🎭 你可能反复出现的关系剧本</h4>
+    <p>
+      综合你的 INFJ + 水命 + 焦虑依恋 + 清醒理想主义人格，你在亲密关系中有一种值得留意的模式：
+    </p>
+
+    <div style="background:#fdf8f3; border:1px solid #ede7e0; border-radius:12px; padding:16px; margin:12px 0;">
+      <p style="margin:0;"><strong>「先观望，再上头，然后开始害怕失去」</strong></p>
+      <p style="margin:8px 0 0; font-size:13px; color:#8a7a6a;">
+        开始一段关系前你会很谨慎（INFJ 天然会评估一个人的「可信度」），
+        但一旦突破了那道防线，你会比对方预想中更快地投入深度情感。
+        投入之后，焦虑型依恋开始启动——越在乎越怕失去，越怕失去就越需要确认。
+        如果对方恰好是回避型或不够主动，这个剧本就会加速上演。
+      </p>
+    </div>
+
+    <!-- ── 爱的语言 ── -->
+    <h4 style="font-size:15px; font-weight:600; margin:18px 0 8px;">💬 你的爱的语言</h4>
+    <p>
+      基于你的性格画像，你在亲密关系中表达爱和感受爱的方式偏向：
+    </p>
+    <div class="metric-row">
+      <div class="metric">
+        <div class="metric-label">🥇 核心语言</div>
+        <div class="metric-value" style="font-size:20px;">深度对话</div>
+        <div class="metric-sub">你通过走心的交流感受爱</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">🥈 第二语言</div>
+        <div class="metric-value" style="font-size:20px;">用心时刻</div>
+        <div class="metric-sub">高质量的共处时间</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">🥉 加分项</div>
+        <div class="metric-value" style="font-size:20px;">肢体接触</div>
+        <div class="metric-sub">信任后才真正需要</div>
+      </div>
+    </div>
+    <p style="font-size:13px; color:#8a7a6a;">
+      *「服务的行动」和「接受礼物」不是你的主要语言——你需要的不是礼物本身，而是那份「你懂我」的感觉。
+    </p>
+
+    <!-- ── 你在亲密关系中需要什么 ── -->
+    <h4 style="font-size:15px; font-weight:600; margin:24px 0 8px;">🎯 你在亲密关系中需要什么</h4>
+    <div class="pill-row">
+      <span class="pill active">稳定的回应节奏</span>
+      <span class="pill active">明确的情绪确认</span>
+      <span class="pill active">被优先考虑的感觉</span>
+      <span class="pill active">深度对话的空间</span>
+      <span class="pill">情绪上的包容</span>
+      <span class="pill">独立的个人时间</span>
+    </div>
+
+    <!-- ── 适配类型（扩展版）── -->
+    <h4 style="font-size:15px; font-weight:600; margin:24px 0 8px;">🔗 适配类型</h4>
+    <p>基于你的恋爱人格（love-radar）、依恋模式（ECR）和八字五行，以下类型的人与你最易产生正向化学反应：</p>
+    <div class="compat-box">
+      <div class="compat-item">
+        <span class="compat-name">🥇 温暖守护型</span>
+        <span class="compat-desc">情感稳定、能给你安全感</span>
+      </div>
+      <div class="compat-item">
+        <span class="compat-name">🥈 深度共鸣型</span>
+        <span class="compat-desc">同样敏感、能同频共振</span>
+      </div>
+      <div class="compat-item">
+        <span class="compat-name">🥉 能量互补型</span>
+        <span class="compat-desc">外向主动、带你走出内耗</span>
+      </div>
+      <div class="compat-item">
+        <span class="compat-name" style="color:#c0392b;">⚠️ 需谨慎：自由浪子型</span>
+        <span class="compat-desc" style="color:#c0392b;">忽冷忽热会触发你的焦虑循环</span>
+      </div>
+    </div>
+
+    <!-- ── 八字合婚视角 ── -->
+    <h4 style="font-size:15px; font-weight:600; margin:24px 0 8px;">☯️ 八字视角下的关系</h4>
+    <p>
+      从八字来看，你的日主为甲木，生于水旺之月，偏印格。这意味着你在关系中需要的不是更多的刺激，而是「扎根的感觉」。
+    </p>
+    <p>
+      <strong>与你五行最合的日柱特点：</strong>火土旺为佳——火泄木之秀气、土为财星也为根基。和这样的人在一起，你会觉得生活有方向感，内心有安定感。相反，如果对方也是木旺或水旺，容易出现「两个人都在内耗」的情况——都敏感、都多想、都在等着对方先迈出一步。
+    </p>
+    <p>
+      你的大运走势显示，当前阶段（正印大运）你在关系中最需要的是「被理解和接纳」，而不是轰轰烈烈的激情。之后的运程会让你的关系观逐渐向更成熟的方向发展。
+    </p>
+  </div>
+
+  <!-- ===== 04 职场与事业 ===== -->
+  <div class="card">
+    <div class="card-number">04</div>
+    <div class="card-title"><span class="emoji">💼</span> 职场与事业</div>
+    <div class="card-sub">工作风格 · 事业倾向 · 发展节奏</div>
+    <div class="tags">
+      <span class="tag">尽责性C 3.2/5</span>
+      <span class="tag">外向性E 2.8/5</span>
+      <span class="tag">偏印格 · 食神透</span>
+      <span class="tag">当前正印大运</span>
+    </div>
+    <p>
+      你的大五人格显示你的工作风格是<strong>「专注但不强势」</strong>。尽责性中等偏上（C 3.2/5），你不会是最会表现自己的那一个，但你是团队里最能稳定交付的人。外向性偏低（E 2.8/5），意味着过多的社交协作会消耗你的精力。
+    </p>
+    <div class="two-col" style="margin-top:12px;">
+      <div>
+        <h5>🌟 优势</h5>
+        <p>深度思考、洞察本质、能独立完成复杂任务、善于发现别人忽略的细节</p>
+      </div>
+      <div>
+        <h5>⚠️ 盲区</h5>
+        <p>不喜欢争抢、容易接受过多任务、在「需要表现」的场合会退缩</p>
+      </div>
+    </div>
+    <p>
+      从八字看，偏印格+食神透出的人，<strong>最适合的是「输出智慧」的工作</strong>——写文、研究、咨询、策划型角色。比肩透干让你有不错的协作能力，但不要被「大多数人的选择」牵着走。当前正印大运是积累期，事业上的真正的跃升在之后的伤官运到来时。
+    </p>
+    <p style="font-size:13px; color:#8a7a6a;">
+      2026 丙午年，印星发力，适合深耕技能或进修。不宜在低谷期裸辞，但可以谋划转轨方向。
+    </p>
+  </div>
+
+  <!-- ===== 05 情绪模式 ===== -->
+  <div class="card">
+    <div class="card-number">05</div>
+    <div class="card-title"><span class="emoji">🌊</span> 情绪模式</div>
+    <div class="card-sub">你的情绪反应 · 压力应对</div>
+    <div class="tags">
+      <span class="tag">焦虑评估：中度</span>
+      <span class="tag">神经质 N 3.8/5</span>
+      <span class="tag">甲木+水：易内耗</span>
+    </div>
+    <p>
+      综合焦虑评估得分 <strong>12/21（中度焦虑）</strong> 和大五人格中较高的神经质（N 3.8/5），你对情绪的感知比大多数人精细。这不是坏事——它让你更有洞察力、更能共情。但需要留意的是：
+    </p>
+    <p>
+      <strong>最容易触发情绪下沉的场景：</strong>被冷落的感觉、被误解、或者在关系中没有安全感的时候。你比较容易陷入「反刍」——一遍遍回想一个场景，在脑子里排练不同的台词。
+    </p>
+    <p>
+      八字中甲木日主+偏印格，本身就有敏感多思的特点。水命加强了这一点——你的情绪不是来得快去得也快的那种，而是会慢慢渗透。好在你当前走的正印运有自我觉察的天赋——你比大多数人都更早发现自己的问题。
+    </p>
+  </div>
+
+  <!-- ===== 06 成长指南 ===== -->
+  <div class="card">
+    <div class="card-number">06</div>
+    <div class="card-title"><span class="emoji">🌱</span> 成长指南</div>
+    <div class="card-sub">给未来自己的三条建议</div>
+
+    <p>
+      <strong>1. 在亲密关系中：建立你的「安全感清单」</strong><br>
+      写下什么会让你感到安心——每天一次深度聊天、固定的「我到家了」、或者周末一起做一件简单的事。不是拿去要求对方，而是在你焦虑的时候看看这个清单，给自己一颗定心丸。
+    </p>
+
+    <p>
+      <strong>2. 在所有关系中：练习「温和的边界」</strong><br>
+      你的 INFJ + 宜人性高 + 水命的组合，让你很容易吸收别人的情绪。试试这个小练习：下次同事向你倾倒负面情绪的时候，先问自己一句「这是他需要处理的，还是我需要承担的？」
+    </p>
+
+    <p>
+      <strong>3. 在职业上：把你的敏感变成专业壁垒</strong><br>
+      偏印格+高开放性+高神经质的组合，天生适合做需要深度洞察的工作。不要把精力花在「变得更外向」上，而是把敏感转化为专业判断力——比如写深度的分析、做用户洞察、或者研究一个你真正感兴趣的领域。
+    </p>
+
+    <hr>
+
+    <p style="font-size:14px; color:#8a7a6a;">
+      🌿 你不是需要被「修复」，你只是需要更好地理解和运用自己的天赋。
+    </p>
+  </div>
+
+  <!-- Summary -->
+  <div class="summary-box">
+    <div class="quote-mark">"</div>
+    <p>
+      你是那种相处久了才知道多深的人。<br>
+      别害怕你的敏感——它让你看到别人看不到的东西。<br>
+      在所有关系里，最值得你好好对待的，是你自己。
+    </p>
+  </div>
+
+  <div class="footer">
+    🌿 情绪树洞 · 数据来源于你的心理测评和八字分析 · AI 生成仅供参考
+  </div>
+</div>
+</body>
+</html>

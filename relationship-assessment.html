@@ -428,7 +428,23 @@ function prevPage() { if (currentPage > 0) { currentPage--; renderPage(); } }
 // ── Save assessment to user account (if logged in) ──
 async function saveRelationshipAssessment() {
   const token = localStorage.getItem('treehole_token');
-  if (!token) return;
+  if (!token) {
+        // 未登录，存到 localStorage 暂存队列
+        var pending = JSON.parse(localStorage.getItem('pending_assessments') || '[]');
+        pending.push({
+            type: 'relationship',
+            scores: { anxiety: Math.round(an*10)/10, avoidance: Math.round(av*10)/10, type: info.name },
+            answers: answers,
+            summary: info.desc
+        });
+        localStorage.setItem('pending_assessments', JSON.stringify(pending));
+        var el = document.getElementById('relSaveIndicator');
+        if (el) {
+            el.innerHTML = '💾 结果已暂存在本机 · <a href="auth.html?redirect=' + encodeURIComponent(window.location.pathname) + '" style="color:#8B9D8B;text-decoration:underline">登录后可永久保存</a>';
+            el.style.display = 'block';
+        }
+        return;
+    }
   try {
     const an = getDimScore('anxiety'), av = getDimScore('avoidance');
     const t = getAttachmentType(an, av), info = typeInfo[t];

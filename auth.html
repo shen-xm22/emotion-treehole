@@ -411,6 +411,26 @@
       localStorage.setItem('treehole_token', data.token);
       localStorage.setItem('treehole_user', JSON.stringify(data.user));
 
+      // 同步暂存的测评结果
+      var pending = JSON.parse(localStorage.getItem('pending_assessments') || '[]');
+      if (pending.length) {
+        var synced = 0;
+        pending.forEach(function(item) {
+          fetch('/api/assessments', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json','Authorization':'Bearer '+data.token},
+            body: JSON.stringify(item)
+          }).then(function(r) {
+            if (r.ok) synced++;
+          }).catch(function(){});
+        });
+        localStorage.removeItem('pending_assessments');
+        // 延迟 toast 让页面跳转后再显示
+        setTimeout(function() {
+          if (synced > 0) alert('🎉 已自动导入 ' + synced + ' 条之前的测评结果');
+        }, 1000);
+      }
+
       // Check if we need to redirect
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get('redirect') || 'index.html';

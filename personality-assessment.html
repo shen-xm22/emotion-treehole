@@ -778,7 +778,22 @@ function computeResults() {
 // ── Save assessment to user account (if logged in) ──
 async function savePersonalityAssessment(scores, typeData) {
   const token = localStorage.getItem('treehole_token');
-  if (!token) return;
+  if (!token) {
+        var pending = JSON.parse(localStorage.getItem("pending_assessments") || "[]");
+        pending.push({
+            type: "personality",
+            scores: scores,
+            answers: answers,
+            summary: typeData.name
+        });
+        localStorage.setItem("pending_assessments", JSON.stringify(pending));
+        var el = document.getElementById("perSaveIndicator");
+        if (el) {
+            el.innerHTML = "💾 结果已暂存在本机 · <a href=\"auth.html?redirect=" + encodeURIComponent(window.location.pathname) + "\" style=\"color:#8B9D8B;text-decoration:underline\">登录后可永久保存</a>";
+            el.style.display = "block";
+        }
+        return;
+    }
   try {
     const resp = await fetch('/api/assessments', {
       method: 'POST',

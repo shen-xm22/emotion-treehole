@@ -322,7 +322,8 @@
     </div>
   </div>
 
-</div>
+<div id="lrSaveIndicator" style="display:none;text-align:center;margin-top:10px;font-size:13px;color:#8B9D8B;"></div>
+  </div>
 
 <script>
 // ================================================================
@@ -893,7 +894,36 @@ function drawRadar(userVec, mainType) {
 // ── Save assessment to user account (if logged in) ──
 async function saveLoveRadarAssessment(norm, mainType, secondType, isHidden) {
   const token = localStorage.getItem('treehole_token');
-  if (!token) return;
+  if (!token) {
+        // 未登录，存到 localStorage 暂存队列
+        var pending = JSON.parse(localStorage.getItem('pending_assessments') || '[]');
+        var bmType = TYPES.find(function(t){ return t.id === mainType.bestMatch; });
+        var smType = TYPES.find(function(t){ return t.id === mainType.secondMatch; });
+        pending.push({
+            type: 'love_radar',
+            scores: {
+                typeName: mainType.name,
+                typeEmoji: mainType.emoji,
+                tagline: mainType.tagline,
+                description: mainType.description,
+                dims: norm,
+                bestMatch: mainType.bestMatch,
+                secondMatch: mainType.secondMatch,
+                bestMatchName: bmType ? bmType.name : '',
+                secondMatchName: smType ? smType.name : '',
+                isHidden: isHidden
+            },
+            answers: state.answers,
+            summary: mainType.name + ' — ' + mainType.tagline
+        });
+        localStorage.setItem('pending_assessments', JSON.stringify(pending));
+        var el = document.getElementById('lrSaveIndicator');
+        if (el) {
+            el.innerHTML = '💾 结果已暂存在本机 · <a href="auth.html?redirect=' + encodeURIComponent(window.location.pathname) + '" style="color:#8B9D8B;text-decoration:underline">登录后可永久保存</a>';
+            el.style.display = 'block';
+        }
+        return;
+    }
   try {
     const bmType = TYPES.find(t => t.id === mainType.bestMatch);
     const smType = TYPES.find(t => t.id === mainType.secondMatch);
