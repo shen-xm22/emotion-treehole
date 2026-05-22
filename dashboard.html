@@ -523,7 +523,7 @@ function renderDashboard() {
       </div>
       <div class="section-body">
         <div class="section-body-inner">
-          <div class="assess-list" id="assessList">${renderAssessments()}</div>
+          <div class="assess-list" id="assessList"></div>
         </div>
       </div>
     </div>
@@ -596,6 +596,7 @@ function renderDashboard() {
       <a href="#" onclick="showPrivacyInfo(); return false;">详情</a>
     </div>
   `;
+  renderAssessments();
 }
 
 function showPrivacyInfo() {
