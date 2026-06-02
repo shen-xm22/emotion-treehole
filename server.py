@@ -1834,10 +1834,18 @@ async def delete_account(request: Request):
 
 @app.on_event("startup")
 def startup():
-    """启动时检查 Supabase 连接。"""
+    """启动时检查 Supabase 连接，必要时自动唤醒。"""
     try:
         supabase.table("users").select("id").limit(1).execute()
         logger.info("Supabase 连接成功，数据库表就绪")
     except Exception as e:
         logger.warning(f"Supabase 连接/表检查失败: {e}")
-        logger.warning("请确保在 Supabase SQL Editor 中运行了 schema.sql")
+        # 自动唤醒：可能是 Free Plan 休眠
+        try:
+            from supabase_auto_wake import ensure_db_awake
+            if ensure_db_awake(supabase, SUPABASE_URL):
+                logger.info("Supabase 已成功唤醒")
+            else:
+                logger.warning("请确保在 Supabase SQL Editor 中运行了 schema.sql")
+        except Exception as e2:
+            logger.warning(f"自动唤醒过程异常: {e2}")
